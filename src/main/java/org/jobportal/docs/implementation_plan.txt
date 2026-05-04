@@ -1,0 +1,666 @@
+# IMPLEMENTATION PLAN - JOB PORTAL SYSTEM
+
+## 1. Mục đích tài liệu
+
+Tài liệu này mô tả cách chia việc, thứ tự triển khai và checklist bàn giao cho dự án JobPortalSystem.
+
+Dự án chia theo folder/tầng:
+- DAL/DAO
+- BLL/Service
+- View/Swing
+- Model/DTO/Enum/Utils nền tảng
+
+Hiện tại:
+- Schema đã chốt.
+- Model/DTO/Enum đã có nền.
+- Service/DAO đã có prototype/skeleton.
+- Java project đã compile được.
+- Bước tiếp theo là implement thật DAO, BLL và View binding.
+
+---
+
+## 2. Nguyên tắc triển khai
+
+1. Không làm toàn bộ app một lần.
+2. Làm theo module ưu tiên.
+3. Mỗi module đi qua đủ 3 tầng: DAO → Service → View.
+4. View không gọi DAO.
+5. DAO không xử lý nghiệp vụ.
+6. Service không chứa Swing code.
+7. DTO là dữ liệu View dùng để hiển thị.
+8. Model bám sát database.
+9. Mỗi lần xong một phần phải compile.
+10. Nên commit theo từng mốc nhỏ.
+
+---
+
+## 3. Chia vai trò trong nhóm
+
+## 3.1. Người làm DAL/DAO
+
+Phụ trách:
+- DatabaseConfig
+- UserDAO
+- CandidateDAO
+- EmployerDAO
+- CategoryDAO
+- RecruitmentDAO
+- ApplicationDAO
+- CVDAO
+- NotificationDAO nếu làm sau
+
+Nhiệm vụ chính:
+- Viết SQL đúng schema.sql.
+- Mapping ResultSet sang Model/DTO.
+- Xử lý SQLException hợp lý.
+- Đảm bảo DAO method trả đúng kiểu dữ liệu contract.
+- Không gọi Service.
+- Không gọi UI.
+
+Bàn giao cho BLL:
+- Method DAO chạy được.
+- Input/output đúng contract.
+- Query đúng dữ liệu.
+- Không làm sai foreign key.
+- Có test thủ công hoặc dữ liệu mẫu để kiểm tra.
+
+---
+
+## 3.2. Người làm BLL/Service
+
+Phụ trách:
+- AuthService
+- UserService
+- CategoryService
+- RecruitmentService
+- ApplicationService
+- CVService
+- NotificationService nếu làm sau
+- Session/Validation/ID generator nếu cần
+
+Nhiệm vụ chính:
+- Gọi DAO.
+- Xử lý nghiệp vụ.
+- Validate dữ liệu.
+- Kiểm tra role/session.
+- Sinh ID đúng format.
+- Mapping Model sang DTO nếu cần.
+- Trả kết quả cho View.
+
+Bàn giao cho View:
+- Service method dùng được.
+- Input/output rõ ràng.
+- Trả DTO đủ field.
+- Trả boolean/null/List rỗng nhất quán.
+- Không throw lỗi khó hiểu lên View nếu không cần.
+
+---
+
+## 3.3. Người làm View/Swing
+
+Phụ trách:
+- LoginPanel
+- RegisterPanel
+- JobSearchPanel
+- JobDetailPanel
+- AppliedJobsPanel
+- CVEditorPanel
+- Employer panels
+- Admin panels
+- HeaderPanel
+- SidebarPanel
+- MainFrame navigation
+
+Nhiệm vụ chính:
+- Hiển thị giao diện.
+- Lấy input người dùng.
+- Gọi Service.
+- Render DTO lên UI.
+- Hiển thị thông báo lỗi/thành công.
+- Dùng mock DTO khi Service chưa hoàn thiện.
+- Không gọi DAO.
+
+Bàn giao:
+- UI gọi đúng Service method.
+- Render đúng DTO field.
+- Không lỗi giao diện cơ bản.
+- Có xử lý empty state/error state.
+- Không viết SQL trong View.
+
+---
+
+## 4. Mức độ nặng của từng phần
+
+1. DAL/DAO - nặng nhất
+Lý do:
+- Phải viết SQL đúng.
+- Phải join nhiều bảng.
+- Phải mapping ResultSet.
+- Dễ lỗi FK, enum, date/time.
+- Là nền cho BLL.
+
+2. BLL/Service - nặng nhì
+Lý do:
+- Phải xử lý nghiệp vụ.
+- Phải kiểm tra quyền/session.
+- Phải gọi nhiều DAO đúng thứ tự.
+- Phải đảm bảo dữ liệu trả cho View đúng.
+
+3. View/Swing - nặng ba
+Lý do:
+- Nhiều file và tốn công UI.
+- Nhưng có thể làm bằng mock DTO trước.
+- Ít rủi ro dữ liệu hơn nếu contract rõ.
+
+Lưu ý:
+Nếu UI hiện tại chưa hoàn thiện, phần View có thể tốn thời gian nhiều nhất về chỉnh giao diện, nhưng về rủi ro logic thì DAL vẫn nặng nhất.
+
+---
+
+## 5. Thứ tự triển khai tổng quát
+
+1. Chốt schema.sql.
+2. Chốt Model.
+3. Chốt DTO.
+4. Chốt Service contract.
+5. Implement DatabaseConfig.
+6. Implement DAO.
+7. Implement Service.
+8. View dựng UI bằng mock DTO.
+9. View thay mock bằng Service thật.
+10. Test từng màn hình.
+11. Test flow hoàn chỉnh.
+12. Sửa lỗi tích hợp.
+13. Dọn code/comment.
+14. Chuẩn bị demo.
+
+---
+
+## 6. Thứ tự module ưu tiên
+
+## 6.1. Module 1 - Auth
+
+Mục tiêu:
+- Login
+- Register
+- Logout
+- SessionManager
+
+DAO cần:
+- UserDAO
+- CandidateDAO
+- EmployerDAO
+
+Service cần:
+- AuthService
+- UserService nếu cần
+
+View cần:
+- LoginPanel
+- RegisterPanel
+- MainFrame điều hướng theo role
+
+Lý do ưu tiên:
+- Không có Auth thì không test được role khác.
+
+Done khi:
+- Đăng nhập được bằng user mẫu.
+- Đăng ký được Candidate/Employer.
+- Đăng xuất quay về LoginPanel.
+- Session lưu đúng current user.
+
+---
+
+## 6.2. Module 2 - User/Candidate/Employer
+
+Mục tiêu:
+- Lấy thông tin user.
+- Lấy candidate/employer theo userId.
+- Cập nhật thông tin công ty.
+- Quản lý trạng thái user cho admin.
+
+DAO cần:
+- UserDAO
+- CandidateDAO
+- EmployerDAO
+
+Service cần:
+- UserService
+
+View cần:
+- CompanyInfoPanel
+- UserManagementPanel
+
+Done khi:
+- Employer xem/cập nhật thông tin công ty được.
+- Admin xem danh sách user được.
+- Admin khóa/mở user được nếu có UI.
+
+---
+
+## 6.3. Module 3 - Category
+
+Mục tiêu:
+- Lấy danh mục.
+- Thêm/sửa/xóa danh mục.
+
+DAO cần:
+- CategoryDAO
+- RecruitmentDAO.countByCategory nếu xóa category.
+
+Service cần:
+- CategoryService
+
+View cần:
+- CategoryManagementPanel
+- JobSearchPanel combo category
+- RecruitmentFormPanel combo category
+
+Done khi:
+- Category hiển thị trong combobox.
+- Admin thêm/sửa/xóa category.
+- Không xóa category đang có recruitment.
+
+---
+
+## 6.4. Module 4 - Recruitment
+
+Mục tiêu:
+- Candidate tìm kiếm tin tuyển dụng.
+- Candidate xem chi tiết tin.
+- Employer đăng/sửa/xóa/đóng tin.
+- Admin kiểm duyệt tin.
+
+DAO cần:
+- RecruitmentDAO
+- CategoryDAO
+- EmployerDAO/UserDAO nếu cần join companyName
+- ApplicationDAO nếu cần applicationCount
+
+Service cần:
+- RecruitmentService
+- CategoryService
+
+View cần:
+- JobSearchPanel
+- JobDetailPanel
+- RecruitmentFormPanel
+- RecruitmentListPanel
+- JobModerationPanel
+
+Done khi:
+- Candidate xem được job đã APPROVED và OPEN.
+- Employer tạo tin với adminStatus = PENDING.
+- Admin duyệt/từ chối tin.
+- Tin được duyệt mới hiện cho Candidate.
+
+---
+
+## 6.5. Module 5 - Application
+
+Mục tiêu:
+- Candidate ứng tuyển.
+- Candidate xem việc đã ứng tuyển.
+- Candidate hủy ứng tuyển nếu PENDING.
+- Employer duyệt/từ chối hồ sơ.
+
+DAO cần:
+- ApplicationDAO
+- RecruitmentDAO
+- CandidateDAO
+- UserDAO
+- CVDAO nếu xem thông tin ứng viên
+
+Service cần:
+- ApplicationService
+
+View cần:
+- JobDetailPanel
+- AppliedJobsPanel
+- ApplicationReviewPanel
+
+Done khi:
+- Candidate apply được.
+- Không apply trùng.
+- Employer xem danh sách ứng viên.
+- Employer approve/reject được.
+- Candidate thấy trạng thái cập nhật.
+
+---
+
+## 6.6. Module 6 - CV
+
+Mục tiêu:
+- Candidate xem CV.
+- Candidate cập nhật objective/skills/education.
+- Employer xem thông tin ứng viên nếu cần.
+
+DAO cần:
+- CVDAO
+
+Service cần:
+- CVService
+
+View cần:
+- CVEditorPanel
+- ApplicationReviewPanel nếu có xem CV
+
+Done khi:
+- Candidate lưu CV được.
+- Load lại CV đúng dữ liệu.
+- Education hiển thị đúng.
+- Skills xử lý nhất quán dạng String hoặc List tùy DTO đã chốt.
+
+---
+
+## 6.7. Module 7 - Admin Dashboard
+
+Mục tiêu:
+- Xem thống kê tổng quan.
+
+DAO cần:
+- UserDAO.countByRole
+- RecruitmentDAO.countOpenRecruitments
+- RecruitmentDAO.getTopEmployers
+- ApplicationDAO nếu cần thống kê nâng cao
+
+Service cần:
+- UserService
+- RecruitmentService
+- ApplicationService nếu cần
+
+View cần:
+- AdminDashboardPanel
+
+Done khi:
+- Hiển thị được số candidate.
+- Hiển thị được số employer.
+- Hiển thị được số recruitment đang mở.
+- Hiển thị top employer nếu có.
+
+---
+
+## 6.8. Module 8 - Notification
+
+Mục tiêu:
+- Để sau nếu không cần demo chính.
+
+DAO cần:
+- NotificationDAO
+
+Service cần:
+- NotificationService
+
+View cần:
+- HeaderPanel hoặc popup notification
+
+Done khi:
+- User xem notification được.
+- Đánh dấu đã đọc được.
+- Service khác có thể tạo notification.
+
+Giai đoạn hiện tại:
+- Có thể giữ skeleton/TODO.
+- Chưa cần nối vào flow chính.
+
+---
+
+## 7. Kế hoạch làm song song
+
+## Giai đoạn 1 - Nền tảng
+
+Người DAL:
+- Kiểm tra DatabaseConfig.
+- Test kết nối DB.
+- Implement UserDAO cơ bản.
+
+Người BLL:
+- Chốt Service contract.
+- Chuẩn bị AuthService logic.
+- Kiểm tra SessionManager, PasswordUtils, ValidationUtils.
+
+Người View:
+- Kiểm tra LoginPanel/RegisterPanel.
+- Chuẩn bị render/handler.
+- Có thể dùng mock UserDTO.
+
+---
+
+## Giai đoạn 2 - Auth chạy thật
+
+Người DAL:
+- UserDAO
+- CandidateDAO
+- EmployerDAO
+
+Người BLL:
+- AuthService.login
+- AuthService.register
+- AuthService.logout
+
+Người View:
+- LoginPanel gọi AuthService.
+- RegisterPanel gọi AuthService.
+- MainFrame điều hướng theo role.
+
+Kết quả:
+- Đăng nhập/đăng ký chạy được.
+
+---
+
+## Giai đoạn 3 - Recruitment search
+
+Người DAL:
+- CategoryDAO
+- RecruitmentDAO.searchByKeywordAndCategory
+- RecruitmentDAO.findById
+
+Người BLL:
+- CategoryService.getAllCategories
+- RecruitmentService.searchRecruitments
+- RecruitmentService.getRecruitmentById
+
+Người View:
+- JobSearchPanel hiển thị danh sách.
+- JobDetailPanel hiển thị chi tiết.
+
+Kết quả:
+- Candidate tìm và xem chi tiết job được.
+
+---
+
+## Giai đoạn 4 - Application
+
+Người DAL:
+- ApplicationDAO.existsByCandidateAndRecruitment
+- ApplicationDAO.insert
+- ApplicationDAO.findByCandidateId
+- ApplicationDAO.findByRecruitmentId
+- ApplicationDAO.updateStatus
+
+Người BLL:
+- ApplicationService.applyRecruitment
+- ApplicationService.hasApplied
+- ApplicationService.getListOfApplicationByUser
+- ApplicationService.approveApplication
+- ApplicationService.rejectApplication
+
+Người View:
+- JobDetailPanel apply/hủy.
+- AppliedJobsPanel render danh sách.
+- ApplicationReviewPanel duyệt/từ chối.
+
+Kết quả:
+- Luồng ứng tuyển chạy được.
+
+---
+
+## Giai đoạn 5 - Employer/Admin/CV
+
+Tùy thời gian, triển khai theo ưu tiên:
+1. RecruitmentFormPanel + RecruitmentListPanel
+2. JobModerationPanel
+3. CVEditorPanel
+4. UserManagementPanel
+5. AdminDashboardPanel
+6. Notification
+
+---
+
+## 8. Checklist trước khi code một chức năng
+
+Trước khi code, trả lời đủ:
+
+1. Màn hình nào dùng chức năng này?
+2. View gọi Service method nào?
+3. Input của Service là gì?
+4. Output của Service là gì?
+5. DTO cần field nào?
+6. Service gọi DAO nào?
+7. DAO query bảng nào?
+8. Có cần JOIN không?
+9. Có cần check role/session không?
+10. Có cần validate không?
+11. Có ảnh hưởng schema không?
+12. Có ảnh hưởng DTO đang dùng ở View khác không?
+
+Nếu chưa trả lời đủ, chưa nên code.
+
+---
+
+## 9. Checklist bàn giao DAL
+
+Một DAO method chỉ xem là xong khi:
+
+- SQL chạy được.
+- Mapping đúng field.
+- Không lỗi null cơ bản.
+- Có xử lý SQLException.
+- Không gọi Service/View.
+- Trả đúng kiểu contract.
+- Có test bằng dữ liệu mẫu.
+- Compile thành công.
+
+---
+
+## 10. Checklist bàn giao BLL
+
+Một Service method chỉ xem là xong khi:
+
+- Gọi đúng DAO.
+- Validate dữ liệu cần thiết.
+- Check role/session nếu cần.
+- Xử lý case null/empty.
+- Trả kết quả đúng contract.
+- Không có code Swing.
+- Không có SQL trực tiếp.
+- Compile thành công.
+
+---
+
+## 11. Checklist bàn giao View
+
+Một màn hình chỉ xem là xong khi:
+
+- Gọi đúng Service.
+- Lấy input đúng.
+- Render DTO đúng.
+- Có xử lý danh sách rỗng.
+- Có thông báo lỗi/thành công.
+- Không gọi DAO.
+- Không viết SQL.
+- Không phụ thuộc dữ liệu mock khi tích hợp thật.
+- Compile thành công.
+
+---
+
+## 12. Quy tắc Git/commit
+
+Nên commit theo mốc nhỏ:
+
+- chore: finalize schema and model
+- feat: implement user dao
+- feat: implement auth service
+- feat: wire login register UI
+- feat: implement recruitment dao
+- feat: implement job search service
+- feat: wire job search UI
+
+Không nên commit kiểu:
+- update all
+- fix bug
+- final
+- code mới
+
+Mỗi commit nên có phạm vi rõ.
+
+---
+
+## 13. Quy tắc tránh xung đột
+
+1. Không sửa file người khác đang làm nếu chưa báo.
+2. Không đổi DTO tùy tiện.
+3. Không đổi Service signature tùy tiện.
+4. Không sửa schema tùy tiện sau khi DAO đã code.
+5. Nếu cần đổi contract, báo cả 3 người.
+6. Mỗi ngày nên merge/check compile ít nhất một lần.
+7. Sau khi pull code, chạy compile trước khi code tiếp.
+
+---
+
+## 14. Rủi ro cần kiểm soát
+
+Rủi ro 1:
+DTO thiếu field View cần.
+
+Cách xử lý:
+Chốt contract trước khi code View.
+
+Rủi ro 2:
+DAO query sai schema.
+
+Cách xử lý:
+Bám schema.sql, test SQL riêng trước.
+
+Rủi ro 3:
+Service bị biến thành nơi viết SQL.
+
+Cách xử lý:
+Mọi SQL phải nằm trong DAO.
+
+Rủi ro 4:
+View gọi DAO cho nhanh.
+
+Cách xử lý:
+Cấm View gọi DAO. View chỉ gọi Service.
+
+Rủi ro 5:
+ID sinh ra vượt VARCHAR(10).
+
+Cách xử lý:
+Dùng format đã chốt:
+- U-00000001
+- EMP-000001
+- CAN-000001
+- REC-000001
+- APP-000001
+- CV-0000001
+- CAT-000001
+- NOT-000001
+- EDU-000001
+- WE-0000001
+- CERT-00001
+
+---
+
+## 15. Kết luận
+
+Kế hoạch triển khai nên đi theo hướng:
+
+1. Làm chắc tầng DAO.
+2. BLL xử lý nghiệp vụ dựa trên DAO.
+3. View gọi Service và render DTO.
+4. Mỗi module test riêng trước.
+5. Sau đó mới test flow hoàn chỉnh.
+
+Khi chia theo folder, tài liệu contract là bắt buộc để nhóm không lệch hướng.
