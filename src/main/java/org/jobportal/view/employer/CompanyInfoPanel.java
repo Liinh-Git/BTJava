@@ -1,238 +1,205 @@
 package org.jobportal.view.employer;
 
-import org.jobportal.view.common.HeaderPanel;
-import org.jobportal.view.common.SidebarPanel;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
+import static org.jobportal.view.util.DesignSystem.*;
+
+/**
+ * Company info panel matching th_ng_tin_c_ng_ty_minimal_1 stitch design.
+ * Layout: page title with blue underline accent + form card (TÊN CÔNG TY,
+ *         ĐỊA CHỈ TRỤ SỞ, MÔ TẢ CÔNG TY) + Hủy/Lưu thay đổi buttons
+ *         + 3-col stats cards (TRẠNG THÁI HỒ SƠ, LƯỢT XEM, CẬP NHẬT CUỐI).
+ */
 public class CompanyInfoPanel extends JPanel {
 
     public CompanyInfoPanel() {
-        // thiet lap layout chinh
         setLayout(new BorderLayout());
-        setBackground(new Color(248, 249, 250)); // mau nen xam nhat
+        setBackground(BG_PAGE);
 
-        JPanel mainContent = new JPanel();
-        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setBackground(new Color(248, 249, 250));
-        mainContent.setBorder(new EmptyBorder(30, 40, 30, 40));
+        JPanel mainContent = createContentPanel();
 
-        // 1. tieu de trang voi duong gach chan xanh
+        // 1. tieu de trang voi duong gach xanh
         mainContent.add(createPageHeader());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_6)));
 
-        // 2. the form nhap lieu thong tin
+        // 2. form card
         mainContent.add(createFormCard());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        // 3. cac nut thao tac (Huy, Luu thay doi)
+        // 3. cac nut hanh dong
         mainContent.add(createActionButtons());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // 4. cac the thong ke trang thai ben duoi
+        // 4. the thong ke
         mainContent.add(createStatsRow());
 
-        // boc vao scroll pane de co the cuon
-        JScrollPane scrollPane = new JScrollPane(mainContent);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-        add(scrollPane, BorderLayout.CENTER);
+        add(createScrollPane(mainContent), BorderLayout.CENTER);
     }
 
     private JPanel createPageHeader() {
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
-        headerPanel.setBackground(new Color(248, 249, 250));
-        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setBackground(BG_PAGE);
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitle = new JLabel("Thông tin công ty");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        lblTitle.setForeground(new Color(33, 37, 41));
+        JLabel lblTitle = createPageTitle("Thông tin công ty");
+        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        header.add(lblTitle);
+        header.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
 
-        // duong gach chan mau xanh duoi tieu de
-        JPanel underline = new JPanel();
-        underline.setBackground(new Color(13, 110, 253));
-        underline.setPreferredSize(new Dimension(50, 4));
-        underline.setMaximumSize(new Dimension(50, 4));
-        underline.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // duong ke xanh accent
+        JPanel blueLine = new JPanel();
+        blueLine.setBackground(PRIMARY);
+        blueLine.setPreferredSize(new Dimension(60, 3));
+        blueLine.setMaximumSize(new Dimension(60, 3));
+        blueLine.setAlignmentX(Component.LEFT_ALIGNMENT);
+        header.add(blueLine);
 
-        headerPanel.add(lblTitle);
-        headerPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        headerPanel.add(underline);
-
-        return headerPanel;
+        return header;
     }
 
     private JPanel createFormCard() {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
+        card.setBackground(BG_SURFACE);
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(226, 230, 234), 1),
-                new EmptyBorder(30, 30, 30, 30)
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_8, SPACE_8, SPACE_8, SPACE_8)
         ));
 
-        // Ten cong ty
-        card.add(createInputGroup("TÊN CÔNG TY", "Nhập tên chính thức của công ty", false));
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
+        // TÊN CÔNG TY
+        card.add(createFieldLabel("TÊN CÔNG TY"));
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
+        JTextField txtName = createFormField("Nhập tên chính thức của công ty");
+        txtName.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(txtName);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        // Dia chi
-        card.add(createInputGroup("ĐỊA CHỈ TRỤ SỞ", "Số nhà, tên đường, quận/huyện, thành phố", false));
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
+        // ĐỊA CHỈ TRỤ SỞ
+        card.add(createFieldLabel("ĐỊA CHỈ TRỤ SỞ"));
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
+        JTextField txtAddress = createFormField("Số nhà, tên đường, quận/huyện, thành phố");
+        txtAddress.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(txtAddress);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        // Mo ta cong ty (TextArea)
-        card.add(createInputGroup("MÔ TẢ CÔNG TY", "Giới thiệu chi tiết về lịch sử, sứ mệnh và định hướng phát triển của công ty...", true));
+        // MÔ TẢ CÔNG TY
+        card.add(createFieldLabel("MÔ TẢ CÔNG TY"));
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
+
+        JTextArea txtDesc = new JTextArea("Giới thiệu chi tiết về lịch sử, sứ mệnh và định hướng phát triển của công ty...");
+        txtDesc.setFont(body());
+        txtDesc.setForeground(TEXT_MUTED);
+        txtDesc.setLineWrap(true);
+        txtDesc.setWrapStyleWord(true);
+        txtDesc.setBackground(BG_SURFACE);
+        txtDesc.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER_INPUT, 1),
+                new EmptyBorder(SPACE_3, SPACE_3, SPACE_3, SPACE_3)
+        ));
+        txtDesc.setRows(8);
+        txtDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JScrollPane scroll = new JScrollPane(txtDesc);
+        scroll.setBorder(null);
+        scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(scroll);
 
         return card;
     }
 
-    private JPanel createInputGroup(String label, String placeholder, boolean isTextArea) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
+    private JTextField createFormField(String placeholder) {
+        JTextField field = new JTextField(placeholder);
+        field.setFont(body());
+        field.setForeground(TEXT_MUTED);
+        field.setPreferredSize(new Dimension(0, INPUT_HEIGHT));
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, INPUT_HEIGHT));
+        field.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER_INPUT, 1),
+                new EmptyBorder(SPACE_2, SPACE_3, SPACE_2, SPACE_3)
+        ));
+        return field;
+    }
+
+    private JPanel createActionButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_4, 0));
+        panel.setBackground(BG_PAGE);
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lbl.setForeground(new Color(108, 117, 125));
+        JButton btnCancel = createOutlineButton("Hủy");
+        btnCancel.setPreferredSize(new Dimension(100, BUTTON_HEIGHT));
+        panel.add(btnCancel);
 
-        panel.add(lbl);
-        panel.add(Box.createRigidArea(new Dimension(0, 8)));
-
-        if (isTextArea) {
-            JTextArea txtArea = new JTextArea(placeholder);
-            txtArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            txtArea.setForeground(new Color(108, 117, 125));
-            txtArea.setLineWrap(true);
-            txtArea.setWrapStyleWord(true);
-            txtArea.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(new Color(226, 230, 234), 1),
-                    new EmptyBorder(15, 15, 15, 15)
-            ));
-
-            JScrollPane scroll = new JScrollPane(txtArea);
-            scroll.setBorder(null);
-            scroll.setPreferredSize(new Dimension(0, 180));
-            scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-            panel.add(scroll);
-        } else {
-            JTextField txtField = new JTextField(placeholder);
-            txtField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            txtField.setForeground(new Color(108, 117, 125));
-            txtField.setPreferredSize(new Dimension(0, 45));
-            txtField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
-            txtField.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(new Color(226, 230, 234), 1),
-                    new EmptyBorder(5, 15, 5, 15)
-            ));
-            txtField.setAlignmentX(Component.LEFT_ALIGNMENT);
-            panel.add(txtField);
-        }
+        JButton btnSave = createPrimaryButton("Lưu thay đổi");
+        btnSave.setPreferredSize(new Dimension(160, BUTTON_HEIGHT));
+        panel.add(btnSave);
 
         return panel;
     }
 
-    private JPanel createActionButtons() {
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        actionPanel.setBackground(new Color(248, 249, 250));
-        actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JButton btnCancel = new JButton("Hủy");
-        btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btnCancel.setBackground(Color.WHITE);
-        btnCancel.setForeground(new Color(33, 37, 41));
-        btnCancel.setBorder(new LineBorder(new Color(226, 230, 234), 1));
-        btnCancel.setPreferredSize(new Dimension(100, 45));
-        btnCancel.setFocusPainted(false);
-        btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        JButton btnSave = new JButton("Lưu thay đổi");
-        btnSave.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btnSave.setBackground(new Color(13, 110, 253));
-        btnSave.setForeground(Color.WHITE);
-        btnSave.setBorderPainted(false);
-        btnSave.setPreferredSize(new Dimension(140, 45));
-        btnSave.setFocusPainted(false);
-        btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        actionPanel.add(btnCancel);
-        actionPanel.add(btnSave);
-        return actionPanel;
-    }
-
     private JPanel createStatsRow() {
-        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
-        statsPanel.setBackground(new Color(248, 249, 250));
-        statsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        statsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        JPanel panel = new JPanel(new GridLayout(1, 3, SPACE_5, 0));
+        panel.setBackground(BG_PAGE);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
 
-        statsPanel.add(createStatCard("TRẠNG THÁI HỒ SƠ", "Hoàn thiện 75%", "v")); // v gia lap icon
-        statsPanel.add(createStatCard("LƯỢT XEM THÁNG NÀY", "1,240", "o"));
-        statsPanel.add(createStatCard("CẬP NHẬT CUỐI", "2 ngày trước", "c"));
+        panel.add(createStatCard("⊘", "TRẠNG THÁI HỒ SƠ", "Hoàn thiện 75%"));
+        panel.add(createStatCard("◉", "LƯỢT XEM THÁNG NÀY", "1,240"));
+        panel.add(createStatCard("↻", "CẬP NHẬT CUỐI", "2 ngày trước"));
 
-        return statsPanel;
+        return panel;
     }
 
-    private JPanel createStatCard(String label, String value, String iconTxt) {
+    private JPanel createStatCard(String icon, String label, String value) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
+        card.setBackground(BG_SURFACE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(226, 230, 234), 1),
-                new EmptyBorder(20, 20, 20, 20)
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_4, SPACE_5, SPACE_4, SPACE_5)
         ));
 
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        topPanel.setBackground(Color.WHITE);
-        topPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JPanel topRow = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
+        topRow.setBackground(BG_SURFACE);
+        topRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblIcon = new JLabel(iconTxt);
-        lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblIcon.setForeground(new Color(13, 110, 253));
+        JLabel lblIcon = new JLabel(icon);
+        lblIcon.setFont(fontRegular(16));
+        lblIcon.setForeground(PRIMARY);
+        topRow.add(lblIcon);
 
         JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblLabel.setForeground(new Color(108, 117, 125));
-
-        topPanel.add(lblIcon);
-        topPanel.add(lblLabel);
+        lblLabel.setFont(tableHeader());
+        lblLabel.setForeground(TEXT_MUTED);
+        topRow.add(lblLabel);
 
         JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblValue.setForeground(Color.BLACK);
-        lblValue.setBorder(new EmptyBorder(10, 5, 0, 0));
+        lblValue.setFont(fontBold(FONT_SIZE_LG));
+        lblValue.setForeground(TEXT_PRIMARY);
         lblValue.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        card.add(topPanel);
+        card.add(topRow);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
         card.add(lblValue);
 
         return card;
     }
 
-    // ham main kiem tra giao dien doc lap
+    // ham test giao dien doc lap
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Employer Portal - Thong tin cong ty");
+            JFrame frame = new JFrame("Employer Portal - Thông tin công ty");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1200, 850);
+            frame.setSize(1200, 800);
             frame.setLayout(new BorderLayout());
 
-            // Header o NORTH
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            // Sidebar o WEST
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.EMPLOYER);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            // Giao dien chinh o CENTER
-            CompanyInfoPanel companyPanel = new CompanyInfoPanel();
-            frame.add(companyPanel, BorderLayout.CENTER);
+            frame.add(new org.jobportal.view.common.HeaderPanel(), BorderLayout.NORTH);
+            frame.add(new org.jobportal.view.common.SidebarPanel(org.jobportal.view.common.SidebarPanel.Role.EMPLOYER), BorderLayout.WEST);
+            frame.add(new CompanyInfoPanel(), BorderLayout.CENTER);
 
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
