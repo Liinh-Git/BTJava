@@ -1,0 +1,9 @@
+QUY TRÌNH XỬ LÝ QUA CÁC LỚP
+
+DatabaseConfig.java  ←  Kết nối JDBC (chỉ viết 1 lần ở đây)
+       ↓
+    ...DAO.java      ←  Dùng connection để query SQL
+       ↓
+   ...Service.java   ←  Gọi DAO, xử lý logic (code logic ở đây)
+       ↓
+    ...Panel.java    ←  Gọi Service, hiển thị UI
