@@ -1020,15 +1020,15 @@ JobModerationPanel      → Kiểm duyệt tin đăng
 
 BLL/SERVICE
 -----------
-AuthService         : register, login, logout, changePassword
+AuthService         : register, login, logout, changePassword (skeleton)
 CategoryService     : getAllCategories, addCategory, updateCategory,
-                      deleteCategory
+                      deleteCategory (skeleton)
 RecruitmentService  : postRecruitment, updateRecruitment,
                       deleteRecruitment, closeRecruitment,
                       getRecruitmentById, searchRecruitments,
                       getRecruitmentsByEmployer,
                       getPendingRecruitments, adminModerate,
-                      countOpenRecruitments, getTopEmployers
+                      countOpenRecruitments, getTopEmployers (skeleton)
 ApplicationService  : applyRecruitment, cancelApplication,
                       getListOfApplicationByUser,
                       getTotalApplyCountByUser,
@@ -1036,34 +1036,34 @@ ApplicationService  : applyRecruitment, cancelApplication,
                       getApplicationsByRecruitmentId,
                       approveApplication, rejectApplication,
                       getCandidateInfo, filterApplicationByStatus,
-                      getTotalApplicationCount, getNewApplicantsToday
-CVService           : getCV, saveCV
+                      getTotalApplicationCount, getNewApplicantsToday (skeleton)
+CVService           : getCV, saveCV (skeleton)
 UserService         : updateCompanyInfo, getEmployerInfo, getAllUsers,
-                      updateUserStatus, deleteUser, countByRole
-NotificationService : getNotifications, sendNotification, markAsRead
+                      updateUserStatus, deleteUser, countByRole (skeleton)
+NotificationService : getNotifications, sendNotification, markAsRead (skeleton/TODO)
 
 DAL/DAO
 -------
 UserDAO         : findByUsernameAndPassword, findById, findAll,
                   insert, update, updateStatus, updatePassword,
                   delete, existsByUsername, existsByEmail,
-                  countByRole
-EmployerDAO     : findByUserId, insert, update
-CandidateDAO    : findByUserId, insert
+                  countByRole (skeleton)
+EmployerDAO     : findByUserId, insert, update (skeleton/TODO)
+CandidateDAO    : findByUserId, insert (skeleton/TODO)
 RecruitmentDAO  : findById, findByEmployerId, findByAdminStatus,
                   searchByKeywordAndCategory, insert, update,
                   updateStatus, updateAdminStatus, delete,
-                  countByCategory, countOpenByEmployerId
+                  countByCategory, countOpenByEmployerId (skeleton)
 ApplicationDAO  : findByCandidateId, findByRecruitmentId,
                   findByRecruitmentIdAndStatus,
                   existsByCandidateAndRecruitment,
                   countByCandidateId,
                   countByCandidateIdAndStatus,
-                  countByEmployerId, insert, delete, updateStatus
-CVDAO           : findByCandidateId, insert, update
-EducationDAO    : findByCvId, insertAll, deleteByCvId
-CategoryDAO     : findAll, findById, insert, update, delete
-NotificationDAO : findByReceiverId, insert, updateIsRead
+                  countByEmployerId, insert, delete, updateStatus (skeleton)
+CVDAO           : findByCandidateId, insert, update (skeleton)
+EducationDAO    : findByCvId, insertAll, deleteByCvId (logic nằm trong CVDAO)
+CategoryDAO     : findAll, findById, insert, update, delete (skeleton)
+NotificationDAO : findByReceiverId, insert, updateIsRead (skeleton/TODO)
 
 DTO
 ---
@@ -1255,18 +1255,19 @@ TUẦN 3 - VIEW (làm sau cùng, gọi Service đã hoàn thiện):
 - [ ] MySQL Connector JAR đã thêm vào pom.xml hoặc thư mục lib/
 - [ ] DatabaseConfig kết nối được (test bằng main() nhỏ)
 - [ ] Mỗi DAO viết xong cần test thủ công với dữ liệu mẫu
-- [ ] Thống nhất cách sinh ID (UUID.randomUUID() hoặc prefix+timestamp)
-      → dùng nhất quán toàn project
-	Tạo bằng cách prefix + 8 character của uuid tự sinh như sau:
-		U-A3F9B12C      // User
-		EMP-7D2E4F91    // Employer  
-		CAN-B8C3A0E5    // Candidate
-		REC-F1234ABC    // Recruitment
-		APP-9E7D6C2B    // Application
-		CV-4A8F1E3D     // CV
-		NOT-2B5C9F7A    // Notification
-		CAT-E3D8A1F2    // Category
-		EDU-C7B4E9D3    // Education
+- [ ] Thống nhất cách sinh ID (prefix + số thứ tự để đủ 10 ký tự)
+      → dùng nhất quán toàn project:
+		U-00000001      // User
+		EMP-000001      // Employer  
+		CAN-000001      // Candidate
+		REC-000001      // Recruitment
+		APP-000001      // Application
+		CV-0000001      // CV
+		NOT-000001      // Notification
+		CAT-000001      // Category
+		EDU-000001      // Education
+		WE-0000001      // WorkExperience
+		CERT-00001      // Certification
 
 - [ ] Thống nhất cách hash password (SHA-256 đơn giản)
       → phải khớp với dữ liệu mẫu trong DB
