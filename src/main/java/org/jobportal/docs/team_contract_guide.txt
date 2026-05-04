@@ -1,0 +1,846 @@
+# TEAM CONTRACT GUIDE - JOB PORTAL SYSTEM
+
+## 1. Mục đích tài liệu
+
+Tài liệu này định nghĩa contract giữa View, Service và DAO.
+
+Khi chia việc theo folder:
+- Người làm View cần biết gọi Service nào.
+- Người làm Service cần biết trả dữ liệu gì.
+- Người làm DAO cần biết query dữ liệu nào.
+- Cả nhóm cần thống nhất DTO field trước khi code.
+
+Contract giúp tránh:
+- View cần field nhưng DTO không có.
+- Service đổi signature làm View lỗi.
+- DAO query thiếu dữ liệu cho Service.
+- Thành viên sửa chồng chéo nhau.
+
+---
+
+## 2. Contract là gì?
+
+Contract là thỏa thuận cho một chức năng gồm:
+
+- Màn hình sử dụng.
+- Service method được gọi.
+- Input của Service.
+- Output của Service.
+- DTO trả về gồm field nào.
+- DAO method hỗ trợ.
+- Bảng database liên quan.
+- Ghi chú nghiệp vụ.
+
+Mọi thành viên phải bám theo contract khi implement.
+
+---
+
+## 3. Template contract
+
+Module:
+Màn hình:
+Actor/Role:
+Mục đích:
+
+View gọi:
+Service method:
+Input:
+Output:
+DTO sử dụng:
+DTO fields View cần:
+DAO hỗ trợ:
+Database tables:
+Ghi chú nghiệp vụ:
+
+---
+
+## 4. Contract Auth
+
+Module:
+Auth
+
+Màn hình:
+LoginPanel
+
+Actor/Role:
+ADMIN, EMPLOYER, CANDIDATE
+
+Mục đích:
+Đăng nhập và điều hướng theo role.
+
+View gọi:
+AuthService.login(username, password, role)
+
+Input:
+- String username
+- String password
+- Role role
+
+Output:
+- UserDTO nếu đăng nhập thành công
+- null nếu thất bại
+
+DTO sử dụng:
+UserDTO
+
+DTO fields View cần:
+- userId
+- username
+- fullName
+- email
+- role
+- active
+
+DAO hỗ trợ:
+UserDAO.findByUsernameAndPassword(...)
+hoặc UserDAO.findByUsername(...), sau đó Service verify password.
+
+Database tables:
+- users
+
+Ghi chú nghiệp vụ:
+- Password dùng PasswordUtils.verify().
+- Chỉ cho đăng nhập nếu active = true.
+- Role chọn ở UI phải khớp role trong database.
+- Sau khi login thành công, lưu current user vào SessionManager.
+
+---
+
+Module:
+Auth
+
+Màn hình:
+RegisterPanel
+
+Actor/Role:
+Khách chưa đăng nhập
+
+Mục đích:
+Đăng ký tài khoản CANDIDATE hoặc EMPLOYER.
+
+View gọi:
+AuthService.register(...)
+
+Input:
+- username
+- email
+- password
+- confirmPassword
+- role
+- các thông tin cơ bản nếu form có
+
+Output:
+- boolean
+
+DTO sử dụng:
+Có thể dùng UserDTO hoặc truyền tham số trực tiếp.
+
+DAO hỗ trợ:
+- UserDAO.existsByUsername(...)
+- UserDAO.existsByEmail(...)
+- UserDAO.insert(...)
+- CandidateDAO.insert(...)
+- EmployerDAO.insert(...)
+
+Database tables:
+- users
+- candidates
+- employers
+
+Ghi chú nghiệp vụ:
+- Không cho đăng ký ADMIN từ UI.
+- Password phải hash trước khi lưu.
+- Nếu role là CANDIDATE thì tạo thêm candidate.
+- Nếu role là EMPLOYER thì tạo thêm employer.
+
+---
+
+## 5. Contract Category
+
+Module:
+Category
+
+Màn hình:
+JobSearchPanel, RecruitmentFormPanel, CategoryManagementPanel
+
+View gọi:
+CategoryService.getAllCategories()
+
+Input:
+- Không có
+
+Output:
+- List<Category>
+
+DTO sử dụng:
+Có thể dùng trực tiếp Category model.
+
+DAO hỗ trợ:
+CategoryDAO.findAll()
+
+Database tables:
+- categories
+
+Ghi chú:
+- Dùng để đổ dữ liệu vào JComboBox hoặc bảng danh mục.
+
+---
+
+Module:
+Category Management
+
+Màn hình:
+CategoryManagementPanel
+
+View gọi:
+- CategoryService.addCategory(categoryName)
+- CategoryService.updateCategory(categoryId, newName)
+- CategoryService.deleteCategory(categoryId)
+
+Output:
+- boolean
+
+DAO hỗ trợ:
+- CategoryDAO.insert(...)
+- CategoryDAO.update(...)
+- CategoryDAO.delete(...)
+- CategoryDAO.existsByName(...)
+- RecruitmentDAO.countByCategory(...)
+
+Ghi chú nghiệp vụ:
+- Không được xóa category đang có recruitment liên kết.
+
+---
+
+## 6. Contract Recruitment - Candidate Search
+
+Module:
+Recruitment
+
+Màn hình:
+JobSearchPanel
+
+Actor/Role:
+CANDIDATE
+
+Mục đích:
+Tìm kiếm và xem danh sách tin tuyển dụng.
+
+View gọi:
+RecruitmentService.searchRecruitments(keyword, categoryId, page, pageSize)
+
+Input:
+- String keyword
+- String categoryId
+- int page
+- int pageSize
+
+Output:
+- List<RecruitmentDTO>
+
+DTO sử dụng:
+RecruitmentDTO
+
+DTO fields View cần:
+- recruitmentId
+- title
+- companyName
+- categoryName
+- jobType
+- salary
+- location
+- dueDate
+- applicationCount
+- status
+- adminStatus
+
+DAO hỗ trợ:
+RecruitmentDAO.searchByKeywordAndCategory(keyword, categoryId, offset, limit)
+
+Database tables:
+- recruitments
+- employers
+- users
+- categories
+- applications nếu cần applicationCount
+
+Ghi chú nghiệp vụ:
+- Chỉ hiển thị recruitment có status = OPEN.
+- Chỉ hiển thị recruitment có adminStatus = APPROVED.
+- page/pageSize chuyển thành offset/limit ở Service hoặc DAO.
+
+---
+
+## 7. Contract Recruitment Detail
+
+Module:
+Recruitment Detail
+
+Màn hình:
+JobDetailPanel
+
+Actor/Role:
+CANDIDATE
+
+Mục đích:
+Xem chi tiết tin tuyển dụng và ứng tuyển.
+
+View gọi:
+- RecruitmentService.getRecruitmentById(recruitmentId)
+- ApplicationService.hasApplied(candidateId, recruitmentId)
+- ApplicationService.applyRecruitment(candidateId, recruitmentId)
+- ApplicationService.cancelApplication(applicationId)
+
+Output:
+- RecruitmentDTO
+- boolean
+
+DTO sử dụng:
+RecruitmentDTO
+
+DTO fields View cần:
+- recruitmentId
+- title
+- companyName
+- categoryName
+- description
+- jobType
+- status
+- adminStatus
+- salary
+- location
+- experienceRequired
+- createdDate
+- dueDate
+- applicationCount
+
+DAO hỗ trợ:
+- RecruitmentDAO.findById(...)
+- ApplicationDAO.existsByCandidateAndRecruitment(...)
+- ApplicationDAO.insert(...)
+- ApplicationDAO.delete(...) hoặc updateStatus(...)
+
+Database tables:
+- recruitments
+- employers
+- users
+- categories
+- applications
+
+Ghi chú nghiệp vụ:
+- Nếu đã apply thì UI hiện nút Hủy ứng tuyển.
+- Nếu chưa apply thì UI hiện nút Apply.
+- Không cho apply nếu tin đã đóng, hết hạn hoặc chưa được duyệt.
+
+---
+
+## 8. Contract Applied Jobs
+
+Module:
+Application
+
+Màn hình:
+AppliedJobsPanel
+
+Actor/Role:
+CANDIDATE
+
+Mục đích:
+Xem danh sách công việc đã ứng tuyển.
+
+View gọi:
+- ApplicationService.getListOfApplicationByUser(candidateId)
+- ApplicationService.getTotalApplyCountByUser(candidateId)
+- ApplicationService.getApprovedApplicationByUser(candidateId)
+- ApplicationService.cancelApplication(applicationId)
+
+Output:
+- List<ApplicationDTO>
+- int
+- boolean
+
+DTO sử dụng:
+ApplicationDTO
+
+DTO fields View cần:
+- applicationId
+- candidateId
+- recruitmentId
+- jobTitle
+- companyName
+- jobType
+- status
+- appliedDate
+
+DAO hỗ trợ:
+- ApplicationDAO.findByCandidateId(...)
+- ApplicationDAO.countByCandidateId(...)
+- ApplicationDAO.countByCandidateIdAndStatus(...)
+- ApplicationDAO.delete(...) hoặc updateStatus(...)
+
+Database tables:
+- applications
+- recruitments
+- employers
+- users
+
+Ghi chú nghiệp vụ:
+- Chỉ cho hủy nếu status = PENDING.
+- Tỷ lệ thành công = số APPROVED / tổng đơn.
+
+---
+
+## 9. Contract CV
+
+Module:
+CV
+
+Màn hình:
+CVEditorPanel
+
+Actor/Role:
+CANDIDATE
+
+Mục đích:
+Xem, tạo và cập nhật CV.
+
+View gọi:
+- CVService.getCV(candidateId)
+- CVService.saveCV(cvDTO)
+
+Output:
+- CVDTO
+- boolean
+
+DTO sử dụng:
+CVDTO
+
+DTO fields View cần:
+- cvId
+- candidateId
+- objective
+- skills
+- desiredPosition
+- desiredSalary
+- lastUpdated
+- educations
+
+DAO hỗ trợ:
+- CVDAO.findByCandidateId(...)
+- CVDAO.insert(...)
+- CVDAO.update(...)
+
+Database tables:
+- cvs
+- educations
+- work_experiences nếu dùng sau
+- certifications nếu dùng sau
+
+Ghi chú nghiệp vụ:
+- Add/remove skill trên UI có thể chỉ cập nhật state tạm.
+- Chỉ khi bấm Save mới gọi CVService.saveCV().
+- WorkExperience và Certification có thể để sau nếu không nằm trong UI chính.
+
+---
+
+## 10. Contract Employer Dashboard
+
+Module:
+Employer Dashboard
+
+Màn hình:
+EmployerDashboardPanel
+
+Actor/Role:
+EMPLOYER
+
+View gọi:
+- RecruitmentService.getActiveRecruitmentCount(employerId) nếu có
+- ApplicationService.getTotalApplicationCount(employerId)
+- ApplicationService.getNewApplicantsToday(employerId)
+
+Output:
+- int
+- dữ liệu thống kê cơ bản
+
+DTO sử dụng:
+Có thể dùng int, Map hoặc DTO thống kê nếu đã chốt.
+
+DAO hỗ trợ:
+- RecruitmentDAO.countOpenByEmployerId(...)
+- ApplicationDAO.countByEmployerId(...)
+- ApplicationDAO.countNewApplicantsToday(...)
+
+Database tables:
+- recruitments
+- applications
+
+Ghi chú:
+- Không cần realtime.
+- Feed hoạt động có thể làm sau.
+
+---
+
+## 11. Contract Recruitment Form
+
+Module:
+Recruitment Management
+
+Màn hình:
+RecruitmentFormPanel
+
+Actor/Role:
+EMPLOYER
+
+View gọi:
+- RecruitmentService.postRecruitment(...)
+- RecruitmentService.updateRecruitment(...)
+
+Output:
+- boolean
+
+DTO sử dụng:
+Có thể dùng RecruitmentDTO hoặc truyền tham số trực tiếp.
+
+Fields cần nhập:
+- title
+- categoryId
+- jobType
+- salary
+- dueDate
+- description
+- location
+- experienceRequired nếu UI có
+
+DAO hỗ trợ:
+- RecruitmentDAO.insert(...)
+- RecruitmentDAO.update(...)
+
+Database tables:
+- recruitments
+
+Ghi chú nghiệp vụ:
+- Tạo mới: status = OPEN, adminStatus = PENDING.
+- Cập nhật tin: có thể reset adminStatus = PENDING nếu cần kiểm duyệt lại.
+- employerId lấy từ SessionManager/current user.
+
+---
+
+## 12. Contract Recruitment List
+
+Module:
+Recruitment Management
+
+Màn hình:
+RecruitmentListPanel
+
+Actor/Role:
+EMPLOYER
+
+View gọi:
+- RecruitmentService.getRecruitmentsByEmployer(employerId)
+- RecruitmentService.deleteRecruitment(recruitmentId)
+- RecruitmentService.closeRecruitment(recruitmentId)
+
+Output:
+- List<RecruitmentDTO>
+- boolean
+
+DAO hỗ trợ:
+- RecruitmentDAO.findByEmployerId(...)
+- RecruitmentDAO.delete(...)
+- RecruitmentDAO.updateStatus(...)
+
+Database tables:
+- recruitments
+- applications nếu cần applicationCount
+
+Ghi chú nghiệp vụ:
+- Chỉ employer sở hữu tin mới được sửa/xóa/đóng tin.
+- Có thể không xóa cứng nếu đã có application.
+
+---
+
+## 13. Contract Application Review
+
+Module:
+Application Review
+
+Màn hình:
+ApplicationReviewPanel
+
+Actor/Role:
+EMPLOYER
+
+View gọi:
+- ApplicationService.getApplicationsByRecruitmentId(recruitmentId)
+- ApplicationService.approveApplication(employerId, applicationId)
+- ApplicationService.rejectApplication(employerId, applicationId)
+- ApplicationService.getCandidateInfo(candidateId)
+- ApplicationService.filterApplicationByStatus(recruitmentId, status)
+
+Output:
+- List<ApplicationDTO>
+- UserDTO hoặc CVDTO
+- boolean
+
+DTO sử dụng:
+- ApplicationDTO
+- UserDTO
+- CVDTO nếu cần xem hồ sơ
+
+ApplicationDTO fields View cần:
+- applicationId
+- candidateId
+- candidateName
+- email
+- recruitmentId
+- jobTitle
+- companyName
+- jobType
+- status
+- appliedDate
+
+DAO hỗ trợ:
+- ApplicationDAO.findByRecruitmentId(...)
+- ApplicationDAO.findByRecruitmentIdAndStatus(...)
+- ApplicationDAO.updateStatus(...)
+- CandidateDAO
+- UserDAO
+- CVDAO
+
+Database tables:
+- applications
+- candidates
+- users
+- cvs
+- recruitments
+
+Ghi chú nghiệp vụ:
+- Chỉ employer sở hữu recruitment mới được duyệt/từ chối.
+- Notification có thể để TODO nếu chưa implement.
+
+---
+
+## 14. Contract Company Info
+
+Module:
+Employer Profile
+
+Màn hình:
+CompanyInfoPanel
+
+Actor/Role:
+EMPLOYER
+
+View gọi:
+- UserService.getEmployerInfo(userId)
+- UserService.updateCompanyInfo(companyName, address, description)
+
+Output:
+- UserDTO
+- boolean
+
+DTO fields View cần:
+- userId
+- fullName
+- email
+- companyName
+- companyAddress nếu DTO có
+- companyDescription nếu DTO có
+
+DAO hỗ trợ:
+- UserDAO.findById(...)
+- EmployerDAO.findByUserId(...)
+- EmployerDAO.update(...)
+
+Database tables:
+- users
+- employers
+
+Ghi chú:
+- Nếu UserDTO hiện chưa có companyAddress/companyDescription thì cần bổ sung hoặc dùng DTO riêng.
+
+---
+
+## 15. Contract Admin Job Moderation
+
+Module:
+Admin Moderation
+
+Màn hình:
+JobModerationPanel
+
+Actor/Role:
+ADMIN
+
+View gọi:
+- RecruitmentService.getPendingRecruitments()
+- RecruitmentService.adminModerate(recruitmentId, decision)
+
+Output:
+- List<RecruitmentDTO>
+- boolean
+
+DTO fields View cần:
+- recruitmentId
+- title
+- companyName
+- description
+- createdDate
+- adminStatus
+
+DAO hỗ trợ:
+- RecruitmentDAO.findByAdminStatus(...)
+- RecruitmentDAO.updateAdminStatus(...)
+
+Database tables:
+- recruitments
+- employers
+- users
+
+Ghi chú:
+- decision dùng AdminStatus.APPROVED hoặc AdminStatus.REJECTED.
+- Notification có thể để TODO nếu chưa implement.
+
+---
+
+## 16. Contract Admin User Management
+
+Module:
+User Management
+
+Màn hình:
+UserManagementPanel
+
+Actor/Role:
+ADMIN
+
+View gọi:
+- UserService.getAllUsers(roleFilter, statusFilter)
+- UserService.updateUserStatus(userId, active)
+- UserService.deleteUser(userId)
+
+Output:
+- List<UserDTO>
+- boolean
+
+DTO fields View cần:
+- userId
+- username
+- fullName
+- email
+- role
+- active
+
+DAO hỗ trợ:
+- UserDAO.findAll(...)
+- UserDAO.updateStatus(...)
+- UserDAO.delete(...)
+
+Database tables:
+- users
+
+Ghi chú:
+- Không cho admin tự xóa chính mình.
+- Xóa user cần cân nhắc FK/cascade.
+
+---
+
+## 17. Contract Admin Category Management
+
+Module:
+Category Management
+
+Màn hình:
+CategoryManagementPanel
+
+Actor/Role:
+ADMIN
+
+View gọi:
+- CategoryService.getAllCategories()
+- CategoryService.addCategory(categoryName)
+- CategoryService.updateCategory(categoryId, newName)
+- CategoryService.deleteCategory(categoryId)
+
+Output:
+- List<Category>
+- boolean
+
+DAO hỗ trợ:
+- CategoryDAO.findAll(...)
+- CategoryDAO.insert(...)
+- CategoryDAO.update(...)
+- CategoryDAO.delete(...)
+- RecruitmentDAO.countByCategory(...)
+
+Database tables:
+- categories
+- recruitments
+
+Ghi chú:
+- Không xóa danh mục đang có tin tuyển dụng.
+
+---
+
+## 18. Contract Admin Dashboard
+
+Module:
+Admin Dashboard
+
+Màn hình:
+AdminDashboardPanel
+
+Actor/Role:
+ADMIN
+
+View gọi:
+- UserService.countByRole(role)
+- RecruitmentService.countOpenRecruitments()
+- RecruitmentService.getTopEmployers()
+
+Output:
+- int
+- List hoặc Map tùy service contract
+
+DAO hỗ trợ:
+- UserDAO.countByRole(...)
+- RecruitmentDAO.countOpenRecruitments(...)
+- RecruitmentDAO.getTopEmployers(...)
+
+Database tables:
+- users
+- employers
+- recruitments
+- applications
+
+Ghi chú:
+- Dashboard chỉ đọc dữ liệu.
+- Không xử lý thay đổi dữ liệu tại màn hình này.
+
+---
+
+## 19. Quy tắc thay đổi contract
+
+1. Không đổi tên Service method nếu View đang dùng.
+2. Không đổi kiểu trả về nếu chưa báo nhóm.
+3. Không xóa field DTO nếu View đang hiển thị.
+4. Nếu cần thêm field DTO, báo người làm DAL và BLL.
+5. Nếu cần thêm DAO query, ghi rõ Service nào dùng.
+6. Nếu thay đổi schema.sql, phải báo cả nhóm.
+7. Sau mỗi thay đổi contract, compile lại.
+
+---
+
+## 20. Kết luận
+
+View, BLL và DAL có thể làm song song nếu contract rõ.
+
+View chỉ cần biết Service method và DTO.
+
+BLL chỉ cần biết DAO method và nghiệp vụ.
+
+DAL chỉ cần biết schema và dữ liệu cần trả.
+
+Contract là tài liệu trung gian để nhóm không đạp code nhau.

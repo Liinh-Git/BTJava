@@ -1,6 +1,6 @@
 package org.jobportal.enums;
 
-public enum ApplicationStatus {
+public enum AdminStatus {
     PENDING,
     APPROVED,
     REJECTED

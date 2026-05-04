@@ -1,0 +1,13 @@
+DỮ LIỆU HỆ THỐNG TUYỂN DỤNG
+
+- users: 9 bản ghi (1 admin, 3 nhà tuyển dụng, 5 ứng viên)
+- employers: 3 bản ghi (FPT Software, VNG, Viettel)
+- candidates: 5 bản ghi (Thông tin kế thừa từ bảng users)
+- categories: 8 bản ghi (CNTT, Marketing, Kế toán...)
+- recruitments: 15 bản ghi (Hỗn hợp FULLTIME/INTERNSHIP, trạng thái OPEN/CLOSED)
+- cvs: 5 bản ghi (Mỗi ứng viên có 1 CV)
+- educations: 8 bản ghi (Thông tin học vấn)
+- work_experiences: 6 bản ghi (Kinh nghiệm làm việc)
+- certifications: 8 bản ghi (CCNA, AWS, Oracle...)
+- applications: 18 bản ghi (Trạng thái PENDING/APPROVED/REJECTED)
+- notifications: 15 bản ghi (Đầy đủ các loại thông báo hệ thống)

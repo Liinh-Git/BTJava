@@ -1,0 +1,12 @@
+# PROCESS INDEX
+
+Đọc theo thứ tự:
+
+1. architecture_guide.txt
+   - Hiểu kiến trúc View → Service → DAO → Database.
+
+2. team_contract_guide.txt
+   - Tra contract giữa View, Service và DAO.
+
+3. implementation_plan.txt
+   - Theo dõi chia việc, thứ tự làm và checklist bàn giao.
