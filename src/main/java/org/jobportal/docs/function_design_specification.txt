@@ -1,0 +1,1290 @@
+================================================================
+   ĐẶC TẢ THIẾT KẾ CHỨC NĂNG - HỆ THỐNG JOB PORTAL
+   Java Desktop App (Swing) | Phiên bản 1.0
+   Ngôn ngữ: Tiếng Việt
+================================================================
+
+================================================================
+PHẦN 1: TỔNG QUAN HỆ THỐNG
+================================================================
+
+1.1. HỆ THỐNG LÀM GÌ
+--------------------------------
+JobPortalSystem là ứng dụng desktop Java (Swing) hỗ trợ kết nối
+nhà tuyển dụng và ứng viên. Hệ thống cho phép:
+- Ứng viên tìm kiếm, xem chi tiết và ứng tuyển vào các vị trí
+  tuyển dụng, đồng thời quản lý CV cá nhân.
+- Nhà tuyển dụng đăng tin, quản lý tin đăng và xét duyệt hồ sơ
+  ứng viên.
+- Admin kiểm duyệt tin đăng, quản lý người dùng, danh mục và
+  xem thống kê hệ thống.
+
+1.2. CÁC ACTOR/ROLE
+--------------------------------
+- CANDIDATE  (Ứng viên)       : Tìm việc, ứng tuyển, quản lý CV
+- EMPLOYER   (Nhà tuyển dụng) : Đăng tin, duyệt hồ sơ, quản lý
+                                  thông tin công ty
+- ADMIN      (Quản trị)       : Kiểm duyệt tin, quản lý người
+                                  dùng, danh mục, xem thống kê
+
+1.3. CÁC MODULE CHÍNH
+--------------------------------
+M1. Auth         : Đăng ký, đăng nhập, đổi mật khẩu
+M2. Recruitment  : Đăng/sửa/xóa/duyệt tin tuyển dụng
+M3. Application  : Ứng tuyển, hủy, duyệt/từ chối hồ sơ
+M4. CV           : Quản lý CV (objective, skills, education)
+M5. Category     : Quản lý danh mục ngành nghề
+M6. User         : Cập nhật thông tin cá nhân / công ty
+M7. Notification : Xem thông báo, đánh dấu đã đọc
+M8. Admin Stats  : Thống kê hệ thống (chỉ đọc)
+
+
+================================================================
+PHẦN 2: PHÂN TÍCH TỪNG MÀN HÌNH UI
+================================================================
+
+------------------------------------------------------------
+MH-01: Đăng nhập (LoginPanel)
+------------------------------------------------------------
+Role sử dụng  : Tất cả (CANDIDATE, EMPLOYER, ADMIN)
+Mục đích      : Xác thực người dùng, điều hướng đến dashboard
+                tương ứng với role.
+Dữ liệu hiện thị:
+  - Logo JobPortal
+  - Tab chọn role: Candidate / Employer / Admin
+Dữ liệu nhập :
+  - username (JTextField)
+  - password (JPasswordField)
+  - role     (tab selection → ánh xạ sang enum Role)
+Hành động/Nút bấm:
+  - [Login]            → gọi AuthService.login()
+  - [Forgot password?] → ĐỀ XUẤT BỎ QUA (không có trong Use Case,
+                         không có restorePsw trong DB hiện tại)
+  - [Create an account]→ chuyển sang RegisterPanel
+Ghi chú:
+  - UI có nút "Sign up with Google" → LOẠI BỎ, không có trong
+    Use Case và không khả thi trong desktop app.
+  - Role được chọn từ tab, truyền vào login() để verify khớp
+    với role thực trong DB.
+
+File view   : view/common/LoginPanel.java
+Service     : AuthService.login()
+DAO         : UserDAO.findByUsernameAndPassword()
+DTO         : UserDTO
+Model       : User
+
+------------------------------------------------------------
+MH-02: Đăng ký (RegisterPanel)
+------------------------------------------------------------
+Role sử dụng  : Khách (chưa đăng nhập)
+Mục đích      : Tạo tài khoản mới (CANDIDATE hoặc EMPLOYER).
+Dữ liệu nhập :
+  - fullName    (JTextField)
+  - email       (JTextField)
+  - password    (JPasswordField)
+  - confirm     (JPasswordField) → validate khớp password
+  - role        (JComboBox: Ứng viên / Nhà tuyển dụng)
+                 → KHÔNG cho đăng ký role ADMIN qua UI
+Hành động/Nút bấm:
+  - [Sign Up]     → gọi AuthService.register()
+  - [Log in]      → quay về LoginPanel
+Ghi chú:
+  - UI hiện tại không có trường chọn role → CẦN THÊM JComboBox
+    chọn Ứng viên / Nhà tuyển dụng.
+  - Sau đăng ký thành công, tự động chuyển về LoginPanel.
+
+File view   : view/common/RegisterPanel.java
+Service     : AuthService.register()
+DAO         : UserDAO.insert(), CandidateDAO.insert()
+              hoặc EmployerDAO.insert()
+DTO         : UserDTO
+Model       : User, Candidate, Employer
+
+------------------------------------------------------------
+MH-03: Tìm kiếm việc làm (JobSearchPanel)
+------------------------------------------------------------
+Role sử dụng  : CANDIDATE
+Mục đích      : Tìm kiếm và duyệt danh sách tin tuyển dụng.
+Dữ liệu hiển thị:
+  - Danh sách JobCardPanel: title, company, salary, location,
+    jobType, mô tả ngắn
+  - Tổng số kết quả, phân trang
+Dữ liệu nhập :
+  - keyword    (JTextField: tên vị trí, công ty)
+  - categoryId (JComboBox: danh mục)
+Hành động/Nút bấm:
+  - [Search]         → gọi RecruitmentService.searchRecruitments()
+  - [Details & Apply]→ mở JobDetailPanel với recruitmentId
+  - [Logout]         → gọi AuthService.logout()
+Ghi chú:
+  - Chỉ hiển thị tin có status=OPEN và admin_status=APPROVED.
+  - Phân trang xử lý ở tầng Service hoặc DAO (offset/limit).
+
+File view   : view/candidate/JobSearchPanel.java
+Service     : RecruitmentService.searchRecruitments()
+              CategoryService.getAllCategories()
+DAO         : RecruitmentDAO.searchByKeywordAndCategory()
+DTO         : RecruitmentDTO
+Model       : Recruitment, Category
+
+------------------------------------------------------------
+MH-04: Chi tiết tin tuyển dụng (JobDetailPanel)
+------------------------------------------------------------
+Role sử dụng  : CANDIDATE
+Mục đích      : Xem toàn bộ thông tin tin tuyển dụng và ứng tuyển.
+Dữ liệu hiển thị:
+  - title, company, location, salary, jobType, status
+  - createdDate, dueDate, số applicants
+  - description (mô tả đầy đủ)
+Hành động/Nút bấm:
+  - [Apply / Send CV]  → gọi ApplicationService.applyRecruitment()
+                         Nếu đã apply → hiện nút [Hủy ứng tuyển]
+  - [Back]             → quay lại JobSearchPanel
+Ghi chú:
+  - Cần kiểm tra trước khi hiện nút Apply: ứng viên đã apply
+    chưa? Nếu rồi thì chuyển sang nút Cancel.
+  - "Add to Bookmarks" trong UI → LOẠI BỎ (không có trong
+    Use Case và Model không có trường này).
+
+File view   : view/candidate/JobDetailPanel.java
+Service     : RecruitmentService.getRecruitmentById()
+              ApplicationService.applyRecruitment()
+              ApplicationService.cancelApplication()
+              ApplicationService.hasApplied()  ← cần thêm
+DAO         : RecruitmentDAO.findById()
+              ApplicationDAO.findByCandidateAndRecruitment()
+DTO         : RecruitmentDTO
+Model       : Recruitment, Application
+
+------------------------------------------------------------
+MH-05: Việc đã ứng tuyển (AppliedJobsPanel)
+------------------------------------------------------------
+Role sử dụng  : CANDIDATE
+Mục đích      : Theo dõi trạng thái các đơn ứng tuyển đã nộp.
+Dữ liệu hiển thị:
+  - Thẻ tổng quan: Tổng đơn, đơn được duyệt, tỷ lệ thành công
+  - Danh sách: jobTitle, company, jobType, appliedDate, status
+  - Phân trang
+Hành động/Nút bấm:
+  - [Filter]   → lọc theo status (PENDING/APPROVED/REJECTED)
+  - [...]      → menu: Xem chi tiết / Hủy đơn (nếu PENDING)
+  - [Logout]   → AuthService.logout()
+Ghi chú:
+  - "Active Interviews" và "Export" trong UI → LOẠI BỎ (ngoài
+    phạm vi Use Case và không có dữ liệu hỗ trợ).
+  - Tỷ lệ thành công = APPROVED / tổng đơn × 100.
+
+File view   : view/candidate/AppliedJobsPanel.java
+Service     : ApplicationService.getListOfApplicationByUser()
+              ApplicationService.getTotalApplyCountByUser()
+              ApplicationService.getApprovedApplicationByUser()
+              ApplicationService.cancelApplication()
+DAO         : ApplicationDAO.findByCandidateId()
+DTO         : ApplicationDTO
+Model       : Application, Recruitment
+
+------------------------------------------------------------
+MH-06: Quản lý CV (CVEditorPanel)
+------------------------------------------------------------
+Role sử dụng  : CANDIDATE
+Mục đích      : Tạo và chỉnh sửa CV cá nhân.
+Dữ liệu hiển thị:
+  - Thông tin cá nhân: fullName, email, phoneNumber
+    (lấy từ User, chỉ đọc tại đây)
+  - Objective (JTextArea)
+  - Skills: danh sách tag, ô nhập thêm
+  - Education History: bảng school, major, year, actions
+Dữ liệu nhập :
+  - objective   (JTextArea)
+  - skill       (JTextField + nút ADD)
+  - education   (dialog: school, degree, major, startYear, endYear)
+                 → BỎ trường description theo ghi chú nhóm
+Hành động/Nút bấm:
+  - [Add Skill]       → CVService.addSkill()
+  - [x] trên tag      → CVService.removeSkill()
+  - [Add Education]   → mở dialog → CVService.addEducation()
+  - [✏️] Education    → mở dialog điền sẵn → CVService.updateEducation()
+  - [🗑️] Education    → CVService.removeEducation()
+  - [Save Profile]    → CVService.saveCV() ← lưu TOÀN BỘ một lần
+  - [Discard Changes] → LOẠI BỎ theo ghi chú nhóm
+Ghi chú:
+  - Thao tác add/remove skill/edu chỉ thay đổi state trong memory,
+    CHƯA lưu DB. Chỉ khi bấm [Save Profile] mới gọi saveCV().
+  - Không có WorkExperience và Certification trong UI hiện tại
+    → ĐỀ XUẤT BỔ SUNG sau nếu còn thời gian.
+
+File view   : view/candidate/CVEditorPanel.java
+Service     : CVService.getCV(), CVService.saveCV()
+              CVService.addSkill(), CVService.removeSkill()
+              CVService.addEducation(), CVService.updateEducation()
+              CVService.removeEducation()
+DAO         : CVDAO.findByCandidateId(), CVDAO.update()
+              EducationDAO (nằm trong CVDAO hoặc tách riêng)
+DTO         : CVDTO
+Model       : CV, Education
+
+------------------------------------------------------------
+MH-07: Dashboard Nhà tuyển dụng (EmployerDashboardPanel)
+------------------------------------------------------------
+Role sử dụng  : EMPLOYER
+Mục đích      : Tổng quan nhanh hoạt động tuyển dụng.
+Dữ liệu hiển thị:
+  - Số tin đang mở, tổng đơn ứng tuyển, ứng viên mới (24h)
+  - Feed hoạt động gần đây (mô tả text, không cần real-time)
+  - Thao tác nhanh: Đăng tin mới, Tìm lượng viên, Cài đặt công ty
+Hành động/Nút bấm:
+  - [Đăng tin mới]     → chuyển sang RecruitmentFormPanel (tạo mới)
+  - [Tìm lượng viên]   → chuyển sang ApplicationReviewPanel
+  - [Cài đặt công ty]  → chuyển sang CompanyInfoPanel
+  - Notification bell  → load NotificationService.getNotifications()
+Ghi chú:
+  - "Gói dịch vụ / Gia hạn ngay" trong UI → LOẠI BỎ.
+  - Feed hoạt động: lấy từ ApplicationService (ứng viên mới)
+    và RecruitmentService (tin vừa cập nhật), ghép lại sort theo
+    thời gian, hiển thị tối đa 5 dòng.
+
+File view   : view/employer/EmployerDashboardPanel.java
+Service     : RecruitmentService.getActiveRecruitmentCount()
+              ApplicationService.getTotalApplicationCount()
+              ApplicationService.getNewApplicantsToday()
+DAO         : RecruitmentDAO, ApplicationDAO
+DTO         : RecruitmentDTO, ApplicationDTO
+Model       : Recruitment, Application
+
+------------------------------------------------------------
+MH-08: Đăng tin tuyển dụng (RecruitmentFormPanel)
+------------------------------------------------------------
+Role sử dụng  : EMPLOYER
+Mục đích      : Tạo mới hoặc chỉnh sửa tin tuyển dụng.
+Dữ liệu nhập :
+  - title       (JTextField)
+  - categoryId  (JComboBox)
+  - jobType     (JComboBox: FULLTIME/PARTTIME/INTERNSHIP)
+  - salary      (JTextField, định dạng số)
+  - dueDate     (JDateChooser hoặc JTextField định dạng dd/MM/yyyy)
+  - description (JTextArea)
+  - location    (JTextField) ← ĐỀ XUẤT BỔ SUNG (có trong Model)
+  - BỎ: experienceRequired ← theo ghi chú nhóm
+Hành động/Nút bấm:
+  - [Lưu & Đăng tin] → validate → RecruitmentService.postRecruitment()
+  - [Lưu nháp]       → ĐỀ XUẤT BỔ SUNG hoặc bỏ qua tùy nhóm
+                        (không có trong Use Case)
+Ghi chú:
+  - Khi tạo mới: admin_status mặc định = PENDING, status = OPEN.
+  - Khi sửa: gọi RecruitmentService.updateRecruitment(), form
+    load sẵn dữ liệu hiện có (RecruitmentFormPanel dùng chung
+    cho cả tạo mới và chỉnh sửa, phân biệt qua recruitmentId null).
+
+File view   : view/employer/RecruitmentFormPanel.java
+Service     : RecruitmentService.postRecruitment()
+              RecruitmentService.updateRecruitment()
+              CategoryService.getAllCategories()
+DAO         : RecruitmentDAO.insert(), RecruitmentDAO.update()
+DTO         : RecruitmentDTO
+Model       : Recruitment, Category
+
+------------------------------------------------------------
+MH-09: Quản lý tin đăng (RecruitmentListPanel)
+------------------------------------------------------------
+Role sử dụng  : EMPLOYER
+Mục đích      : Xem, tìm kiếm và quản lý các tin đã đăng.
+Dữ liệu hiển thị:
+  - Thẻ tổng quan: Đang hiển thị, tổng lượt xem*, ứng viên mới,
+    hết hạn
+  - Bảng: title, status, createdDate, applicationCount, actions
+  - Lọc theo trạng thái, tìm kiếm theo tên tin
+Hành động/Nút bấm:
+  - [+ Tạo tin mới]  → chuyển sang RecruitmentFormPanel (tạo mới)
+  - [✏️] mỗi dòng    → chuyển sang RecruitmentFormPanel (sửa)
+  - [🗑️] mỗi dòng    → confirm → RecruitmentService.deleteRecruitment()
+  - Click tên tin    → chuyển sang ApplicationReviewPanel
+                       với recruitmentId tương ứng
+Ghi chú:
+  - "Tổng lượt xem" không có trong Model → LOẠI BỎ hoặc
+    hiển thị N/A.
+  - "Bản nháp" trên UI → LOẠI BỎ (không có trong Use Case).
+  - Nút đóng tin: RecruitmentService.closeRecruitment() cập nhật
+    status = CLOSED.
+
+File view   : view/employer/RecruitmentListPanel.java
+Service     : RecruitmentService.getRecruitmentsByEmployer()
+              RecruitmentService.deleteRecruitment()
+              RecruitmentService.closeRecruitment()
+              ApplicationService.getTotalApplicationCount()
+DAO         : RecruitmentDAO.findByEmployerId()
+DTO         : RecruitmentDTO
+Model       : Recruitment
+
+------------------------------------------------------------
+MH-10: Duyệt hồ sơ ứng viên (ApplicationReviewPanel)
+------------------------------------------------------------
+Role sử dụng  : EMPLOYER
+Mục đích      : Xem và xử lý đơn ứng tuyển cho một tin cụ thể.
+Dữ liệu hiển thị:
+  - Tên vị trí (breadcrumb)
+  - Thẻ: tổng ứng viên, đang chờ duyệt, đã phỏng vấn*, tỷ lệ
+    chấp thuận
+  - Bảng: avatar, tên, email, ngày nộp, vị trí hiện tại*, status,
+    actions (👁 xem, ✅ duyệt, ❌ từ chối)
+  - Phân trang
+Hành động/Nút bấm:
+  - [👁 Xem]   → ApplicationService.getCandidateInfo() → hiện dialog
+  - [✅ Duyệt]  → ApplicationService.approveApplication()
+  - [❌ Từ chối]→ ApplicationService.rejectApplication()
+  - [Bộ lọc]   → ApplicationService.filterApplicationByStatus()
+Ghi chú:
+  - "Đã phỏng vấn" và "vị trí hiện tại của ứng viên" không có
+    trong Model → LOẠI BỎ hoặc hiển thị dữ liệu CV.
+  - "Gợi ý AI" và "Nâng cấp tin đăng" → LOẠI BỎ hoàn toàn.
+  - Khi approve/reject: cập nhật Application.status và gửi
+    Notification tới ứng viên qua NotificationService.
+
+File view   : view/employer/ApplicationReviewPanel.java
+Service     : ApplicationService.getApplicationsByRecruitmentId()
+              ApplicationService.approveApplication()
+              ApplicationService.rejectApplication()
+              ApplicationService.getCandidateInfo()
+              ApplicationService.filterApplicationByStatus()
+DAO         : ApplicationDAO, CandidateDAO, UserDAO
+DTO         : ApplicationDTO, UserDTO, CVDTO
+Model       : Application, Candidate, User, CV
+
+------------------------------------------------------------
+MH-11: Thông tin công ty (CompanyInfoPanel)
+------------------------------------------------------------
+Role sử dụng  : EMPLOYER
+Mục đích      : Xem và cập nhật thông tin công ty.
+Dữ liệu hiển thị / nhập:
+  - companyName    (JTextField)
+  - companyAddress (JTextField)
+  - companyDescription (JTextArea)
+Hành động/Nút bấm:
+  - [Lưu thay đổi] → UserService.updateCompanyInfo()
+  - [Hủy]          → reset form về giá trị cũ
+Ghi chú:
+  - Thẻ "Trạng thái hồ sơ", "Lượt xem" → LOẠI BỎ (không có
+    trong Model).
+
+File view   : view/employer/CompanyInfoPanel.java
+Service     : UserService.getEmployerInfo()
+              UserService.updateCompanyInfo()
+DAO         : EmployerDAO.findByUserId(), EmployerDAO.update()
+DTO         : UserDTO
+Model       : Employer
+
+------------------------------------------------------------
+MH-12: Kiểm duyệt tin đăng - Admin (JobModerationPanel)
+------------------------------------------------------------
+Role sử dụng  : ADMIN
+Mục đích      : Duyệt hoặc từ chối các tin tuyển dụng mới đăng.
+Dữ liệu hiển thị:
+  - Badge tổng số tin đang chờ duyệt
+  - Grid card: title, company, createdDate, description (tóm tắt)
+  - Phân trang
+Hành động/Nút bấm:
+  - [Approve] → RecruitmentService.adminModerate(id, APPROVED)
+  - [Reject]  → RecruitmentService.adminModerate(id, REJECTED)
+  - [Search]  → tìm trong hàng chờ theo tên tin/công ty
+Ghi chú:
+  - Sau khi duyệt/từ chối, tin biến mất khỏi danh sách và gửi
+    thông báo cho nhà tuyển dụng qua NotificationService.
+
+File view   : view/admin/JobModerationPanel.java
+Service     : RecruitmentService.getPendingRecruitments()
+              RecruitmentService.adminModerate()
+              NotificationService.sendNotification()
+DAO         : RecruitmentDAO.findByAdminStatus()
+              RecruitmentDAO.updateAdminStatus()
+DTO         : RecruitmentDTO
+Model       : Recruitment
+
+------------------------------------------------------------
+MH-13: Quản lý người dùng - Admin (UserManagementPanel)
+------------------------------------------------------------
+Role sử dụng  : ADMIN
+Mục đích      : Xem, tìm kiếm, lọc và quản lý tài khoản.
+Dữ liệu hiển thị:
+  - Bảng: name, email, role, status (Active/Inactive), actions
+  - Lọc theo role và status
+  - Tìm kiếm theo tên/email
+  - Phân trang
+Hành động/Nút bấm:
+  - [✏️] → dialog sửa thông tin cơ bản (fullName, email, role)
+  - [🗑️] → xác nhận → UserService.deleteUser()
+  - [+ Add User] → ĐỀ XUẤT BỎ QUA hoặc dùng lại RegisterPanel
+Ghi chú:
+  - Chức năng "activate/deactivate" ánh xạ vào cột is_active
+    của bảng users trong DB.
+  - Admin không tự tạo user qua UI này (Use Case không có).
+
+File view   : view/admin/UserManagementPanel.java
+Service     : UserService.getAllUsers()
+              UserService.updateUserStatus()
+              UserService.deleteUser()
+DAO         : UserDAO.findAll(), UserDAO.updateStatus()
+              UserDAO.delete()
+DTO         : UserDTO
+Model       : User
+
+------------------------------------------------------------
+MH-14: Quản lý danh mục - Admin (CategoryManagementPanel)
+------------------------------------------------------------
+Role sử dụng  : ADMIN
+Mục đích      : Thêm, sửa, xóa danh mục ngành nghề.
+Dữ liệu hiển thị:
+  - Bảng: categoryId, categoryName, actions (✏️ 🗑️)
+  - Phân trang
+Dữ liệu nhập :
+  - Tên danh mục mới (JTextField trên đầu)
+Hành động/Nút bấm:
+  - [+ Thêm]  → CategoryService.addCategory()
+  - [✏️]      → inline edit hoặc dialog → CategoryService.updateCategory()
+  - [🗑️]      → confirm → CategoryService.deleteCategory()
+Ghi chú:
+  - Không được xóa danh mục đang có tin tuyển dụng liên kết.
+    Cần validate trong CategoryService trước khi gọi DAO.
+
+File view   : view/admin/CategoryManagementPanel.java
+Service     : CategoryService.getAllCategories()
+              CategoryService.addCategory()
+              CategoryService.updateCategory()
+              CategoryService.deleteCategory()
+DAO         : CategoryDAO (findAll, insert, update, delete)
+DTO         : (dùng thẳng model Category)
+Model       : Category
+
+------------------------------------------------------------
+MH-15: Thống kê hệ thống - Admin (AdminDashboardPanel)
+------------------------------------------------------------
+Role sử dụng  : ADMIN
+Mục đích      : Xem các chỉ số tổng quan của toàn hệ thống.
+Dữ liệu hiển thị:
+  - Tổng ứng viên, tổng nhà tuyển dụng, tổng tin đang mở
+  - Feed hoạt động gần đây (log đơn giản: ai vừa làm gì)
+  - Bảng Top nhà tuyển dụng: công ty, ngành, số tin, tỷ lệ
+Hành động/Nút bấm:
+  - Chỉ xem, không có thao tác thay đổi dữ liệu
+Ghi chú:
+  - Feed hoạt động có thể lấy từ bảng notifications hoặc query
+    trực tiếp từ applications + recruitments sort theo ngày.
+  - "Tỷ lệ phản hồi" không có dữ liệu trực tiếp trong DB
+    → tính gần đúng: APPROVED/(APPROVED+REJECTED) theo employer.
+
+File view   : view/admin/AdminDashboardPanel.java
+Service     : UserService.countByRole()
+              RecruitmentService.countOpenRecruitments()
+              RecruitmentService.getTopEmployers()
+DAO         : UserDAO, RecruitmentDAO, ApplicationDAO
+DTO         : (dùng Map hoặc tạo StatDTO đơn giản)
+Model       : User, Recruitment, Employer
+
+
+================================================================
+PHẦN 3: DANH SÁCH HÀM CẦN CÓ
+================================================================
+
+------------------------------------------------------------
+MODULE: AuthService
+------------------------------------------------------------
+
+Tên hàm       : register
+Thuộc module  : Auth
+Vị trí        :
+  - Package : org.jobportal.bll.impl
+  - File    : AuthService.java
+Loại hàm      : Service
+Mục đích      : Tạo tài khoản người dùng mới
+Role sử dụng  : Khách
+Đầu vào       : String username, String email, String password,
+                String confirmPassword, Role role
+Đầu ra        : boolean (true = thành công)
+Logic xử lý   :
+  1. Validate: username/email không trống, password >= 6 ký tự,
+     password == confirmPassword, email đúng định dạng.
+  2. Kiểm tra username và email chưa tồn tại (UserDAO.existsByUsername,
+     UserDAO.existsByEmail).
+  3. Hash password (PasswordUtils.hash).
+  4. Sinh userId mới (UUID hoặc prefix + sequence).
+  5. Gọi UserDAO.insert() để tạo bản ghi user.
+  6. Nếu role = CANDIDATE: gọi CandidateDAO.insert().
+     Nếu role = EMPLOYER : gọi EmployerDAO.insert() (companyName
+     tạm = username, cập nhật sau qua CompanyInfoPanel).
+  7. Trả về true nếu thành công.
+File gọi hàm  : RegisterPanel.java
+File được hàm gọi: UserDAO, CandidateDAO/EmployerDAO, PasswordUtils,
+                   ValidationUtils
+Model/DTO     : User, Candidate/Employer, UserDTO
+Ghi chú       : Toàn bộ bước 5-6 nên dùng transaction (nếu hỗ trợ).
+
+---
+
+Tên hàm       : login
+Thuộc module  : Auth
+Vị trí        :
+  - Package : org.jobportal.bll.impl
+  - File    : AuthService.java
+Loại hàm      : Service
+Mục đích      : Xác thực đăng nhập và tạo session
+Role sử dụng  : Tất cả
+Đầu vào       : String username, String password, Role role
+Đầu ra        : UserDTO (null nếu thất bại)
+Logic xử lý   :
+  1. Hash password đầu vào.
+  2. Gọi UserDAO.findByUsernameAndPassword(username, hashedPsw).
+  3. Nếu null hoặc is_active = false → return null.
+  4. Kiểm tra role trả về có khớp với role nhập không.
+  5. Nếu khớp: lưu UserDTO vào SessionManager.setCurrentUser().
+  6. Trả về UserDTO.
+File gọi hàm  : LoginPanel.java
+File được hàm gọi: UserDAO, PasswordUtils, SessionManager
+Model/DTO     : User, UserDTO
+Ghi chú       : LoginPanel dùng UserDTO.getRole() để quyết định
+                mở dashboard nào (MainFrame.showPanel()).
+
+---
+
+Tên hàm       : logout
+Thuộc module  : Auth
+Vị trí        :
+  - Package : org.jobportal.bll.impl
+  - File    : AuthService.java
+Loại hàm      : Service
+Mục đích      : Xoá session, quay về LoginPanel
+Role sử dụng  : Tất cả
+Đầu vào       : (void)
+Đầu ra        : void
+Logic xử lý   : SessionManager.clear() → MainFrame.showPanel(LOGIN)
+File gọi hàm  : SidebarPanel.java (nút Logout)
+File được hàm gọi: SessionManager
+Ghi chú       : -
+
+---
+
+Tên hàm       : changePassword
+Thuộc module  : Auth
+Vị trí        :
+  - Package : org.jobportal.bll.impl
+  - File    : AuthService.java
+Loại hàm      : Service
+Mục đích      : Đổi mật khẩu khi đã đăng nhập
+Role sử dụng  : Tất cả
+Đầu vào       : String oldPassword, String newPassword,
+                String confirmNewPassword
+Đầu ra        : boolean
+Logic xử lý   :
+  1. Lấy userId từ SessionManager.
+  2. Hash oldPassword, kiểm tra khớp với DB.
+  3. Validate newPassword != oldPassword, == confirmNewPassword.
+  4. Hash newPassword, gọi UserDAO.updatePassword().
+File gọi hàm  : (màn hình My Account - ĐỀ XUẤT BỔ SUNG nếu cần)
+File được hàm gọi: UserDAO, PasswordUtils, SessionManager
+
+------------------------------------------------------------
+MODULE: CategoryService
+------------------------------------------------------------
+
+Tên hàm       : getAllCategories
+Vị trí        : bll/impl/CategoryService.java
+Loại hàm      : Service
+Mục đích      : Lấy toàn bộ danh mục để hiển thị JComboBox
+Đầu vào       : (void)
+Đầu ra        : List<Category>
+Logic         : CategoryDAO.findAll()
+File gọi      : JobSearchPanel, RecruitmentFormPanel,
+                CategoryManagementPanel
+
+---
+
+Tên hàm       : addCategory
+Vị trí        : bll/impl/CategoryService.java
+Đầu vào       : String categoryName
+Đầu ra        : boolean
+Logic         : Validate không trống, không trùng tên,
+                sinh categoryId, CategoryDAO.insert()
+File gọi      : CategoryManagementPanel
+
+---
+
+Tên hàm       : updateCategory
+Vị trí        : bll/impl/CategoryService.java
+Đầu vào       : String categoryId, String newName
+Đầu ra        : boolean
+Logic         : Validate, CategoryDAO.update()
+File gọi      : CategoryManagementPanel
+
+---
+
+Tên hàm       : deleteCategory
+Vị trí        : bll/impl/CategoryService.java
+Đầu vào       : String categoryId
+Đầu ra        : boolean
+Logic         : Kiểm tra không có recruitment đang dùng
+                categoryId này (RecruitmentDAO.countByCategory).
+                Nếu sạch: CategoryDAO.delete().
+File gọi      : CategoryManagementPanel
+
+------------------------------------------------------------
+MODULE: RecruitmentService
+------------------------------------------------------------
+
+Tên hàm       : postRecruitment
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String title, String categoryId, JobType jobType,
+                double salary, LocalDate dueDate, String description,
+                String location
+Đầu ra        : boolean
+Logic         :
+  1. Lấy employerId từ SessionManager (currentUser → EmployerDAO).
+  2. Validate các trường không trống, dueDate > ngày hiện tại.
+  3. Sinh recruitmentId, set status=OPEN, admin_status=PENDING,
+     createdDate=now.
+  4. RecruitmentDAO.insert().
+File gọi      : RecruitmentFormPanel
+
+---
+
+Tên hàm       : updateRecruitment
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String recruitmentId, String title, String categoryId,
+                JobType jobType, double salary, LocalDate dueDate,
+                String description, String location
+Đầu ra        : boolean
+Logic         : Verify employerId trong session là chủ tin.
+                RecruitmentDAO.update(). Reset admin_status = PENDING.
+File gọi      : RecruitmentFormPanel
+
+---
+
+Tên hàm       : deleteRecruitment
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String recruitmentId
+Đầu ra        : boolean
+Logic         : Verify owner. Kiểm tra không có application APPROVED.
+                RecruitmentDAO.delete() (hoặc đổi status thay vì xóa cứng).
+File gọi      : RecruitmentListPanel
+
+---
+
+Tên hàm       : closeRecruitment
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String recruitmentId
+Đầu ra        : boolean
+Logic         : Verify owner. RecruitmentDAO.updateStatus(CLOSED).
+File gọi      : RecruitmentListPanel
+
+---
+
+Tên hàm       : getRecruitmentById
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String recruitmentId
+Đầu ra        : RecruitmentDTO
+Logic         : RecruitmentDAO.findById(). Map sang DTO.
+File gọi      : JobDetailPanel
+
+---
+
+Tên hàm       : searchRecruitments
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String keyword, String categoryId, int page, int pageSize
+Đầu ra        : List<RecruitmentDTO>
+Logic         : Chỉ lấy status=OPEN AND admin_status=APPROVED.
+                RecruitmentDAO.searchByKeywordAndCategory().
+File gọi      : JobSearchPanel
+
+---
+
+Tên hàm       : getRecruitmentsByEmployer
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String employerId
+Đầu ra        : List<RecruitmentDTO>
+Logic         : RecruitmentDAO.findByEmployerId()
+File gọi      : RecruitmentListPanel
+
+---
+
+Tên hàm       : getPendingRecruitments
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : (void)
+Đầu ra        : List<RecruitmentDTO>
+Logic         : RecruitmentDAO.findByAdminStatus(PENDING)
+File gọi      : JobModerationPanel
+
+---
+
+Tên hàm       : adminModerate
+Vị trí        : bll/impl/RecruitmentService.java
+Đầu vào       : String recruitmentId, String decision (APPROVED/REJECTED)
+Đầu ra        : boolean
+Logic         : Verify role = ADMIN từ session.
+                RecruitmentDAO.updateAdminStatus().
+                Gọi NotificationService.sendNotification() cho employer.
+File gọi      : JobModerationPanel
+
+------------------------------------------------------------
+MODULE: ApplicationService
+------------------------------------------------------------
+
+Tên hàm       : applyRecruitment
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String candidateId, String recruitmentId
+Đầu ra        : boolean
+Logic         :
+  1. Kiểm tra recruitment còn OPEN và chưa hết hạn.
+  2. Kiểm tra chưa apply lần nào (ApplicationDAO.existsBy...).
+  3. Sinh applicationId, set status=PENDING, appliedDate=now.
+  4. ApplicationDAO.insert().
+File gọi      : JobDetailPanel
+
+---
+
+Tên hàm       : cancelApplication
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String applicationId
+Đầu ra        : boolean
+Logic         : Lấy application, kiểm tra status=PENDING và
+                candidateId khớp session. ApplicationDAO.delete()
+                hoặc cập nhật status=CANCELLED (nếu muốn giữ log).
+File gọi      : JobDetailPanel, AppliedJobsPanel
+
+---
+
+Tên hàm       : getListOfApplicationByUser
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String candidateId
+Đầu ra        : List<ApplicationDTO>
+Logic         : ApplicationDAO.findByCandidateId(). Join với
+                Recruitment để lấy title, company.
+File gọi      : AppliedJobsPanel
+
+---
+
+Tên hàm       : getTotalApplyCountByUser
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String candidateId
+Đầu ra        : int
+Logic         : ApplicationDAO.countByCandidateId()
+File gọi      : AppliedJobsPanel
+
+---
+
+Tên hàm       : getApprovedApplicationByUser
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String candidateId
+Đầu ra        : int
+Logic         : ApplicationDAO.countByCandidateIdAndStatus(APPROVED)
+File gọi      : AppliedJobsPanel
+
+---
+
+Tên hàm       : hasApplied
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String candidateId, String recruitmentId
+Đầu ra        : boolean
+Logic         : ApplicationDAO.existsByCandidateAndRecruitment()
+File gọi      : JobDetailPanel (quyết định hiện nút Apply hay Cancel)
+
+---
+
+Tên hàm       : getApplicationsByRecruitmentId
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String recruitmentId
+Đầu ra        : List<ApplicationDTO>
+Logic         : Verify employer là chủ tin.
+                ApplicationDAO.findByRecruitmentId(). Join User/Candidate.
+File gọi      : ApplicationReviewPanel
+
+---
+
+Tên hàm       : approveApplication
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String userId (employer), String applicationId
+Đầu ra        : boolean
+Logic         : Verify employer là chủ tin.
+                ApplicationDAO.updateStatus(APPROVED).
+                NotificationService.sendNotification() tới candidate.
+File gọi      : ApplicationReviewPanel
+
+---
+
+Tên hàm       : rejectApplication
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String userId, String applicationId
+Đầu ra        : boolean
+Logic         : Tương tự approveApplication nhưng status=REJECTED.
+File gọi      : ApplicationReviewPanel
+
+---
+
+Tên hàm       : getCandidateInfo
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String candidateId
+Đầu ra        : UserDTO (bao gồm thông tin CV cơ bản)
+Logic         : UserDAO.findById() + CVDAO.findByCandidateId()
+                ghép vào UserDTO.
+File gọi      : ApplicationReviewPanel (nút 👁 xem)
+
+---
+
+Tên hàm       : filterApplicationByStatus
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String recruitmentId, ApplicationStatus status
+Đầu ra        : List<ApplicationDTO>
+Logic         : ApplicationDAO.findByRecruitmentIdAndStatus()
+File gọi      : ApplicationReviewPanel (bộ lọc)
+
+---
+
+Tên hàm       : getTotalApplicationCount
+Vị trí        : bll/impl/ApplicationService.java
+Đầu vào       : String employerId
+Đầu ra        : int
+Logic         : ApplicationDAO.countByEmployerId() (join qua Recruitment)
+File gọi      : EmployerDashboardPanel
+
+------------------------------------------------------------
+MODULE: CVService
+------------------------------------------------------------
+
+Tên hàm       : getCV
+Vị trí        : bll/impl/CVService.java
+Đầu vào       : String candidateId
+Đầu ra        : CVDTO (bao gồm educations list)
+Logic         : CVDAO.findByCandidateId(). Nếu null, trả về
+                CVDTO rỗng (chưa tạo CV).
+File gọi      : CVEditorPanel
+
+---
+
+Tên hàm       : saveCV
+Vị trí        : bll/impl/CVService.java
+Đầu vào       : CVDTO (objective, skills, List<Education>)
+Đầu ra        : boolean
+Logic         :
+  1. Lấy candidateId từ SessionManager.
+  2. Nếu CV chưa tồn tại: CVDAO.insert(), sau đó insert educations.
+  3. Nếu đã tồn tại: CVDAO.update(), xóa toàn bộ education cũ,
+     insert lại danh sách mới (delete-then-insert strategy).
+  4. Cập nhật lastUpdated = now.
+File gọi      : CVEditorPanel (nút Save Profile)
+Ghi chú       : addSkill/removeSkill/addEducation chỉ thay đổi
+                state ở UI, saveCV() mới thực sự ghi xuống DB.
+
+---
+
+Tên hàm       : addSkill (logic tầng View/Service)
+Vị trí        : CVEditorPanel.java hoặc CVService.java
+Đầu vào       : String skill
+Đầu ra        : void (cập nhật state trong memory)
+Logic         : Thêm skill vào danh sách tạm trong Panel, hiển thị tag.
+Ghi chú       : Không gọi DB trực tiếp.
+
+---
+
+Tên hàm       : removeSkill
+Tương tự addSkill nhưng xóa khỏi danh sách tạm.
+
+---
+
+Tên hàm       : addEducation (tầng View)
+Vị trí        : CVEditorPanel.java
+Logic         : Mở dialog nhập school/degree/major/startYear/endYear.
+                Thêm Education object vào List tạm trong Panel.
+
+---
+
+Tên hàm       : updateEducation (tầng View)
+Logic         : Mở dialog với dữ liệu điền sẵn. Cập nhật object
+                trong List tạm.
+
+---
+
+Tên hàm       : removeEducation (tầng View)
+Logic         : Xóa Education khỏi List tạm. Cập nhật JTable.
+
+------------------------------------------------------------
+MODULE: UserService
+------------------------------------------------------------
+
+Tên hàm       : updateCompanyInfo
+Vị trí        : bll/impl/UserService.java
+Đầu vào       : String companyName, String address, String description
+Đầu ra        : boolean
+Logic         : Lấy employerId từ session.
+                Validate không trống. EmployerDAO.update().
+File gọi      : CompanyInfoPanel
+
+---
+
+Tên hàm       : getEmployerInfo
+Vị trí        : bll/impl/UserService.java
+Đầu vào       : String userId
+Đầu ra        : UserDTO (bao gồm companyName, address, description)
+Logic         : UserDAO.findById() + EmployerDAO.findByUserId()
+File gọi      : CompanyInfoPanel
+
+---
+
+Tên hàm       : getAllUsers
+Vị trí        : bll/impl/UserService.java
+Đầu vào       : Role roleFilter (null = all), Boolean statusFilter
+Đầu ra        : List<UserDTO>
+Logic         : UserDAO.findAll(roleFilter, statusFilter)
+File gọi      : UserManagementPanel
+
+---
+
+Tên hàm       : updateUserStatus
+Vị trí        : bll/impl/UserService.java
+Đầu vào       : String userId, boolean isActive
+Đầu ra        : boolean
+Logic         : UserDAO.updateStatus()
+File gọi      : UserManagementPanel
+
+---
+
+Tên hàm       : deleteUser
+Vị trí        : bll/impl/UserService.java
+Đầu vào       : String userId
+Đầu ra        : boolean
+Logic         : Không được xóa chính mình (kiểm tra session).
+                UserDAO.delete() (cascade xóa theo FK).
+File gọi      : UserManagementPanel
+
+---
+
+Tên hàm       : countByRole
+Vị trí        : bll/impl/UserService.java
+Đầu vào       : Role role
+Đầu ra        : int
+Logic         : UserDAO.countByRole()
+File gọi      : AdminDashboardPanel
+
+------------------------------------------------------------
+MODULE: NotificationService
+------------------------------------------------------------
+
+Tên hàm       : getNotifications
+Vị trí        : bll/impl/NotificationService.java
+Đầu vào       : String userId
+Đầu ra        : List<NotificationDTO>
+Logic         : NotificationDAO.findByReceiverId(userId)
+                sort theo dateTime DESC.
+File gọi      : HeaderPanel (icon chuông)
+
+---
+
+Tên hàm       : sendNotification
+Vị trí        : bll/impl/NotificationService.java
+Đầu vào       : String senderId, String receiverId, String content
+Đầu ra        : boolean
+Logic         : Sinh notificationId. NotificationDAO.insert().
+File gọi      : ApplicationService, RecruitmentService
+
+---
+
+Tên hàm       : markAsRead
+Vị trí        : bll/impl/NotificationService.java
+Đầu vào       : String notificationId
+Đầu ra        : boolean
+Logic         : NotificationDAO.updateIsRead(true)
+File gọi      : HeaderPanel hoặc màn hình thông báo
+
+
+================================================================
+PHẦN 4: DANH SÁCH CHỨC NĂNG THEO TẦNG
+================================================================
+
+VIEW (Swing Panels)
+-------------------
+LoginPanel          → Đăng nhập, chọn role
+RegisterPanel       → Tạo tài khoản
+MainFrame           → Container chính, quản lý chuyển panel
+HeaderPanel         → Hiện tên user, icon thông báo, logout
+SidebarPanel        → Menu điều hướng theo role
+
+JobSearchPanel      → Tìm kiếm tin tuyển dụng
+JobDetailPanel      → Xem chi tiết + ứng tuyển/hủy
+AppliedJobsPanel    → Danh sách đơn đã nộp + lọc trạng thái
+CVEditorPanel       → Quản lý CV (objective, skills, education)
+
+EmployerDashboardPanel  → Tổng quan employer
+RecruitmentFormPanel    → Đăng/sửa tin (dùng chung)
+RecruitmentListPanel    → Quản lý tin đăng
+ApplicationReviewPanel  → Duyệt hồ sơ ứng viên
+CompanyInfoPanel        → Cập nhật thông tin công ty
+
+AdminDashboardPanel     → Thống kê hệ thống
+UserManagementPanel     → Quản lý người dùng
+CategoryManagementPanel → Quản lý danh mục
+JobModerationPanel      → Kiểm duyệt tin đăng
+
+BLL/SERVICE
+-----------
+AuthService         : register, login, logout, changePassword
+CategoryService     : getAllCategories, addCategory, updateCategory,
+                      deleteCategory
+RecruitmentService  : postRecruitment, updateRecruitment,
+                      deleteRecruitment, closeRecruitment,
+                      getRecruitmentById, searchRecruitments,
+                      getRecruitmentsByEmployer,
+                      getPendingRecruitments, adminModerate,
+                      countOpenRecruitments, getTopEmployers
+ApplicationService  : applyRecruitment, cancelApplication,
+                      getListOfApplicationByUser,
+                      getTotalApplyCountByUser,
+                      getApprovedApplicationByUser, hasApplied,
+                      getApplicationsByRecruitmentId,
+                      approveApplication, rejectApplication,
+                      getCandidateInfo, filterApplicationByStatus,
+                      getTotalApplicationCount, getNewApplicantsToday
+CVService           : getCV, saveCV
+UserService         : updateCompanyInfo, getEmployerInfo, getAllUsers,
+                      updateUserStatus, deleteUser, countByRole
+NotificationService : getNotifications, sendNotification, markAsRead
+
+DAL/DAO
+-------
+UserDAO         : findByUsernameAndPassword, findById, findAll,
+                  insert, update, updateStatus, updatePassword,
+                  delete, existsByUsername, existsByEmail,
+                  countByRole
+EmployerDAO     : findByUserId, insert, update
+CandidateDAO    : findByUserId, insert
+RecruitmentDAO  : findById, findByEmployerId, findByAdminStatus,
+                  searchByKeywordAndCategory, insert, update,
+                  updateStatus, updateAdminStatus, delete,
+                  countByCategory, countOpenByEmployerId
+ApplicationDAO  : findByCandidateId, findByRecruitmentId,
+                  findByRecruitmentIdAndStatus,
+                  existsByCandidateAndRecruitment,
+                  countByCandidateId,
+                  countByCandidateIdAndStatus,
+                  countByEmployerId, insert, delete, updateStatus
+CVDAO           : findByCandidateId, insert, update
+EducationDAO    : findByCvId, insertAll, deleteByCvId
+CategoryDAO     : findAll, findById, insert, update, delete
+NotificationDAO : findByReceiverId, insert, updateIsRead
+
+DTO
+---
+UserDTO         : userId, username, fullName, email, role,
+                  isActive, companyName (cho Employer)
+RecruitmentDTO  : recruitmentId, employerId, companyName, categoryName,
+                  title, description, jobType, status, adminStatus,
+                  salary, location, createdDate, dueDate,
+                  applicationCount
+ApplicationDTO  : applicationId, candidateId, candidateName, email,
+                  recruitmentId, jobTitle, companyName, jobType,
+                  status, appliedDate
+CVDTO           : cvId, candidateId, objective, skills (List<String>),
+                  desiredPosition, desiredSalary, lastUpdated,
+                  educations (List<Education>)
+NotificationDTO : notificationId, senderName, content, dateTime, isRead
+
+MODEL (đúng theo Class Diagram)
+-------------------------------
+User, Employer, Candidate, Recruitment, Application, CV,
+Education, WorkExperience, Certification, Category, Notification
+
+ENUM
+----
+Role                : CANDIDATE, EMPLOYER, ADMIN
+Gender              : MALE, FEMALE, OTHER
+JobType             : FULLTIME, PARTTIME, INTERNSHIP
+RecruitmentStatus   : OPEN, CLOSED, EXPIRED
+ApplicationStatus   : PENDING, APPROVED, REJECTED
+
+UTILS
+-----
+PasswordUtils       : hash(String) → String, verify(raw, hash) → boolean
+DateUtils           : toLocalDate, toSqlDate, format, isExpired
+ValidationUtils     : isValidEmail, isNotEmpty, isValidPassword
+SessionManager      : setCurrentUser, getCurrentUser, clear, isLoggedIn
+
+
+================================================================
+PHẦN 5: BẢNG ÁNH XẠ UI - USE CASE - CLASS - FILE - HÀM
+================================================================
+
+Màn hình UI              | Use Case             | Model chính      | View file                  | Service function                          | DAO function
+------------------------ | -------------------- | ---------------- | -------------------------- | ----------------------------------------- | ----------------------------
+Đăng nhập                | Đăng nhập            | User             | LoginPanel.java            | AuthService.login()                       | UserDAO.findByUsernameAndPassword()
+Đăng ký                  | Đăng ký              | User,Candidate   | RegisterPanel.java         | AuthService.register()                    | UserDAO.insert(), CandidateDAO/EmployerDAO.insert()
+Tìm kiếm việc làm        | Tìm kiếm việc làm    | Recruitment      | JobSearchPanel.java        | RecruitmentService.searchRecruitments()   | RecruitmentDAO.searchByKeywordAndCategory()
+Chi tiết tin tuyển dụng  | Xem chi tiết tin     | Recruitment      | JobDetailPanel.java        | RecruitmentService.getRecruitmentById()   | RecruitmentDAO.findById()
+Ứng tuyển (trong detail) | Ứng tuyển/Hủy       | Application      | JobDetailPanel.java        | ApplicationService.applyRecruitment()     | ApplicationDAO.insert()
+Việc đã ứng tuyển        | Ứng tuyển/Hủy       | Application      | AppliedJobsPanel.java      | ApplicationService.getListOfAppByUser()   | ApplicationDAO.findByCandidateId()
+Quản lý CV               | Quản lý CV           | CV,Education     | CVEditorPanel.java         | CVService.getCV(), saveCV()               | CVDAO, EducationDAO
+Dashboard NTD            | Quản lý tin đăng     | Recruitment      | EmployerDashboardPanel.java| RecruitmentService.getActiveCount()       | RecruitmentDAO
+Đăng tin tuyển dụng      | Đăng tin tuyển dụng  | Recruitment      | RecruitmentFormPanel.java  | RecruitmentService.postRecruitment()      | RecruitmentDAO.insert()
+Quản lý tin đăng         | Quản lý tin đăng     | Recruitment      | RecruitmentListPanel.java  | RecruitmentService.getByEmployer()        | RecruitmentDAO.findByEmployerId()
+Duyệt hồ sơ ứng viên     | Xem ds/Duyệt từ chối| Application      | ApplicationReviewPanel.java| ApplicationService.approveApplication()   | ApplicationDAO.updateStatus()
+Thông tin công ty        | Cập nhật công ty     | Employer         | CompanyInfoPanel.java      | UserService.updateCompanyInfo()           | EmployerDAO.update()
+Kiểm duyệt tin đăng      | Kiểm duyệt tin đăng  | Recruitment      | JobModerationPanel.java    | RecruitmentService.adminModerate()        | RecruitmentDAO.updateAdminStatus()
+Quản lý người dùng       | Quản lý người dùng   | User             | UserManagementPanel.java   | UserService.getAllUsers()                 | UserDAO.findAll()
+Quản lý danh mục         | Quản lý danh mục     | Category         | CategoryManagementPanel.java| CategoryService.addCategory()            | CategoryDAO.insert()
+Thống kê hệ thống        | Xem thống kê         | User,Recruitment | AdminDashboardPanel.java   | UserService.countByRole()                 | UserDAO, RecruitmentDAO
+
+
+================================================================
+PHẦN 6: PHÂN TÍCH THIẾU/SAI/LỆCH
+================================================================
+
+6.1. HÀM CÒN THIẾU TRONG DANH SÁCH BAN ĐẦU
+--------------------------------------------
+- ApplicationService.hasApplied()        → cần cho JobDetailPanel
+- ApplicationService.getNewApplicantsToday() → cần cho EmployerDashboard
+- RecruitmentService.closeRecruitment()  → Use Case có "Đóng tin"
+- RecruitmentService.countOpenRecruitments() → cần cho AdminDashboard
+- RecruitmentService.getTopEmployers()   → cần cho AdminDashboard
+- UserService.getEmployerInfo()          → cần load form CompanyInfo
+- UserService.deleteUser()               → cần cho UserManagement
+- NotificationService.sendNotification() → bị thiếu hoàn toàn
+- CategoryService.updateCategory()       → bị thiếu trong danh sách ban đầu
+
+6.2. USE CASE CHƯA CÓ UI / CẦN LƯU Ý
+--------------------------------------
+- "Xem thông báo": Use Case có, nhưng không có màn hình riêng.
+  → ĐỀ XUẤT: Hiện popup/list khi click icon chuông trong HeaderPanel.
+- "Đổi mật khẩu": Có trong hàm ban đầu nhưng không có màn hình.
+  → ĐỀ XUẤT: Thêm tab trong My Account nếu còn thời gian.
+
+6.3. UI LỆCH SO VỚI USE CASE / CLASS DIAGRAM
+---------------------------------------------
+- RegisterPanel thiếu trường chọn ROLE (Ứng viên / Nhà tuyển dụng)
+  → Cần thêm JComboBox.
+- RecruitmentFormPanel có "Lưu nháp" nhưng không có trong Use Case
+  và không có trường isDraft trong Model → LOẠI BỎ.
+- JobDetailPanel có "Add to Bookmarks" và "Share Job" → LOẠI BỎ.
+- AppliedJobsPanel có "Export" → LOẠI BỎ.
+- ApplicationReviewPanel có "Gợi ý AI", "Nâng cấp tin" → LOẠI BỎ.
+- CompanyInfoPanel hiện thị "Trạng thái hồ sơ %" → LOẠI BỎ.
+- EmployerDashboardPanel có "Gói dịch vụ / Gia hạn" → LOẠI BỎ.
+- AdminDashboardPanel "tỷ lệ phản hồi" không có dữ liệu trực tiếp
+  → Tính thủ công hoặc hiển thị N/A.
+
+6.4. HÀM NÊN ĐẶT Ở SERVICE THAY VÌ VIEW
+-----------------------------------------
+- Logic kiểm tra "đã apply chưa" phải ở ApplicationService,
+  không để trong JobDetailPanel tự query.
+- Logic validate form (email, password...) phải qua ValidationUtils,
+  không viết thẳng trong panel.
+- Logic phân trang (offset/limit) nên tính trong Service hoặc DAO,
+  không tính trong View.
+
+6.5. HÀM NÊN ĐẶT Ở DAO
+------------------------
+- Mọi câu SQL (SELECT, INSERT, UPDATE, DELETE) phải ở DAO.
+- Không viết SQL trực tiếp trong Service hay Panel.
+
+6.6. LOGIC BỊ TRÙNG CÓ THỂ XẢY RA
+------------------------------------
+- Lấy employer từ session: dùng chung 1 helper trong SessionManager
+  thay vì mỗi Service tự query lại EmployerDAO.
+- Gửi thông báo sau approve/reject/moderate: gom vào 1 hàm helper
+  private trong từng Service, không viết lặp.
+
+
+================================================================
+PHẦN 7: CHECKLIST TRIỂN KHAI
+================================================================
+
+7.1. THỨ TỰ LÀM (ưu tiên từ trên xuống)
+-----------------------------------------
+TUẦN 1 - Nền tảng (làm trước, mọi thứ phụ thuộc vào đây):
+  [ ] DatabaseConfig.java        - Kết nối JDBC
+  [ ] Toàn bộ Model classes      - User, Employer, Candidate,
+                                    Recruitment, Application, CV,
+                                    Education, Category, Notification
+  [ ] Toàn bộ Enum               - Role, Gender, JobType,
+                                    RecruitmentStatus, ApplicationStatus
+  [ ] PasswordUtils, DateUtils,
+      ValidationUtils, SessionManager
+
+TUẦN 1-2 - DAL/DAO (làm song song với Model):
+  [ ] UserDAO                    - CRUD + findByUsernameAndPassword
+  [ ] EmployerDAO, CandidateDAO
+  [ ] CategoryDAO
+  [ ] RecruitmentDAO             - Bao gồm search và filter
+  [ ] ApplicationDAO             - Bao gồm count queries
+  [ ] CVDAO + EducationDAO
+  [ ] NotificationDAO
+
+TUẦN 2 - BLL/Service:
+  [ ] AuthService                - login, register (quan trọng nhất)
+  [ ] CategoryService
+  [ ] RecruitmentService
+  [ ] ApplicationService
+  [ ] CVService
+  [ ] UserService
+  [ ] NotificationService
+
+TUẦN 2-3 - DTO:
+  [ ] UserDTO, RecruitmentDTO,
+      ApplicationDTO, CVDTO, NotificationDTO
+
+TUẦN 3 - VIEW (làm sau cùng, gọi Service đã hoàn thiện):
+  [ ] MainFrame + LoginPanel + RegisterPanel   (mở đầu)
+  [ ] JobSearchPanel + JobDetailPanel          (luồng candidate)
+  [ ] CVEditorPanel + AppliedJobsPanel
+  [ ] RecruitmentFormPanel + RecruitmentListPanel (luồng employer)
+  [ ] ApplicationReviewPanel + CompanyInfoPanel
+  [ ] JobModerationPanel + UserManagementPanel (luồng admin)
+  [ ] CategoryManagementPanel + AdminDashboardPanel
+  [ ] HeaderPanel + SidebarPanel               (dùng chung)
+
+7.2. HÀM QUAN TRỌNG NHẤT (làm trước)
+--------------------------------------
+1. DatabaseConfig.getConnection()         - Không có thì không làm được gì
+2. AuthService.login() + register()       - Gate vào toàn bộ hệ thống
+3. SessionManager                         - Mọi service cần biết ai đang dùng
+4. RecruitmentService.searchRecruitments()- Chức năng cốt lõi của ứng viên
+5. ApplicationService.applyRecruitment()  - Chức năng cốt lõi ứng tuyển
+
+7.3. PHẦN CÓ THỂ ĐỂ SAU
+-------------------------
+- changePassword (nếu không có màn hình My Account)
+- WorkExperience và Certification trong CVEditorPanel
+- AdminDashboardPanel (chỉ đọc, không ảnh hưởng luồng chính)
+- Phân trang (implement sau, trước mắt load all)
+- Thông báo realtime (hiện popup khi click chuông là đủ)
+
+7.4. KIỂM TRA TRƯỚC KHI CODE
+-------------------------------
+- [ ] Script SQL đã chạy thành công, database job_portal tồn tại
+- [ ] MySQL Connector JAR đã thêm vào pom.xml hoặc thư mục lib/
+- [ ] DatabaseConfig kết nối được (test bằng main() nhỏ)
+- [ ] Mỗi DAO viết xong cần test thủ công với dữ liệu mẫu
+- [ ] Thống nhất cách sinh ID (UUID.randomUUID() hoặc prefix+timestamp)
+      → dùng nhất quán toàn project
+	Tạo bằng cách prefix + 8 character của uuid tự sinh như sau:
+		U-A3F9B12C      // User
+		EMP-7D2E4F91    // Employer  
+		CAN-B8C3A0E5    // Candidate
+		REC-F1234ABC    // Recruitment
+		APP-9E7D6C2B    // Application
+		CV-4A8F1E3D     // CV
+		NOT-2B5C9F7A    // Notification
+		CAT-E3D8A1F2    // Category
+		EDU-C7B4E9D3    // Education
+
+- [ ] Thống nhất cách hash password (SHA-256 đơn giản)
+      → phải khớp với dữ liệu mẫu trong DB
+
+
+LƯU Ý:
+
+1. Cần thêm/sửa so với thiết kế ban đầu:
+
+- RegisterPanel thiếu JComboBox chọn role (Ứng viên / NTD) — không có cái này thì không biết tạo bản ghi vào bảng nào.
+- Cần thêm ApplicationService.hasApplied() — để JobDetailPanel biết hiện nút Apply hay Hủy.
+- NotificationService.sendNotification() bị thiếu hoàn toàn trong danh sách ban đầu nhưng được gọi bởi cả ApplicationService lẫn RecruitmentService.
+
+2. Loại bỏ khỏi UI (không có trong Use Case / Model): "Lưu nháp", "Add to Bookmarks", "Export", "Gợi ý AI", "Nâng cấp gói dịch vụ", "Sign up with Google".
+
+================================================================
+KẾT THÚC ĐẶC TẢ
+Phiên bản: 1.0 | Tài liệu tham chiếu: Use Case Diagram,
+Class Diagram, 15 màn hình UI, repo_structure.txt,
+Các_hàm_tự_liệt_kê.txt
+================================================================
