@@ -60,17 +60,7 @@ public class UserManagementPanel extends JPanel {
         leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         leftPanel.add(lblSub);
 
-        JButton btnAdd = new JButton("+ Add User");
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAdd.setBackground(new Color(13, 110, 253));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setPreferredSize(new Dimension(130, 42));
-        btnAdd.setFocusPainted(false);
-        btnAdd.setBorderPainted(false);
-        btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         headerPanel.add(leftPanel, BorderLayout.WEST);
-        headerPanel.add(btnAdd, BorderLayout.EAST);
 
         return headerPanel;
     }
@@ -91,12 +81,12 @@ public class UserManagementPanel extends JPanel {
         ));
 
         // combobox role
-        JComboBox<String> cbRole = new JComboBox<>(new String[]{"Role: All", "SUPER ADMIN", "MODERATOR", "REVIEWER"});
+        JComboBox<String> cbRole = new JComboBox<>(new String[]{"Role: All", "ADMIN", "EMPLOYER", "CANDIDATE"});
         cbRole.setPreferredSize(new Dimension(200, 42));
         cbRole.setBackground(Color.WHITE);
 
         // combobox status
-        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Status: All", "Active", "Suspended", "Pending"});
+        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Status: All", "Active", "Inactive"});
         cbStatus.setPreferredSize(new Dimension(200, 42));
         cbStatus.setBackground(Color.WHITE);
 

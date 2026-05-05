@@ -7,6 +7,9 @@ import java.awt.*;
 
 public class JobCardPanel extends JPanel {
 
+    private JPanel bottomPanel;
+    private Component actionComponent;
+
     public JobCardPanel(String title, String company, String salary, String location, String description, String[] tags) {
         // thiet lap layout chinh cho the
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -34,11 +37,6 @@ public class JobCardPanel extends JPanel {
         titlePanel.add(lblTitle);
         titlePanel.add(lblCompany);
         topPanel.add(titlePanel, BorderLayout.CENTER);
-
-        JButton btnBookmark = new JButton("W"); // gia lap icon
-        btnBookmark.setContentAreaFilled(false);
-        btnBookmark.setBorderPainted(false);
-        topPanel.add(btnBookmark, BorderLayout.EAST);
 
         add(topPanel);
         add(Box.createRigidArea(new Dimension(0, 15)));
@@ -73,7 +71,7 @@ public class JobCardPanel extends JPanel {
         add(Box.createRigidArea(new Dimension(0, 20)));
 
         // phan bottom: the tag va nut apply
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(Color.WHITE);
 
         JPanel tagPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -88,9 +86,21 @@ public class JobCardPanel extends JPanel {
         btnApply.setForeground(Color.WHITE);
         btnApply.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnApply.setFocusPainted(false);
-        bottomPanel.add(btnApply, BorderLayout.EAST);
+        
+        actionComponent = btnApply;
+        bottomPanel.add(actionComponent, BorderLayout.EAST);
 
         add(bottomPanel);
+    }
+
+    public void setActionComponent(Component comp) {
+        if (actionComponent != null) {
+            bottomPanel.remove(actionComponent);
+        }
+        actionComponent = comp;
+        bottomPanel.add(actionComponent, BorderLayout.EAST);
+        bottomPanel.revalidate();
+        bottomPanel.repaint();
     }
 
     // ham tao label the tag

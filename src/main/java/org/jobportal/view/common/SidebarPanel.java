@@ -12,11 +12,21 @@ public class SidebarPanel extends JPanel {
 
     private JPanel menuContainer;
 
+    public interface MenuSelectionListener {
+        void onMenuSelected(String menuTitle);
+    }
+    
+    private MenuSelectionListener menuListener;
+
+    public void setMenuListener(MenuSelectionListener listener) {
+        this.menuListener = listener;
+    }
+
     public SidebarPanel(Role role) {
         // khoi tao layout chinh cho sidebar
         setLayout(new BorderLayout());
         setBackground(new Color(248, 249, 250)); // mau nen nhe giong tren hinh
-        setPreferredSize(new Dimension(200, 0));
+        setPreferredSize(new Dimension(260, 0));
         setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(220, 220, 220)));
 
         // container chua cac nut menu
@@ -28,7 +38,7 @@ public class SidebarPanel extends JPanel {
         // tao menu dua tren quyen
         buildMenu(role);
 
-        add(menuContainer, BorderLayout.NORTH);
+        add(menuContainer, BorderLayout.CENTER);
     }
 
     // ham xu ly logic hien thi if-else theo role
@@ -37,46 +47,73 @@ public class SidebarPanel extends JPanel {
 
         if (role == Role.CANDIDATE) {
             // hien thi menu cua ung vien tim viec
-            menuContainer.add(createMenuButton("Tìm việc"));
-            menuContainer.add(createMenuButton("Đã ứng tuyển"));
-            menuContainer.add(createMenuButton("Quản lý CV"));
-            menuContainer.add(createMenuButton("Thông tin người dùng"));
+            addMenuItem("Tìm việc");
+            addMenuItem("Đã ứng tuyển");
+            addMenuItem("Quản lý CV");
+            addMenuItem("Thông tin người dùng");
 
         } else if (role == Role.EMPLOYER) {
             // hien thi menu cua nha tuyen dung
-            menuContainer.add(createMenuButton("Tổng quan"));
-            menuContainer.add(createMenuButton("Đăng tin tuyển dụng"));
-            menuContainer.add(createMenuButton("Quản lý tin tuyển dụng"));
-            menuContainer.add(createMenuButton("Danh sách các ứng viên"));
-            menuContainer.add(createMenuButton("Thông tin công ty"));
-            menuContainer.add(createMenuButton("Thông tin người dùng"));
+            addMenuItem("Tổng quan");
+            addMenuItem("Đăng tin tuyển dụng");
+            addMenuItem("Quản lý tin tuyển dụng");
+            addMenuItem("Danh sách các ứng viên");
+            addMenuItem("Thông tin công ty");
+            addMenuItem("Thông tin người dùng");
 
         } else if (role == Role.ADMIN) {
             // hien thi menu cua he thong quan tri
-            menuContainer.add(createMenuButton("Thống kê hệ thống"));
-            menuContainer.add(createMenuButton("Quản lý người dùng"));
-            menuContainer.add(createMenuButton("Quản lý danh mục"));
-            menuContainer.add(createMenuButton("Kiểm duyệt tin tuyển dụng"));
+            addMenuItem("Thống kê hệ thống");
+            addMenuItem("Quản lý người dùng");
+            addMenuItem("Quản lý danh mục");
+            addMenuItem("Kiểm duyệt tin tuyển dụng");
         }
+
+        // Đẩy nút Đăng xuất xuống dưới cùng
+        menuContainer.add(Box.createVerticalGlue());
+        
+        JButton btnLogout = createMenuButton("Đăng xuất");
+        // Ghi đè màu chữ đỏ cho nút đăng xuất (tuỳ chọn)
+        btnLogout.setForeground(new Color(220, 53, 69));
+        // Thêm sự kiện đăng xuất
+        btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btnLogout.setBackground(new Color(255, 235, 235));
+                btnLogout.setForeground(new Color(200, 35, 51));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btnLogout.setBackground(new Color(248, 249, 250));
+                btnLogout.setForeground(new Color(220, 53, 69));
+            }
+        });
+        menuContainer.add(btnLogout);
 
         // cap nhat lai giao dien sau khi them nut
         menuContainer.revalidate();
         menuContainer.repaint();
     }
 
+    // ham ho tro them menu item voi khoang cach
+    private JButton addMenuItem(String title) {
+        JButton btn = createMenuButton(title);
+        menuContainer.add(btn);
+        menuContainer.add(Box.createRigidArea(new Dimension(0, 10))); // khoang cach cac muc
+        return btn;
+    }
+
     // ham ho tro tao nut menu voi UI custom
     private JButton createMenuButton(String title) {
         JButton btn = new JButton(title);
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45)); // chieu cao nut
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50)); // chieu cao nut
         btn.setBackground(new Color(248, 249, 250));
         btn.setForeground(new Color(50, 50, 50));
         btn.setFocusPainted(false);
         btn.setBorderPainted(false); // bo vien de nhin giong menu web
         btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0)); // padding text
+        btn.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); // padding text
 
         // them hieu ung hover (doi mau nen va chu)
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -87,6 +124,13 @@ public class SidebarPanel extends JPanel {
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 btn.setBackground(new Color(248, 249, 250));
                 btn.setForeground(new Color(50, 50, 50));
+            }
+        });
+
+        // xu ly su kien click chuyen tab
+        btn.addActionListener(e -> {
+            if (menuListener != null) {
+                menuListener.onMenuSelected(title);
             }
         });
 

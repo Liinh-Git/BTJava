@@ -1,10 +1,15 @@
-import org.jobportal.config.DatabaseConfig;
+package org.jobportal;
 
-public static void main(String[] args) {
-    if (DatabaseConfig.checkConnection()) {
-        System.out.println("Hệ thống sẵn sàng!");
-        // Gọi giao diện View ở đây
-    } else {
-        System.out.println("Lỗi hệ thống, vui lòng kiểm tra lại Database.");
+import org.jobportal.view.common.MainFrame;
+
+import javax.swing.*;
+
+public class Main {
+    public static void main(String[] args) {
+        // Khởi chạy giao diện trên Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            MainFrame mainFrame = new MainFrame();
+            mainFrame.setVisible(true);
+        });
     }
 }
