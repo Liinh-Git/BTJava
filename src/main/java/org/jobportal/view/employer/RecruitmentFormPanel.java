@@ -1,40 +1,100 @@
 package org.jobportal.view.employer;
 
+import org.jobportal.bll.impl.CategoryService;
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.enums.JobType;
+import org.jobportal.model.Category;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static org.jobportal.view.util.DesignSystem.*;
 
-/**
- * Recruitment form panel matching ng_tin_tuy_n_d_ng stitch design.
- * Layout: page header + form card (TIÊU ĐỀ, NGÀNH NGHỀ/LOẠI HÌNH,
- *         MỨC LƯƠNG/HẠN NỘP, MÔ TẢ CÔNG VIỆC with toolbar)
- *         + action buttons (Lưu nháp / Lưu & Đăng tin)
- *         + advice banner.
- */
 public class RecruitmentFormPanel extends JPanel {
 
+    private final RecruitmentService recruitmentService = new RecruitmentService();
+    private final CategoryService categoryService = new CategoryService();
+    private JTextField txtTitle;
+    private JComboBox<String> cbCategory;
+    private JComboBox<String> cbJobType;
+    private JTextField txtSalary;
+    private JTextField txtDueDate;
+    private JTextField txtLocation;
+    private JTextArea txtDescription;
+    private List<Category> categories;
+    private String editingRecruitmentId = null;
+
     public RecruitmentFormPanel() {
-        // thiet lap layout chinh
         setLayout(new BorderLayout());
         setBackground(BG_PAGE);
 
         JPanel mainContent = createContentPanel();
 
-        // 1. tieu de trang
         mainContent.add(createPageHeader());
         mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_6)));
 
-        // 2. the form nhap lieu
         mainContent.add(createFormCard());
         mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        // 3. banner loi khuyen
         mainContent.add(createAdviceBanner());
 
         add(createScrollPane(mainContent), BorderLayout.CENTER);
+
+        loadCategories();
+    }
+
+    private void loadCategories() {
+        categories = categoryService.getAllCategories();
+        cbCategory.removeAllItems();
+        for (Category cat : categories) {
+            cbCategory.addItem(cat.getCategoryName());
+        }
+    }
+
+    private String getSelectedCategoryId() {
+        int idx = cbCategory.getSelectedIndex();
+        if (idx >= 0 && categories != null && idx < categories.size()) {
+            return categories.get(idx).getCategoryId();
+        }
+        return null;
+    }
+
+    private JobType getSelectedJobType() {
+        String selected = (String) cbJobType.getSelectedItem();
+        if (selected == null) return JobType.FULLTIME;
+        switch (selected) {
+            case "Part-time": return JobType.PARTTIME;
+            case "Internship": return JobType.INTERNSHIP;
+            default: return JobType.FULLTIME;
+        }
+    }
+
+    public void loadRecruitmentForEdit(String recruitmentId) {
+        this.editingRecruitmentId = recruitmentId;
+        var dto = recruitmentService.getRecruitmentById(recruitmentId);
+        if (dto == null) return;
+        txtTitle.setText(dto.getTitle());
+        txtSalary.setText(dto.getSalary() != null ? String.valueOf(dto.getSalary()) : "");
+        txtDueDate.setText(dto.getDueDate() != null ? dto.getDueDate().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "");
+        txtLocation.setText(dto.getLocation() != null ? dto.getLocation() : "");
+        txtDescription.setText(dto.getDescription() != null ? dto.getDescription() : "");
+        if (dto.getJobType() != null) {
+            cbJobType.setSelectedItem(dto.getJobType() == JobType.FULLTIME ? "Full-time" :
+                    dto.getJobType() == JobType.PARTTIME ? "Part-time" : "Internship");
+        }
+        if (categories != null && dto.getCategoryId() != null) {
+            for (int i = 0; i < categories.size(); i++) {
+                if (categories.get(i).getCategoryId().equals(dto.getCategoryId())) {
+                    cbCategory.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
     }
 
     private JPanel createPageHeader() {
@@ -66,7 +126,6 @@ public class RecruitmentFormPanel extends JPanel {
             new EmptyBorder(SPACE_8, SPACE_8, SPACE_8, SPACE_8)
         ));
 
-        // su dung gridbaglayout de chia cot chinh xac
         JPanel formGrid = new JPanel(new GridBagLayout());
         formGrid.setBackground(BG_SURFACE);
         formGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -76,15 +135,14 @@ public class RecruitmentFormPanel extends JPanel {
         gbc.insets = new Insets(0, 0, SPACE_2, SPACE_5);
         gbc.weightx = 0.5;
 
-        // dong 1: Tieu de cong viec (chiem 2 cot)
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 0, SPACE_2, 0);
         formGrid.add(createFieldLabel("TIÊU ĐỀ CÔNG VIỆC"), gbc);
 
         gbc.gridy = 1; gbc.insets = new Insets(0, 0, SPACE_5, 0);
-        formGrid.add(createFormTextField("VD: Senior Frontend Developer (Tailwind CSS)"), gbc);
+        txtTitle = createFormTextField("VD: Senior Frontend Developer (Tailwind CSS)");
+        formGrid.add(txtTitle, gbc);
 
-        // dong 2: Nganh nghe & Loai hinh
         gbc.gridwidth = 1; gbc.insets = new Insets(0, 0, SPACE_2, SPACE_5);
         gbc.gridx = 0; gbc.gridy = 2;
         formGrid.add(createFieldLabel("NGÀNH NGHỀ"), gbc);
@@ -93,12 +151,13 @@ public class RecruitmentFormPanel extends JPanel {
         formGrid.add(createFieldLabel("LOẠI HÌNH"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.insets = new Insets(0, 0, SPACE_5, SPACE_5);
-        formGrid.add(createFormComboBox(new String[]{"Công nghệ thông tin", "Marketing", "Kế toán"}), gbc);
+        cbCategory = createFormComboBox(new String[]{});
+        formGrid.add(cbCategory, gbc);
 
         gbc.gridx = 1; gbc.insets = new Insets(0, 0, SPACE_5, 0);
-        formGrid.add(createFormComboBox(new String[]{"Toàn thời gian", "Bán thời gian", "Thực tập"}), gbc);
+        cbJobType = createFormComboBox(new String[]{"Full-time", "Part-time", "Internship"});
+        formGrid.add(cbJobType, gbc);
 
-        // dong 3: Muc luong & Han nop ho so
         gbc.gridx = 0; gbc.gridy = 4; gbc.insets = new Insets(0, 0, SPACE_2, SPACE_5);
         formGrid.add(createFieldLabel("MỨC LƯƠNG"), gbc);
 
@@ -106,28 +165,44 @@ public class RecruitmentFormPanel extends JPanel {
         formGrid.add(createFieldLabel("HẠN NỘP HỒ SƠ"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 5; gbc.insets = new Insets(0, 0, SPACE_5, SPACE_5);
-        formGrid.add(createFormTextField("VD: 20 - 30 triệu"), gbc);
+        txtSalary = createFormTextField("VD: 20 - 30 triệu");
+        formGrid.add(txtSalary, gbc);
 
         gbc.gridx = 1; gbc.insets = new Insets(0, 0, SPACE_5, 0);
-        formGrid.add(createFormTextField("mm/dd/yyyy"), gbc);
+        txtDueDate = createFormTextField("dd/MM/yyyy");
+        formGrid.add(txtDueDate, gbc);
 
-        // dong 4: Mo ta cong viec (chiem 2 cot)
         gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; gbc.insets = new Insets(0, 0, SPACE_2, 0);
-        formGrid.add(createFieldLabel("MÔ TẢ CÔNG VIỆC"), gbc);
+        formGrid.add(createFieldLabel("ĐỊA ĐIỂM"), gbc);
 
         gbc.gridy = 7; gbc.insets = new Insets(0, 0, SPACE_5, 0);
-        formGrid.add(createEditorField("Nhập chi tiết công việc, yêu cầu và quyền lợi..."), gbc);
+        txtLocation = createFormTextField("VD: Hà Nội");
+        formGrid.add(txtLocation, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 8; gbc.gridwidth = 2; gbc.insets = new Insets(0, 0, SPACE_2, 0);
+        formGrid.add(createFieldLabel("MÔ TẢ CÔNG VIỆC"), gbc);
+
+        gbc.gridy = 9; gbc.insets = new Insets(0, 0, SPACE_5, 0);
+        txtDescription = new JTextArea("Nhập chi tiết công việc, yêu cầu và quyền lợi...");
+        txtDescription.setFont(body());
+        txtDescription.setForeground(TEXT_MUTED);
+        txtDescription.setLineWrap(true);
+        txtDescription.setWrapStyleWord(true);
+        txtDescription.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER_INPUT, 1),
+                new EmptyBorder(SPACE_4, SPACE_4, SPACE_4, SPACE_4)
+        ));
+        txtDescription.setRows(6);
+        formGrid.add(new JScrollPane(txtDescription), gbc);
 
         card.add(formGrid);
 
-        // duong ke ngang
         JSeparator separator = new JSeparator();
         separator.setForeground(BORDER_LIGHT);
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
         card.add(separator);
         card.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        // cac nut thao tac
         card.add(createActionButtons());
 
         return card;
@@ -157,56 +232,41 @@ public class RecruitmentFormPanel extends JPanel {
         return cb;
     }
 
-    private JPanel createEditorField(String placeholder) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new LineBorder(BORDER_INPUT, 1));
-
-        // thanh toolbar
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_3, SPACE_2));
-        toolbar.setBackground(BG_PAGE);
-        toolbar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_INPUT));
-
-        JLabel btnB = new JLabel("B"); btnB.setFont(new Font("Serif", Font.BOLD, 14));
-        JLabel btnI = new JLabel("I"); btnI.setFont(new Font("Serif", Font.ITALIC, 14));
-        JLabel btnList = new JLabel("≡"); btnList.setFont(fontRegular(14));
-        JLabel btnLink = new JLabel("🔗"); btnLink.setFont(fontRegular(14));
-
-        toolbar.add(btnB);
-        toolbar.add(btnI);
-        toolbar.add(btnList);
-        toolbar.add(btnLink);
-        panel.add(toolbar, BorderLayout.NORTH);
-
-        // phan text
-        JTextArea textArea = new JTextArea(placeholder);
-        textArea.setFont(body());
-        textArea.setForeground(TEXT_MUTED);
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        textArea.setBorder(new EmptyBorder(SPACE_4, SPACE_4, SPACE_4, SPACE_4));
-
-        JScrollPane scroll = new JScrollPane(textArea);
-        scroll.setBorder(null);
-        scroll.setPreferredSize(new Dimension(0, 180));
-        panel.add(scroll, BorderLayout.CENTER);
-
-        return panel;
-    }
-
     private JPanel createActionButtons() {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_4, 0));
         actionPanel.setBackground(BG_SURFACE);
         actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton btnDraft = createOutlineButton("Lưu nháp");
-        btnDraft.setPreferredSize(new Dimension(130, BUTTON_HEIGHT));
-        actionPanel.add(btnDraft);
-
         JButton btnPublish = createPrimaryButton("▶  Lưu & Đăng tin");
         btnPublish.setPreferredSize(new Dimension(180, BUTTON_HEIGHT));
+        btnPublish.addActionListener(e -> saveRecruitment());
         actionPanel.add(btnPublish);
 
         return actionPanel;
+    }
+
+    private void saveRecruitment() {
+        String title = txtTitle.getText().trim();
+        String categoryId = getSelectedCategoryId();
+        JobType jobType = getSelectedJobType();
+        double salary = 0;
+        try { salary = Double.parseDouble(txtSalary.getText().trim()); } catch (Exception ignored) {}
+        LocalDate dueDate = null;
+        try { dueDate = LocalDate.parse(txtDueDate.getText().trim(), DateTimeFormatter.ofPattern("dd/MM/yyyy")); } catch (Exception ignored) {}
+        String description = txtDescription.getText().trim();
+        String location = txtLocation.getText().trim();
+
+        boolean ok;
+        if (editingRecruitmentId != null) {
+            ok = recruitmentService.updateRecruitment(editingRecruitmentId, title, categoryId, jobType, salary, dueDate, description, location);
+        } else {
+            ok = recruitmentService.postRecruitment(title, categoryId, jobType, salary, dueDate, description, location);
+        }
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "Lưu tin thành công!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Lưu tin thất bại.");
+        }
     }
 
     private JPanel createAdviceBanner() {
@@ -244,9 +304,6 @@ public class RecruitmentFormPanel extends JPanel {
         return banner;
     }
 
-    /**
-     * Main method for independent testing of this panel.
-     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Recruitment Form");

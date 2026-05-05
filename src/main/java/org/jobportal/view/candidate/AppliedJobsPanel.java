@@ -1,22 +1,23 @@
 package org.jobportal.view.candidate;
 
+import org.jobportal.bll.impl.ApplicationService;
+import org.jobportal.dto.ApplicationDTO;
+import org.jobportal.enums.ApplicationStatus;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.util.List;
 
 import static org.jobportal.view.util.DesignSystem.*;
 
-/**
- * Applied jobs panel matching screen.png / code.html reference.
- * Layout:
- *   - Page header: "Applied Jobs" title + subtitle + Filter/Export buttons
- *   - 3-col stats: TOTAL APPLICATIONS / ACTIVE INTERVIEWS / SUCCESS RATE
- *   - Table: JOB TITLE (with tags), COMPANY (with icon), DATE APPLIED, STATUS (badge), ACTIONS
- *   - Pagination: "Showing 4 of 24 applications" + page buttons
- *   - Footer tip: "Pro Tip: Keep your profile updated"
- */
 public class AppliedJobsPanel extends JPanel {
+
+    private final ApplicationService applicationService = new ApplicationService();
+    private JPanel tableContainer;
+    private JLabel lblTotal;
+    private JLabel lblSuccessRate;
 
     public AppliedJobsPanel() {
         setLayout(new BorderLayout());
@@ -24,22 +25,56 @@ public class AppliedJobsPanel extends JPanel {
 
         JPanel mainContent = createContentPanel();
 
-        // 1. page header
         mainContent.add(createPageHeader());
         mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // 2. stats row
         mainContent.add(createStatsRow());
         mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // 3. table
-        mainContent.add(createJobTable());
-        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
-
-        // 4. footer tip
-        mainContent.add(createFooterTip());
+        tableContainer = createJobTable();
+        mainContent.add(tableContainer);
 
         add(createScrollPane(mainContent), BorderLayout.CENTER);
+
+        loadData();
+    }
+
+    private void loadData() {
+        String candidateId = org.jobportal.utils.SessionManager.getCurrentUser().getUserId();
+        List<ApplicationDTO> apps = applicationService.getListOfApplicationByUser(candidateId);
+        int total = applicationService.getTotalApplyCountByUser(candidateId);
+        int approved = applicationService.getApprovedApplicationByUser(candidateId);
+        int rate = total == 0 ? 0 : (approved * 100 / total);
+
+        lblTotal.setText(String.valueOf(total));
+        lblSuccessRate.setText(rate + "%");
+
+        tableContainer.removeAll();
+        tableContainer.add(createTableHeader());
+        for (ApplicationDTO app : apps) {
+            String statusText = app.getStatus().name();
+            String statusColor = getStatusColor(app.getStatus());
+            tableContainer.add(createJobRow(
+                    app.getJobTitle(),
+                    new String[]{app.getJobType().name()},
+                    app.getCompanyName(),
+                    app.getAppliedDate() != null ? app.getAppliedDate().toLocalDate().toString() : "",
+                    statusText,
+                    statusColor
+            ));
+        }
+        tableContainer.add(createPaginationFooter(apps.size()));
+        tableContainer.revalidate();
+        tableContainer.repaint();
+    }
+
+    private String getStatusColor(ApplicationStatus status) {
+        switch (status) {
+            case PENDING: return "blue";
+            case APPROVED: return "green";
+            case REJECTED: return "grey";
+            default: return "blue";
+        }
     }
 
     private JPanel createPageHeader() {
@@ -47,7 +82,6 @@ public class AppliedJobsPanel extends JPanel {
         header.setBackground(BG_SURFACE);
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // left: title + subtitle
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.setBackground(BG_SURFACE);
@@ -67,7 +101,6 @@ public class AppliedJobsPanel extends JPanel {
         left.add(lblSub);
         header.add(left, BorderLayout.WEST);
 
-        // right: Filter + Export buttons
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_4, 0));
         right.setBackground(BG_SURFACE);
 
@@ -75,61 +108,26 @@ public class AppliedJobsPanel extends JPanel {
         btnFilter.setPreferredSize(new Dimension(100, BUTTON_HEIGHT));
         right.add(btnFilter);
 
-        JButton btnExport = createOutlineButton("Export");
-        btnExport.setPreferredSize(new Dimension(100, BUTTON_HEIGHT));
-        right.add(btnExport);
-
         header.add(right, BorderLayout.EAST);
 
         return header;
     }
 
     private JPanel createStatsRow() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, SPACE_6, 0));
+        JPanel panel = new JPanel(new GridLayout(1, 2, SPACE_6, 0));
         panel.setBackground(BG_SURFACE);
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
-        // TOTAL APPLICATIONS
-        panel.add(createStatCard("TOTAL APPLICATIONS", "24", null));
-
-        // ACTIVE INTERVIEWS with "Coming up" badge
-        JPanel interviewCard = new JPanel();
-        interviewCard.setLayout(new BoxLayout(interviewCard, BoxLayout.Y_AXIS));
-        interviewCard.setBackground(BG_SURFACE);
-        interviewCard.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER, 1),
-                new EmptyBorder(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
-        ));
-
-        JLabel lblIntLabel = new JLabel("ACTIVE INTERVIEWS");
-        lblIntLabel.setFont(label());
-        lblIntLabel.setForeground(TEXT_MUTED);
-        interviewCard.add(lblIntLabel);
-        interviewCard.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
-
-        JPanel valueRow = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
-        valueRow.setBackground(BG_SURFACE);
-        valueRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel lblIntValue = new JLabel("3");
-        lblIntValue.setFont(heading1());
-        lblIntValue.setForeground(PRIMARY);
-        valueRow.add(lblIntValue);
-
-        JLabel badgeComingUp = createBadge("Coming up", BADGE_INFO_BG, BADGE_INFO_FG);
-        valueRow.add(badgeComingUp);
-        interviewCard.add(valueRow);
-
-        panel.add(interviewCard);
-
-        // SUCCESS RATE
-        panel.add(createStatCard("SUCCESS RATE", "12%", null));
+        lblTotal = new JLabel("0");
+        lblSuccessRate = new JLabel("0%");
+        panel.add(createStatCard("TOTAL APPLICATIONS", lblTotal));
+        panel.add(createStatCard("SUCCESS RATE", lblSuccessRate));
 
         return panel;
     }
 
-    private JPanel createStatCard(String labelText, String value, String extra) {
+    private JPanel createStatCard(String labelText, JLabel valueLabel) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(BG_SURFACE);
@@ -144,10 +142,9 @@ public class AppliedJobsPanel extends JPanel {
         card.add(lblLabel);
         card.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
 
-        JLabel lblValue = new JLabel(value);
-        lblValue.setFont(heading1());
-        lblValue.setForeground(TEXT_PRIMARY);
-        card.add(lblValue);
+        valueLabel.setFont(heading1());
+        valueLabel.setForeground(TEXT_PRIMARY);
+        card.add(valueLabel);
 
         return card;
     }
@@ -159,17 +156,8 @@ public class AppliedJobsPanel extends JPanel {
         tableContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
         tableContainer.setBorder(new LineBorder(BORDER, 1));
 
-        // header row
         tableContainer.add(createTableHeader());
-
-        // data rows
-        tableContainer.add(createJobRow("Senior Frontend Developer", new String[]{"FULL-TIME", "REMOTE"}, "TechCorp Inc.", "Oct 24, 2023", "In Review", "blue"));
-        tableContainer.add(createJobRow("UI/UX Designer", new String[]{"CONTRACT"}, "CreativePulse", "Oct 20, 2023", "Interview Scheduled", "orange"));
-        tableContainer.add(createJobRow("Backend Engineer (Go)", new String[]{"FULL-TIME"}, "Streamline Soft", "Oct 18, 2023", "Not Selected", "grey"));
-        tableContainer.add(createJobRow("Product Manager", new String[]{"FULL-TIME"}, "Nexus Labs", "Oct 15, 2023", "Applied", "blue"));
-
-        // pagination footer
-        tableContainer.add(createPaginationFooter());
+        tableContainer.add(createPaginationFooter(0));
 
         return tableContainer;
     }
@@ -214,7 +202,6 @@ public class AppliedJobsPanel extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1.0;
 
-        // Col 1: Job Title + tags
         gbc.gridx = 0;
         gbc.weightx = 0.30;
         gbc.insets = new Insets(SPACE_3, SPACE_6, SPACE_3, SPACE_3);
@@ -243,7 +230,6 @@ public class AppliedJobsPanel extends JPanel {
         titleCell.add(tagPanel);
         row.add(titleCell, gbc);
 
-        // Col 2: Company
         gbc.gridx = 1;
         gbc.weightx = 0.20;
         gbc.insets = new Insets(SPACE_3, SPACE_3, SPACE_3, SPACE_3);
@@ -266,7 +252,6 @@ public class AppliedJobsPanel extends JPanel {
         companyCell.add(lblCompany);
         row.add(companyCell, gbc);
 
-        // Col 3: Date Applied
         gbc.gridx = 2;
         gbc.weightx = 0.18;
 
@@ -275,35 +260,29 @@ public class AppliedJobsPanel extends JPanel {
         lblDate.setForeground(TEXT_SECONDARY);
         row.add(lblDate, gbc);
 
-        // Col 4: Status badge
         gbc.gridx = 3;
         gbc.weightx = 0.18;
 
-        Color badgeBg, badgeFg, dotColor;
-        Color borderColor;
+        Color badgeBg, badgeFg, borderColor;
         switch (statusColor) {
             case "blue":
                 badgeBg = new Color(239, 246, 255);
                 badgeFg = new Color(29, 78, 216);
-                dotColor = new Color(37, 99, 235);
                 borderColor = new Color(191, 219, 254);
                 break;
-            case "orange":
-                badgeBg = new Color(255, 219, 204);
-                badgeFg = new Color(124, 46, 0);
-                dotColor = new Color(158, 61, 0);
-                borderColor = new Color(198, 79, 0);
+            case "green":
+                badgeBg = new Color(220, 252, 231);
+                badgeFg = new Color(22, 101, 52);
+                borderColor = new Color(134, 239, 172);
                 break;
             case "grey":
                 badgeBg = new Color(237, 238, 239);
                 badgeFg = new Color(65, 71, 84);
-                dotColor = new Color(113, 119, 134);
                 borderColor = BORDER;
                 break;
             default:
                 badgeBg = BADGE_BG;
                 badgeFg = BADGE_FG;
-                dotColor = TEXT_MUTED;
                 borderColor = BORDER;
                 break;
         }
@@ -323,7 +302,6 @@ public class AppliedJobsPanel extends JPanel {
         statusPanel.add(statusBadge);
         row.add(statusPanel, gbc);
 
-        // Col 5: Actions (more_horiz icon)
         gbc.gridx = 4;
         gbc.weightx = 0.14;
         gbc.insets = new Insets(SPACE_3, SPACE_3, SPACE_3, SPACE_6);
@@ -337,60 +315,18 @@ public class AppliedJobsPanel extends JPanel {
         return row;
     }
 
-    private JPanel createPaginationFooter() {
+    private JPanel createPaginationFooter(int total) {
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(BG_SURFACE);
         footer.setBorder(new EmptyBorder(SPACE_4, SPACE_6, SPACE_4, SPACE_6));
         footer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
 
-        JLabel lblShowing = new JLabel("Showing 4 of 24 applications");
+        JLabel lblShowing = new JLabel("Showing " + total + " applications");
         lblShowing.setFont(label());
         lblShowing.setForeground(TEXT_MUTED);
         footer.add(lblShowing, BorderLayout.WEST);
 
-        JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_1, 0));
-        pagination.setBackground(BG_SURFACE);
-        pagination.add(createPageButton("1", true));
-        pagination.add(createPageButton("2", false));
-        pagination.add(createPageButton("3", false));
-        pagination.add(createPageButton(">", false));
-        footer.add(pagination, BorderLayout.EAST);
-
         return footer;
-    }
-
-    private JPanel createFooterTip() {
-        JPanel tip = new JPanel(new BorderLayout(SPACE_6, 0));
-        tip.setBackground(BG_PAGE);
-        tip.setAlignmentX(Component.LEFT_ALIGNMENT);
-        tip.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER, 1),
-                new EmptyBorder(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
-        ));
-
-        JLabel lblIcon = new JLabel("Q");
-        lblIcon.setFont(fontBold(FONT_SIZE_XL));
-        lblIcon.setForeground(PRIMARY);
-        tip.add(lblIcon, BorderLayout.WEST);
-
-        JPanel textPanel = new JPanel();
-        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.setBackground(BG_PAGE);
-
-        JLabel lblTipTitle = new JLabel("Pro Tip: Keep your profile updated");
-        lblTipTitle.setFont(fontBold(FONT_SIZE_BASE));
-        lblTipTitle.setForeground(TEXT_PRIMARY);
-
-        JLabel lblTipDesc = new JLabel("Companies are 3x more likely to view candidates who have updated their CV in the last 30 days.");
-        lblTipDesc.setFont(body());
-        lblTipDesc.setForeground(TEXT_SECONDARY);
-
-        textPanel.add(lblTipTitle);
-        textPanel.add(Box.createRigidArea(new Dimension(0, SPACE_1)));
-        textPanel.add(lblTipDesc);
-        tip.add(textPanel, BorderLayout.CENTER);
-
-        return tip;
     }
 
     public static void main(String[] args) {

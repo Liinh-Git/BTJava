@@ -1,21 +1,26 @@
 package org.jobportal.view.candidate;
 
-import org.jobportal.view.util.DesignSystem;
+import org.jobportal.bll.impl.CategoryService;
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.dto.RecruitmentDTO;
+import org.jobportal.model.Category;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.util.List;
 
 import static org.jobportal.view.util.DesignSystem.*;
 
-/**
- * Job search panel matching t_m_ki_m_vi_c_l_m_minimal stitch design.
- * Layout: search bar card + category filter + "Recommended Jobs" title
- *         + 2-column grid of job cards + pagination.
- * Flat design, 1px borders, no shadows.
- */
 public class JobSearchPanel extends JPanel {
+
+    private final RecruitmentService recruitmentService = new RecruitmentService();
+    private final CategoryService categoryService = new CategoryService();
+    private JTextField txtSearch;
+    private JComboBox<String> cbCategory;
+    private JPanel jobGrid;
+    private List<Category> categories;
 
     public JobSearchPanel() {
         setLayout(new BorderLayout());
@@ -23,22 +28,56 @@ public class JobSearchPanel extends JPanel {
 
         JPanel mainContent = createContentPanel();
 
-        // 1. thanh tim kiem
         mainContent.add(createSearchSection());
         mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // 2. tieu de "Recommended Jobs" va toggle view
         mainContent.add(createSectionHeader());
         mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        // 3. luoi the cong viec 2 cot
-        mainContent.add(createJobGrid());
+        jobGrid = createJobGrid();
+        mainContent.add(jobGrid);
         mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // 4. phan trang
         mainContent.add(createPagination());
 
         add(createScrollPane(mainContent), BorderLayout.CENTER);
+
+        loadCategories();
+        loadJobs();
+    }
+
+    private void loadCategories() {
+        categories = categoryService.getAllCategories();
+        cbCategory.removeAllItems();
+        cbCategory.addItem("All Categories");
+        for (Category cat : categories) {
+            cbCategory.addItem(cat.getCategoryName());
+        }
+    }
+
+    private void loadJobs() {
+        String keyword = txtSearch.getText().trim();
+        if (keyword.equals("Job title, keywords, or company")) keyword = "";
+        String categoryId = null;
+        int selected = cbCategory.getSelectedIndex();
+        if (selected > 0 && categories != null && selected - 1 < categories.size()) {
+            categoryId = categories.get(selected - 1).getCategoryId();
+        }
+        List<RecruitmentDTO> jobs = recruitmentService.searchRecruitments(keyword, categoryId, 1, 20);
+
+        jobGrid.removeAll();
+        for (RecruitmentDTO job : jobs) {
+            jobGrid.add(createJobCard(
+                    job.getTitle(),
+                    job.getCompanyName(),
+                    job.getSalary() != null ? String.valueOf(job.getSalary()) : "",
+                    job.getLocation() != null ? job.getLocation() : "",
+                    job.getDescription() != null ? job.getDescription() : "",
+                    new String[]{job.getJobType() != null ? job.getJobType().name() : "", job.getCategoryName() != null ? job.getCategoryName() : ""}
+            ));
+        }
+        jobGrid.revalidate();
+        jobGrid.repaint();
     }
 
     private JPanel createSearchSection() {
@@ -54,7 +93,6 @@ public class JobSearchPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 0, 0);
 
-        // dong nhan
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.6;
         gbc.insets = new Insets(0, 0, SPACE_2, SPACE_5);
         JLabel lblSearch = new JLabel("What job are you looking for?");
@@ -71,13 +109,12 @@ public class JobSearchPanel extends JPanel {
 
         gbc.gridx = 2; gbc.weightx = 0.15;
         gbc.insets = new Insets(0, 0, SPACE_2, 0);
-        card.add(new JLabel(""), gbc); // spacer
+        card.add(new JLabel(""), gbc);
 
-        // dong input
         gbc.gridy = 1;
         gbc.gridx = 0; gbc.weightx = 0.6;
         gbc.insets = new Insets(0, 0, 0, SPACE_5);
-        JTextField txtSearch = new JTextField("Job title, keywords, or company");
+        txtSearch = new JTextField("Job title, keywords, or company");
         txtSearch.setFont(body());
         txtSearch.setForeground(TEXT_MUTED);
         txtSearch.setPreferredSize(new Dimension(0, INPUT_HEIGHT));
@@ -89,7 +126,7 @@ public class JobSearchPanel extends JPanel {
 
         gbc.gridx = 1; gbc.weightx = 0.25;
         gbc.insets = new Insets(0, 0, 0, SPACE_3);
-        JComboBox<String> cbCategory = new JComboBox<>(new String[]{"All Categories", "IT - Phần mềm", "Marketing", "Kế toán"});
+        cbCategory = new JComboBox<>();
         cbCategory.setFont(body());
         cbCategory.setBackground(BG_SURFACE);
         cbCategory.setPreferredSize(new Dimension(0, INPUT_HEIGHT));
@@ -99,9 +136,9 @@ public class JobSearchPanel extends JPanel {
         gbc.insets = new Insets(0, 0, 0, 0);
         JButton btnSearch = createPrimaryButton("Search");
         btnSearch.setPreferredSize(new Dimension(100, INPUT_HEIGHT));
+        btnSearch.addActionListener(e -> loadJobs());
         card.add(btnSearch, gbc);
 
-        // dong popular tags
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 3;
         gbc.insets = new Insets(SPACE_4, 0, 0, 0);
         JPanel tagsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
@@ -137,7 +174,6 @@ public class JobSearchPanel extends JPanel {
         lblTitle.setForeground(TEXT_PRIMARY);
         header.add(lblTitle, BorderLayout.WEST);
 
-        // toggle view icons (grid / list)
         JPanel viewToggle = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_1, 0));
         viewToggle.setBackground(BG_PAGE);
 
@@ -166,27 +202,6 @@ public class JobSearchPanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(0, 2, SPACE_5, SPACE_5));
         grid.setBackground(BG_PAGE);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        grid.add(createJobCard("Senior UI/UX Designer", "Aperture Systems",
-                "$120k - $150k", "San Francisco (Hybrid)",
-                "We are looking for a creative UI/UX Designer to join our team. You will be responsible for creating amazing user experiences and...",
-                new String[]{"Full-time", "Remote-friendly"}));
-
-        grid.add(createJobCard("Frontend Developer", "Nebula Cloud Services",
-                "$90k - $130k", "Remote, USA",
-                "Join our fast-growing engineering team as a Frontend Developer. You'll be working with React, Tailwind CSS, and TypeScript to bui...",
-                new String[]{"Contract", "Junior-Mid"}));
-
-        grid.add(createJobCard("Product Manager", "Zenith FinTech",
-                "$140k - $180k", "New York, NY",
-                "Zenith FinTech is looking for a strategic Product Manager to lead our mobile banking initiative. You will drive the product vision and...",
-                new String[]{"Full-time", "Senior"}));
-
-        grid.add(createJobCard("Sustainability Analyst", "GreenPath Solutions",
-                "$75k - $95k", "Austin, TX",
-                "Passionate about the planet? We are seeking an Analyst to evaluate corporate carbon footprints and suggest actionable...",
-                new String[]{"Full-time", "Entry Level"}));
-
         return grid;
     }
 
@@ -199,12 +214,10 @@ public class JobSearchPanel extends JPanel {
                 new EmptyBorder(CARD_PADDING, CARD_PADDING, CARD_PADDING, CARD_PADDING)
         ));
 
-        // dong 1: icon + title + company + bookmark
         JPanel topRow = new JPanel(new BorderLayout(SPACE_3, 0));
         topRow.setBackground(BG_SURFACE);
         topRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // icon cong ty (placeholder)
         JLabel iconCompany = new JLabel("▣");
         iconCompany.setFont(fontRegular(24));
         iconCompany.setForeground(PRIMARY);
@@ -223,16 +236,9 @@ public class JobSearchPanel extends JPanel {
         titlePanel.add(lblCompany);
         topRow.add(titlePanel, BorderLayout.CENTER);
 
-        JLabel lblBookmark = new JLabel("☐");
-        lblBookmark.setFont(fontRegular(20));
-        lblBookmark.setForeground(TEXT_MUTED);
-        lblBookmark.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        topRow.add(lblBookmark, BorderLayout.EAST);
-
         card.add(topRow);
         card.add(Box.createRigidArea(new Dimension(0, SPACE_3)));
 
-        // dong 2: salary + location
         JPanel metaRow = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_6, 0));
         metaRow.setBackground(BG_SURFACE);
         metaRow.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -250,7 +256,6 @@ public class JobSearchPanel extends JPanel {
         card.add(metaRow);
         card.add(Box.createRigidArea(new Dimension(0, SPACE_3)));
 
-        // dong 3: mo ta ngan
         JTextArea txtDesc = new JTextArea(description);
         txtDesc.setFont(body());
         txtDesc.setForeground(TEXT_SECONDARY);
@@ -264,7 +269,6 @@ public class JobSearchPanel extends JPanel {
         card.add(txtDesc);
         card.add(Box.createRigidArea(new Dimension(0, SPACE_4)));
 
-        // separator
         JSeparator sep = new JSeparator();
         sep.setForeground(BORDER_LIGHT);
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
@@ -272,7 +276,6 @@ public class JobSearchPanel extends JPanel {
         card.add(sep);
         card.add(Box.createRigidArea(new Dimension(0, SPACE_3)));
 
-        // dong 4: tags + button "Details & Apply"
         JPanel bottomRow = new JPanel(new BorderLayout());
         bottomRow.setBackground(BG_SURFACE);
         bottomRow.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -280,6 +283,7 @@ public class JobSearchPanel extends JPanel {
         JPanel tagsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
         tagsPanel.setBackground(BG_SURFACE);
         for (String tag : tags) {
+            if (tag == null || tag.isEmpty()) continue;
             JLabel chip = new JLabel(tag);
             chip.setFont(bodySmall());
             chip.setOpaque(true);
@@ -318,7 +322,6 @@ public class JobSearchPanel extends JPanel {
         return paginationPanel;
     }
 
-    // ham test giao dien doc lap
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Candidate - Job Search");
