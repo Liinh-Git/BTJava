@@ -5,58 +5,58 @@ import org.jobportal.enums.Role;
 import org.jobportal.model.User;
 
 public interface IUserDAO {
-    // Chức năng: Tìm user theo username và password
-    // Đầu vào: username (String), password (String)
-    // Đầu ra: User
-    User findByUsernameAndPassword(String username, String password);
+    // Ch?c nang: T�m user theo username v� password hash
+    // �?u v�o: username (String), passwordHash (String)
+    // �?u ra: User
+    User findByUsernameAndPassword(String username, String passwordHash);
 
-    // Chức năng: Tìm user theo id
-    // Đầu vào: userId (String)
-    // Đầu ra: User
+    // Ch?c nang: T�m user theo id
+    // �?u v�o: userId (String)
+    // �?u ra: User
     User findById(String userId);
 
-    // Chức năng: Lấy danh sách user có lọc
-    // Đầu vào: roleFilter (Role), statusFilter (Boolean)
-    // Đầu ra: List<User>
+    // Ch?c nang: L?y danh s�ch user c� l?c
+    // �?u v�o: roleFilter (Role), statusFilter (Boolean)
+    // �?u ra: List<User>
     List<User> findAll(Role roleFilter, Boolean statusFilter);
 
-    // Chức năng: Thêm user
-    // Đầu vào: user (User)
-    // Đầu ra: boolean
+    // Ch?c nang: Th�m user
+    // �?u v�o: user (User)
+    // �?u ra: boolean
     boolean insert(User user);
 
-    // Chức năng: Cập nhật user
-    // Đầu vào: user (User)
-    // Đầu ra: boolean
+    // Ch?c nang: C?p nh?t user
+    // �?u v�o: user (User)
+    // �?u ra: boolean
     boolean update(User user);
 
-    // Chức năng: Cập nhật trạng thái user
-    // Đầu vào: userId (String), isActive (boolean)
-    // Đầu ra: boolean
+    // Ch?c nang: C?p nh?t tr?ng th�i user
+    // �?u v�o: userId (String), isActive (boolean)
+    // �?u ra: boolean
     boolean updateStatus(String userId, boolean isActive);
 
-    // Chức năng: Cập nhật mật khẩu
-    // Đầu vào: userId (String), newPassword (String)
-    // Đầu ra: boolean
-    boolean updatePassword(String userId, String newPassword);
+    // Ch?c nang: C?p nh?t m?t kh?u d� hash
+    // �?u v�o: userId (String), passwordHash (String)
+    // �?u ra: boolean
+    boolean updatePassword(String userId, String passwordHash);
 
-    // Chức năng: Xóa user
-    // Đầu vào: userId (String)
-    // Đầu ra: boolean
+    // Ch?c nang: X�a user
+    // �?u v�o: userId (String)
+    // �?u ra: boolean
     boolean delete(String userId);
 
-    // Chức năng: Kiểm tra tồn tại username
-    // Đầu vào: username (String)
-    // Đầu ra: boolean
+    // Ch?c nang: Ki?m tra t?n t?i username
+    // �?u v�o: username (String)
+    // �?u ra: boolean
     boolean existsByUsername(String username);
 
-    // Chức năng: Kiểm tra tồn tại email
-    // Đầu vào: email (String)
-    // Đầu ra: boolean
+    // Ch?c nang: Ki?m tra t?n t?i email
+    // �?u v�o: email (String)
+    // �?u ra: boolean
     boolean existsByEmail(String email);
 
-    // Chức năng: Đếm user theo role
-    // Đầu vào: role (Role)
-    // Đầu ra: int
+    // Ch?c nang: �?m user theo role
+    // �?u v�o: role (Role)
+    // �?u ra: int
     int countByRole(Role role);
 }

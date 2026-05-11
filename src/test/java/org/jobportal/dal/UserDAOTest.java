@@ -5,7 +5,9 @@ import org.jobportal.dal.impl.UserDAO;
 import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.enums.Role;
 import org.jobportal.model.User;
+import org.jobportal.utils.PasswordUtils;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserDAOTest extends DalIntegrationTestBase {
@@ -26,7 +28,8 @@ class UserDAOTest extends DalIntegrationTestBase {
         assertNotNull(byId);
         assertEquals(username, byId.getUsername());
 
-        User byLogin = userDAO.findByUsernameAndPassword(username, "MatKhau@123");
+        String hashedPassword = PasswordUtils.hash("MatKhau@123");
+        User byLogin = userDAO.findByUsernameAndPassword(username, hashedPassword);
         assertNotNull(byLogin);
 
         List<User> roleUsers = userDAO.findAll(Role.CANDIDATE, true);
@@ -51,7 +54,8 @@ class UserDAOTest extends DalIntegrationTestBase {
         assertTrue(userDAO.update(user));
 
         assertTrue(userDAO.updateStatus(userId, false));
-        assertTrue(userDAO.updatePassword(userId, "NewPass@123"));
+        String newHashedPassword = PasswordUtils.hash("NewPass@123");
+        assertTrue(userDAO.updatePassword(userId, newHashedPassword));
 
         User reloaded = userDAO.findById(userId);
         assertNotNull(reloaded);

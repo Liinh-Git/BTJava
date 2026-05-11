@@ -11,7 +11,6 @@ import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.enums.Gender;
 import org.jobportal.enums.Role;
 import org.jobportal.model.User;
-import org.jobportal.utils.PasswordUtils;
 
 public class UserDAO implements IUserDAO {
 
@@ -61,10 +60,7 @@ public class UserDAO implements IUserDAO {
     // Đầu ra: User - user tìm thấy
     // Tương tác: Được gọi từ AuthService; sẽ dùng JDBC
     // Ghi chú: Trả về null nếu không tìm thấy
-    public User findByUsernameAndPassword(String username, String password) {
-        // Hash mật khẩu
-        String password_hash = PasswordUtils.hash(password);
-
+    public User findByUsernameAndPassword(String username, String passwordHash) {
         // Bước 1 - Query SELECT theo username và password đã hash
         String sql = "SELECT user_id, username, password_hash, full_name, phone_number, "
                 + "date_of_birth, gender, email, role, is_active, created_at "
@@ -75,7 +71,7 @@ public class UserDAO implements IUserDAO {
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
-            ps.setString(2, password_hash);
+            ps.setString(2, passwordHash);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -293,10 +289,7 @@ public class UserDAO implements IUserDAO {
     // Đầu ra: boolean - true nếu cập nhật thành công
     // Tương tác: Được gọi từ AuthService; sẽ dùng JDBC
     // Ghi chú: Lưu mật khẩu đã hash (do BLL thực hiện hash)
-    public boolean updatePassword(String userId, String newPassword) {
-        // Hash mật khẩu mới
-        String newHashedPassword = PasswordUtils.hash(newPassword);
-
+    public boolean updatePassword(String userId, String passwordHash) {
         // Bước 1 - Tạo câu lệnh UPDATE password
         String sql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
 
@@ -304,7 +297,7 @@ public class UserDAO implements IUserDAO {
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, newHashedPassword);
+            ps.setString(1, passwordHash);
             ps.setString(2, userId);
 
             // Bước 3 - Trả về boolean
@@ -420,3 +413,4 @@ public class UserDAO implements IUserDAO {
         return 0;
     }
 }
+
