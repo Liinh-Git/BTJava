@@ -237,7 +237,9 @@ public class ApplicationDAO implements IApplicationDAO {
     public int countNewApplicantsToday(String employerId) {
         String sql = "SELECT COUNT(*) FROM applications a "
                 + "INNER JOIN recruitments r ON a.recruitment_id = r.recruitment_id "
-                + "WHERE r.employer_id = ? AND DATE(a.applied_date) = CURDATE()";
+                + "WHERE r.employer_id = ? "
+                + "AND a.applied_date >= CURDATE() "
+                + "AND a.applied_date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)";
 
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
