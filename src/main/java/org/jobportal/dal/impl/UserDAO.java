@@ -65,7 +65,7 @@ public class UserDAO implements IUserDAO {
         // Hash mật khẩu
         String password_hash = PasswordUtils.hash(password);
 
-        // Bước 1 - Query SELECT theo username và password
+        // Bước 1 - Query SELECT theo username và password đã hash
         String sql = "SELECT user_id, username, password_hash, full_name, phone_number, "
                 + "date_of_birth, gender, email, role, is_active, created_at "
                 + "FROM users WHERE username = ? AND password_hash = ?";
