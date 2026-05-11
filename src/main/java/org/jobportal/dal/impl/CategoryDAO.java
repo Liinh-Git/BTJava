@@ -1,79 +1,179 @@
 package org.jobportal.dal.impl;
 
-import java.util.Collections;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import org.jobportal.config.DatabaseConfig;
+import org.jobportal.dal.interfaces.ICategoryDAO;
 import org.jobportal.model.Category;
 
-public class CategoryDAO {
-    // Chuc nang: Lay danh sach danh muc
-    // Dau vao: (void)
-    // Dau ra: List<Category> - danh sach danh muc
-    // Tuong tac: Duoc goi tu CategoryService; se dung JDBC
-    // Ghi chu: Tra ve danh sach day du
-    public List<Category> findAll() {
-        // TODO: Buoc 1 - Tao ket noi va query SELECT
-        // TODO: Buoc 2 - Map ResultSet sang list Category
-        // TODO: Buoc 3 - Dong ket noi va tra ve
-        return Collections.emptyList();
+public class CategoryDAO implements ICategoryDAO {
+
+    // Ánh xạ một hàng ResultSet sang đối tượng Category.
+    private Category mapRow(ResultSet rs) throws SQLException {
+        Category category = new Category();
+        category.setCategoryId(rs.getString("category_id"));
+        category.setCategoryName(rs.getString("category_name"));
+        return category;
     }
 
-    // Chuc nang: Tim danh muc theo id
-    // Dau vao: categoryId (String) - ma danh muc
-    // Dau ra: Category - danh muc tim thay
-    // Tuong tac: Duoc goi tu CategoryService; se dung JDBC
-    // Ghi chu: Tra ve null neu khong tim thay
+    // Chức năng: Lấy danh sách danh mục
+    // Đầu vào: (void)
+    // Đầu ra: List<Category> - danh sách danh mục
+    // Tương tác: Được gọi từ CategoryService; sẽ dùng JDBC
+    // Ghi chú: Trả về danh sách đầy đủ, sắp xếp theo tên
+    @Override
+    public List<Category> findAll() {
+        // Bước 1 - Tạo kết nối và query SELECT
+        String sql = "SELECT category_id, category_name FROM categories ORDER BY category_name";
+        List<Category> result = new ArrayList<>();
+
+        // Bước 2 - Map ResultSet sang list Category
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                result.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi khi lấy danh sách category: " + e.getMessage(), e);
+        }
+
+        // Bước 3 - Đóng kết nối và trả về (try-with-resources tự đóng)
+        return result;
+    }
+
+    // Chức năng: Tìm danh mục theo id
+    // Đầu vào: categoryId (String) - mã danh mục
+    // Đầu ra: Category - danh mục tìm thấy
+    // Tương tác: Được gọi từ CategoryService; sẽ dùng JDBC
+    // Ghi chú: Trả về null nếu không tìm thấy
+    @Override
     public Category findById(String categoryId) {
-        // TODO: Buoc 1 - Query SELECT theo categoryId
-        // TODO: Buoc 2 - Map ResultSet sang Category
-        // TODO: Buoc 3 - Tra ve ket qua
+        // Bước 1 - Query SELECT theo categoryId
+        String sql = "SELECT category_id, category_name FROM categories WHERE category_id = ?";
+
+        // Bước 2 - Map ResultSet sang Category
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, categoryId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi khi tìm category theo id: " + e.getMessage(), e);
+        }
+        // Bước 3 - Trả về kết quả
         return null;
     }
 
-    // Chuc nang: Them danh muc
-    // Dau vao: category (Category) - danh muc can them
-    // Dau ra: boolean - true neu them thanh cong
-    // Tuong tac: Duoc goi tu CategoryService; se dung JDBC
-    // Ghi chu: Kiem tra trung ten truoc khi insert
+    // Chức năng: Thêm danh mục
+    // Đầu vào: category (Category) - danh mục cần thêm
+    // Đầu ra: boolean - true nếu thêm thành công
+    // Tương tác: Được gọi từ CategoryService; sẽ dùng JDBC
+    // Ghi chú: Kiểm tra trùng tên trước khi insert (do BLL thực hiện)
+    @Override
     public boolean insert(Category category) {
-        // TODO: Buoc 1 - Tao cau lenh INSERT
-        // TODO: Buoc 2 - Thuc thi va lay ket qua
-        // TODO: Buoc 3 - Tra ve boolean
-        return false;
+        // Bước 1 - Tạo câu lệnh INSERT
+        String sql = "INSERT INTO categories (category_id, category_name) VALUES (?, ?)";
+
+        // Bước 2 - Thực thi và lấy kết quả
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, category.getCategoryId());
+            ps.setString(2, category.getCategoryName());
+
+            // Bước 3 - Trả về boolean
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi khi thêm category: " + e.getMessage(), e);
+        }
     }
 
-    // Chuc nang: Cap nhat danh muc
-    // Dau vao: category (Category) - danh muc can cap nhat
-    // Dau ra: boolean - true neu cap nhat thanh cong
-    // Tuong tac: Duoc goi tu CategoryService; se dung JDBC
-    // Ghi chu: Cap nhat theo categoryId
+    // Chức năng: Cập nhật danh mục
+    // Đầu vào: category (Category) - danh mục cần cập nhật
+    // Đầu ra: boolean - true nếu cập nhật thành công
+    // Tương tác: Được gọi từ CategoryService; sẽ dùng JDBC
+    // Ghi chú: Cập nhật theo categoryId
+    @Override
     public boolean update(Category category) {
-        // TODO: Buoc 1 - Tao cau lenh UPDATE
-        // TODO: Buoc 2 - Thuc thi va lay ket qua
-        // TODO: Buoc 3 - Tra ve boolean
-        return false;
+        // Bước 1 - Tạo câu lệnh UPDATE
+        String sql = "UPDATE categories SET category_name = ? WHERE category_id = ?";
+
+        // Bước 2 - Thực thi và lấy kết quả
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, category.getCategoryName());
+            ps.setString(2, category.getCategoryId());
+
+            // Bước 3 - Trả về boolean
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi khi cập nhật category: " + e.getMessage(), e);
+        }
     }
 
-    // Chuc nang: Xoa danh muc
-    // Dau vao: categoryId (String) - ma danh muc
-    // Dau ra: boolean - true neu xoa thanh cong
-    // Tuong tac: Duoc goi tu CategoryService; se dung JDBC
-    // Ghi chu: Can dam bao khong co recruitment lien ket
+    // Chức năng: Xóa danh mục
+    // Đầu vào: categoryId (String) - mã danh mục
+    // Đầu ra: boolean - true nếu xóa thành công
+    // Tương tác: Được gọi từ CategoryService; sẽ dùng JDBC
+    // Ghi chú: Cần đảm bảo không có recruitment liên kết (BLL kiểm tra countByCategory trước)
+    @Override
     public boolean delete(String categoryId) {
-        // TODO: Buoc 1 - Tao cau lenh DELETE
-        // TODO: Buoc 2 - Thuc thi va lay ket qua
-        // TODO: Buoc 3 - Tra ve boolean
-        return false;
+        // Bước 1 - Tạo câu lệnh DELETE
+        String sql = "DELETE FROM categories WHERE category_id = ?";
+
+        // Bước 2 - Thực thi và lấy kết quả
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, categoryId);
+
+            // Bước 3 - Trả về boolean
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi khi xóa category: " + e.getMessage(), e);
+        }
     }
 
-    // Chuc nang: Kiem tra ton tai theo ten
-    // Dau vao: categoryName (String) - ten danh muc
-    // Dau ra: boolean - true neu da ton tai
-    // Tuong tac: Duoc goi tu CategoryService; se dung JDBC
-    // Ghi chu: Dung de kiem tra trung ten
+    // Chức năng: Kiểm tra tồn tại theo tên
+    // Đầu vào: categoryName (String) - tên danh mục
+    // Đầu ra: boolean - true nếu đã tồn tại
+    // Tương tác: Được gọi từ CategoryService; sẽ dùng JDBC
+    // Ghi chú: Dùng để kiểm tra trùng tên (không phân biệt hoa/thường)
+    @Override
     public boolean existsByName(String categoryName) {
-        // TODO: Buoc 1 - Query COUNT theo categoryName
-        // TODO: Buoc 2 - Doc ket qua
-        // TODO: Buoc 3 - Tra ve boolean
+        // Bước 1 - Query COUNT theo categoryName (LOWER để không phân biệt hoa/thường)
+        String sql = "SELECT COUNT(*) FROM categories WHERE LOWER(category_name) = LOWER(?)";
+
+        // Bước 2 - Đọc kết quả
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, categoryName);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi khi kiểm tra tên category: " + e.getMessage(), e);
+        }
+        // Bước 3 - Trả về boolean
         return false;
     }
 }

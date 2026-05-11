@@ -4,27 +4,33 @@ import java.util.List;
 import org.jobportal.model.Notification;
 
 public interface INotificationDAO {
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Lay danh sach thong bao theo receiver
-    // Dau vao: receiverId (String)
-    // Dau ra: List<Notification>
+    // LƯU Ý ĐẶC BIỆT: Chức năng Notification CHƯA THỰC HIỆN IMPLEMENT ở giai đoạn
+    // này.
+    // Hiện tại chỉ tạo prototype/skeleton và TODO để dev triển khai sau.
+    // Không viết logic insert/update/select thật và không nối Notification vào flow
+    // xử lý chính ở task này.
+    // Chức năng: Lấy danh sách thông báo theo receiver
+    // Đầu vào: receiverId (String)
+    // Đầu ra: List<Notification>
     List<Notification> findByReceiverId(String receiverId);
 
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Them thong bao
-    // Dau vao: notification (Notification)
-    // Dau ra: boolean
+    // LƯU Ý ĐẶC BIỆT: Chức năng Notification CHƯA THỰC HIỆN IMPLEMENT ở giai đoạn
+    // này.
+    // Hiện tại chỉ tạo prototype/skeleton và TODO để dev triển khai sau.
+    // Không viết logic insert/update/select thật và không nối Notification vào flow
+    // xử lý chính ở task này.
+    // Chức năng: Thêm thông báo
+    // Đầu vào: notification (Notification)
+    // Đầu ra: boolean
     boolean insert(Notification notification);
 
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Cap nhat trang thai da doc
-    // Dau vao: notificationId (String), isRead (boolean)
-    // Dau ra: boolean
+    // LƯU Ý ĐẶC BIỆT: Chức năng Notification CHƯA THỰC HIỆN IMPLEMENT ở giai đoạn
+    // này.
+    // Hiện tại chỉ tạo prototype/skeleton và TODO để dev triển khai sau.
+    // Không viết logic insert/update/select thật và không nối Notification vào flow
+    // xử lý chính ở task này.
+    // Chức năng: Cập nhật trạng thái đã đọc
+    // Đầu vào: notificationId (String), isRead (boolean)
+    // Đầu ra: boolean
     boolean updateIsRead(String notificationId, boolean isRead);
 }

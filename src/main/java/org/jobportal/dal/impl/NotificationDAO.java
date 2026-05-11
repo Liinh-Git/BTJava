@@ -2,51 +2,59 @@ package org.jobportal.dal.impl;
 
 import java.util.Collections;
 import java.util.List;
+import org.jobportal.dal.interfaces.INotificationDAO;
 import org.jobportal.model.Notification;
 
-public class NotificationDAO {
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Lay danh sach thong bao theo receiver
-    // Dau vao: receiverId (String) - ma nguoi nhan
-    // Dau ra: List<Notification> - danh sach thong bao
-    // Tuong tac: Duoc goi tu NotificationService; se dung JDBC
-    // Ghi chu: Sap xep giam dan theo thoi gian
+public class NotificationDAO implements INotificationDAO {
+
+    // LƯU Ý ĐẶC BIỆT: Chức năng Notification CHƯA THỰC HIỆN IMPLEMENT ở giai đoạn này.
+    // Hiện tại chỉ tạo prototype/skeleton và TODO để dev triển khai sau.
+    // Không viết logic insert/update/select thật và không nối Notification vào flow xử lý chính ở task này.
+
+    // Chức năng: Lấy danh sách thông báo theo receiver
+    // Đầu vào: receiverId (String) - mã người nhận
+    // Đầu ra: List<Notification> - danh sách thông báo
+    // Tương tác: Được gọi từ NotificationService; sẽ dùng JDBC
+    // Ghi chú: Sắp xếp giảm dần theo thời gian
+    @Override
     public List<Notification> findByReceiverId(String receiverId) {
-        // TODO: Buoc 1 - Query SELECT theo receiverId
-        // TODO: Buoc 2 - Map ResultSet sang list Notification
-        // TODO: Buoc 3 - Tra ve danh sach
+        // TODO: Bước 1 - Query SELECT theo receiverId
+        // TODO: Bước 2 - Map ResultSet sang list Notification
+        // TODO: Bước 3 - Trả về danh sách
         return Collections.emptyList();
     }
 
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Them thong bao
-    // Dau vao: notification (Notification) - thong bao can them
-    // Dau ra: boolean - true neu insert thanh cong
-    // Tuong tac: Duoc goi tu NotificationService; se dung JDBC
-    // Ghi chu: Tao notificationId va thoi gian gui
+    // LƯU Ý ĐẶC BIỆT: Chức năng Notification CHƯA THỰC HIỆN IMPLEMENT ở giai đoạn này.
+    // Hiện tại chỉ tạo prototype/skeleton và TODO để dev triển khai sau.
+    // Không viết logic insert/update/select thật và không nối Notification vào flow xử lý chính ở task này.
+
+    // Chức năng: Thêm thông báo
+    // Đầu vào: notification (Notification) - thông báo cần thêm
+    // Đầu ra: boolean - true nếu insert thành công
+    // Tương tác: Được gọi từ NotificationService; sẽ dùng JDBC
+    // Ghi chú: Tạo notificationId và thời gian gửi
+    @Override
     public boolean insert(Notification notification) {
-        // TODO: Buoc 1 - Tao cau lenh INSERT notification
-        // TODO: Buoc 2 - Thuc thi va lay ket qua
-        // TODO: Buoc 3 - Tra ve boolean
+        // TODO: Bước 1 - Tạo câu lệnh INSERT notification
+        // TODO: Bước 2 - Thực thi và lấy kết quả
+        // TODO: Bước 3 - Trả về boolean
         return false;
     }
 
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Cap nhat trang thai da doc
-    // Dau vao: notificationId (String) - ma thong bao; isRead (boolean) - trang thai
-    // Dau ra: boolean - true neu cap nhat thanh cong
-    // Tuong tac: Duoc goi tu NotificationService; se dung JDBC
-    // Ghi chu: Update cot is_read
+    // LƯU Ý ĐẶC BIỆT: Chức năng Notification CHƯA THỰC HIỆN IMPLEMENT ở giai đoạn này.
+    // Hiện tại chỉ tạo prototype/skeleton và TODO để dev triển khai sau.
+    // Không viết logic insert/update/select thật và không nối Notification vào flow xử lý chính ở task này.
+
+    // Chức năng: Cập nhật trạng thái đã đọc
+    // Đầu vào: notificationId (String) - mã thông báo; isRead (boolean) - trạng thái
+    // Đầu ra: boolean - true nếu cập nhật thành công
+    // Tương tác: Được gọi từ NotificationService; sẽ dùng JDBC
+    // Ghi chú: Update cột is_read
+    @Override
     public boolean updateIsRead(String notificationId, boolean isRead) {
-        // TODO: Buoc 1 - Tao cau lenh UPDATE is_read
-        // TODO: Buoc 2 - Thuc thi va lay ket qua
-        // TODO: Buoc 3 - Tra ve boolean
+        // TODO: Bước 1 - Tạo câu lệnh UPDATE is_read
+        // TODO: Bước 2 - Thực thi và lấy kết quả
+        // TODO: Bước 3 - Trả về boolean
         return false;
     }
 }

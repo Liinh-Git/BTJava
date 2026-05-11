@@ -3,18 +3,18 @@ package org.jobportal.dal.interfaces;
 import org.jobportal.model.CV;
 
 public interface ICVDAO {
-    // Chuc nang: Lay CV theo candidateId
-    // Dau vao: candidateId (String)
-    // Dau ra: CV
+    // Chức năng: Lấy CV theo candidateId
+    // Đầu vào: candidateId (String)
+    // Đầu ra: CV
     CV findByCandidateId(String candidateId);
 
-    // Chuc nang: Them CV
-    // Dau vao: cv (CV)
-    // Dau ra: boolean
+    // Chức năng: Thêm CV
+    // Đầu vào: cv (CV)
+    // Đầu ra: boolean
     boolean insert(CV cv);
 
-    // Chuc nang: Cap nhat CV
-    // Dau vao: cv (CV)
-    // Dau ra: boolean
+    // Chức năng: Cập nhật CV
+    // Đầu vào: cv (CV)
+    // Đầu ra: boolean
     boolean update(CV cv);
 }
