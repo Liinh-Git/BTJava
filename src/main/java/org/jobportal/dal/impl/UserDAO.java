@@ -57,13 +57,14 @@ public class UserDAO implements IUserDAO {
     }
 
     // Chức năng: Tìm user theo username và password
-    // Đầu vào: username (String) - tên đăng nhập; password (String) - mật khẩu đã
-    // hash
+    // Đầu vào: username (String) - tên đăng nhập; password (String) - mật khẩu
     // Đầu ra: User - user tìm thấy
     // Tương tác: Được gọi từ AuthService; sẽ dùng JDBC
     // Ghi chú: Trả về null nếu không tìm thấy
     public User findByUsernameAndPassword(String username, String password) {
+        // Hash mật khẩu
         String password_hash = PasswordUtils.hash(password);
+
         // Bước 1 - Query SELECT theo username và password
         String sql = "SELECT user_id, username, password_hash, full_name, phone_number, "
                 + "date_of_birth, gender, email, role, is_active, created_at "
