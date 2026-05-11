@@ -288,8 +288,7 @@ public class UserDAO implements IUserDAO {
     }
 
     // Chức năng: Cập nhật mật khẩu
-    // Đầu vào: userId (String) - mã user; newHashedPassword (String) - mật khẩu đã
-    // hash
+    // Đầu vào: userId (String) - mã user; newPassword (String) - mật khẩu
     // Đầu ra: boolean - true nếu cập nhật thành công
     // Tương tác: Được gọi từ AuthService; sẽ dùng JDBC
     // Ghi chú: Lưu mật khẩu đã hash (do BLL thực hiện hash)

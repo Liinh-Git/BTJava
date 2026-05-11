@@ -36,9 +36,9 @@ public interface IUserDAO {
     boolean updateStatus(String userId, boolean isActive);
 
     // Chức năng: Cập nhật mật khẩu
-    // Đầu vào: userId (String), newHashedPassword (String)
+    // Đầu vào: userId (String), newPassword (String)
     // Đầu ra: boolean
-    boolean updatePassword(String userId, String newHashedPassword);
+    boolean updatePassword(String userId, String newPassword);
 
     // Chức năng: Xóa user
     // Đầu vào: userId (String)
