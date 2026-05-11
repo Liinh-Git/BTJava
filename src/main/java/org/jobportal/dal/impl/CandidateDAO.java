@@ -5,9 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.jobportal.config.DatabaseConfig;
+import org.jobportal.dal.interfaces.ICandidateDAO;
 import org.jobportal.model.Candidate;
 
-public class CandidateDAO {
+public class CandidateDAO implements ICandidateDAO {
 
     // Ánh xạ một hàng ResultSet sang đối tượng Candidate.
     private Candidate mapRow(ResultSet rs) throws SQLException {

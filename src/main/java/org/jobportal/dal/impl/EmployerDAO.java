@@ -5,9 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.jobportal.config.DatabaseConfig;
+import org.jobportal.dal.interfaces.IEmployerDAO;
 import org.jobportal.model.Employer;
 
-public class EmployerDAO {
+public class EmployerDAO implements IEmployerDAO {
 
     // Ánh xạ một hàng ResultSet sang đối tượng Employer.
     private Employer mapRow(ResultSet rs) throws SQLException {
@@ -32,7 +33,7 @@ public class EmployerDAO {
 
         // Bước 2 - Map ResultSet sang Employer
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, userId);
 
@@ -60,7 +61,7 @@ public class EmployerDAO {
 
         // Bước 2 - Map ResultSet sang Employer
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, employerId);
 
@@ -88,7 +89,7 @@ public class EmployerDAO {
 
         // Bước 2 - Thực thi và lấy kết quả
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, employer.getEmployerId());
             ps.setString(2, employer.getUserId());
@@ -108,7 +109,8 @@ public class EmployerDAO {
     // Đầu vào: employer (Employer) - employer cần cập nhật
     // Đầu ra: boolean - true nếu update thành công
     // Tương tác: Được gọi từ UserService; sẽ dùng JDBC
-    // Ghi chú: Cập nhật company_name, company_address, company_description theo employerId
+    // Ghi chú: Cập nhật company_name, company_address, company_description theo
+    // employerId
     public boolean update(Employer employer) {
         // Bước 1 - Tạo câu lệnh UPDATE
         String sql = "UPDATE employers SET company_name = ?, company_address = ?, company_description = ? "
@@ -116,7 +118,7 @@ public class EmployerDAO {
 
         // Bước 2 - Thực thi và lấy kết quả
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, employer.getCompanyName());
             ps.setString(2, employer.getCompanyAddress());
@@ -142,7 +144,7 @@ public class EmployerDAO {
 
         // Bước 2 - Thực thi và lấy kết quả
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, employerId);
 
