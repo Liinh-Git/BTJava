@@ -2,6 +2,7 @@ package org.jobportal.view.common;
 
 import org.jobportal.dto.UserDTO;
 import org.jobportal.utils.SessionManager;
+import org.jobportal.view.common.NotificationPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,6 +45,18 @@ public class HeaderPanel extends JPanel {
         rightActionPanel.add(btnUser);
 
         add(rightActionPanel, BorderLayout.EAST);
+
+        btnNotification.addActionListener(e -> openNotificationDialog());
+    }
+
+    private void openNotificationDialog() {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(owner, "Thong bao", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(520, 600);
+        dialog.setLocationRelativeTo(owner);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(new NotificationPanel(), BorderLayout.CENTER);
+        dialog.setVisible(true);
     }
 
     // ham ho tro tao nut bam trong suot, khong vien de giong voi cac icon tren web

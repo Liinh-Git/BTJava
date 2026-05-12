@@ -1,6 +1,7 @@
 package org.jobportal.bll.impl;
 
 import org.jobportal.bll.interfaces.IRecruitmentService;
+import org.jobportal.bll.interfaces.INotificationService;
 import org.jobportal.dal.impl.ApplicationDAO;
 import org.jobportal.dal.impl.CategoryDAO;
 import org.jobportal.dal.impl.EmployerDAO;
@@ -39,6 +40,7 @@ public class RecruitmentService implements IRecruitmentService {
     private final IEmployerDAO    employerDAO    = new EmployerDAO();
     private final ICategoryDAO    categoryDAO    = new CategoryDAO();
     private final SessionManager  session        = SessionManager.getInstance();
+    private final INotificationService notificationService = new NotificationService();
 
     // ------------------------------------------------------------------
     // ID generation
@@ -231,8 +233,20 @@ public class RecruitmentService implements IRecruitmentService {
             System.err.println("[RecruitmentService] adminModerate: decision phai la APPROVED hoac REJECTED.");
             return false;
         }
-        // TODO: Sau nay goi NotificationService de thong bao cho Employer
-        return recruitmentDAO.updateAdminStatus(recruitmentId, decision);
+        boolean updated = recruitmentDAO.updateAdminStatus(recruitmentId, decision);
+        if (updated) {
+            Recruitment r = recruitmentDAO.findById(recruitmentId);
+            if (r != null) {
+                Employer employer = employerDAO.findById(r.getEmployerId());
+                String receiverUserId = employer != null ? employer.getUserId() : null;
+                if (receiverUserId != null) {
+                    String content = "Tin tuyen dung \"" + r.getTitle() + "\" da "
+                            + ("APPROVED".equals(decision) ? "duoc duyet." : "bi tu choi.");
+                    notificationService.sendNotification(session.getCurrentUserId(), receiverUserId, content);
+                }
+            }
+        }
+        return updated;
     }
 
     // ------------------------------------------------------------------

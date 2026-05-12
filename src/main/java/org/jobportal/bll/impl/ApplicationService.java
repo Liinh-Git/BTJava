@@ -1,12 +1,15 @@
 package org.jobportal.bll.impl;
 
 import org.jobportal.bll.interfaces.IApplicationService;
+import org.jobportal.bll.interfaces.INotificationService;
 import org.jobportal.dal.impl.ApplicationDAO;
 import org.jobportal.dal.impl.CandidateDAO;
+import org.jobportal.dal.impl.EmployerDAO;
 import org.jobportal.dal.impl.RecruitmentDAO;
 import org.jobportal.dal.impl.UserDAO;
 import org.jobportal.dal.interfaces.IApplicationDAO;
 import org.jobportal.dal.interfaces.ICandidateDAO;
+import org.jobportal.dal.interfaces.IEmployerDAO;
 import org.jobportal.dal.interfaces.IRecruitmentDAO;
 import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.dto.ApplicationDTO;
@@ -15,6 +18,7 @@ import org.jobportal.enums.ApplicationStatus;
 import org.jobportal.enums.RecruitmentStatus;
 import org.jobportal.model.Application;
 import org.jobportal.model.Candidate;
+import org.jobportal.model.Employer;
 import org.jobportal.model.Recruitment;
 import org.jobportal.model.User;
 import org.jobportal.utils.SessionManager;
@@ -34,7 +38,9 @@ public class ApplicationService implements IApplicationService {
     private final IRecruitmentDAO recruitmentDAO = new RecruitmentDAO();
     private final IUserDAO        userDAO        = new UserDAO();
     private final ICandidateDAO   candidateDAO   = new CandidateDAO();
+    private final IEmployerDAO    employerDAO    = new EmployerDAO();
     private final SessionManager  session        = SessionManager.getInstance();
+    private final INotificationService notificationService = new NotificationService();
 
     // ------------------------------------------------------------------
     // ID generation
@@ -94,7 +100,16 @@ public class ApplicationService implements IApplicationService {
                 applicationId, candidateId, recruitmentId,
                 ApplicationStatus.PENDING, LocalDateTime.now()
         );
-        return applicationDAO.insert(app);
+        boolean inserted = applicationDAO.insert(app);
+        if (inserted) {
+            String senderUserId = getCandidateUserId(candidateId);
+            String receiverUserId = getEmployerUserId(r.getEmployerId());
+            if (receiverUserId != null) {
+                String content = "Ung vien da ung tuyen vao tin: " + r.getTitle();
+                notificationService.sendNotification(senderUserId, receiverUserId, content);
+            }
+        }
+        return inserted;
     }
 
     // ------------------------------------------------------------------
@@ -323,7 +338,22 @@ public class ApplicationService implements IApplicationService {
         // Sau khi DAL bổ sung phương thức này, hãy thêm lại.
         // TODO: Sau nay goi NotificationService de thong bao cho Candidate
 
-        return applicationDAO.updateStatus(applicationId, newStatus);
+        boolean updated = applicationDAO.updateStatus(applicationId, newStatus);
+        if (updated) {
+            Application target = findApplicationForEmployer(applicationId);
+            if (target != null) {
+                String candidateUserId = getCandidateUserId(target.getCandidateId());
+                Recruitment r = recruitmentDAO.findById(target.getRecruitmentId());
+                String title = (r != null && r.getTitle() != null) ? r.getTitle() : "(khong ro)";
+                String content = (newStatus == ApplicationStatus.APPROVED)
+                        ? "Don ung tuyen cua ban da duoc duyet: " + title
+                        : "Don ung tuyen cua ban da bi tu choi: " + title;
+                if (candidateUserId != null) {
+                    notificationService.sendNotification(session.getCurrentUserId(), candidateUserId, content);
+                }
+            }
+        }
+        return updated;
     }
 
     /**
@@ -368,5 +398,37 @@ public class ApplicationService implements IApplicationService {
                 a.getStatus(),
                 a.getAppliedDate()
         );
+    }
+
+    private String getCandidateUserId(String candidateId) {
+        if (candidateId == null || candidateId.isBlank()) return null;
+        Candidate c = candidateDAO.findById(candidateId);
+        return c != null ? c.getUserId() : null;
+    }
+
+    private String getEmployerUserId(String employerId) {
+        if (employerId == null || employerId.isBlank()) return null;
+        Employer e = employerDAO.findById(employerId);
+        return e != null ? e.getUserId() : null;
+    }
+
+    private Application findApplicationForEmployer(String applicationId) {
+        if (applicationId == null || applicationId.isBlank()) return null;
+        String employerId = session.getEmployerId();
+        if (employerId == null || employerId.isBlank()) return null;
+
+        List<Recruitment> recruitments = recruitmentDAO.findByEmployerId(employerId);
+        if (recruitments == null || recruitments.isEmpty()) return null;
+
+        for (Recruitment r : recruitments) {
+            List<Application> apps = applicationDAO.findByRecruitmentId(r.getRecruitmentId());
+            if (apps == null) continue;
+            for (Application a : apps) {
+                if (applicationId.equals(a.getApplicationId())) {
+                    return a;
+                }
+            }
+        }
+        return null;
     }
 }
