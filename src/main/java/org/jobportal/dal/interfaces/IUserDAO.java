@@ -5,10 +5,10 @@ import org.jobportal.enums.Role;
 import org.jobportal.model.User;
 
 public interface IUserDAO {
-    // Chức năng: Tìm user theo username và password
-    // Đầu vào: username (String), password (String)
+    // Chức năng: Tìm user theo username và password hash
+    // Đầu vào: username (String), passwordHash (String)
     // Đầu ra: User
-    User findByUsernameAndPassword(String username, String password);
+    User findByUsernameAndPassword(String username, String passwordHash);
 
     // Chức năng: Tìm user theo id
     // Đầu vào: userId (String)
@@ -25,7 +25,7 @@ public interface IUserDAO {
     // Đầu ra: boolean
     boolean insert(User user);
 
-    // Chức năng: Cập nhật user
+    // Chức năng: C?p nh?t user
     // Đầu vào: user (User)
     // Đầu ra: boolean
     boolean update(User user);
@@ -35,10 +35,10 @@ public interface IUserDAO {
     // Đầu ra: boolean
     boolean updateStatus(String userId, boolean isActive);
 
-    // Chức năng: Cập nhật mật khẩu
-    // Đầu vào: userId (String), newHashedPassword (String)
+    // Chức năng: Cập nhật mật khẩu hash
+    // Đầu vào: userId (String), passwordHash (String)
     // Đầu ra: boolean
-    boolean updatePassword(String userId, String newHashedPassword);
+    boolean updatePassword(String userId, String passwordHash);
 
     // Chức năng: Xóa user
     // Đầu vào: userId (String)
@@ -55,7 +55,7 @@ public interface IUserDAO {
     // Đầu ra: boolean
     boolean existsByEmail(String email);
 
-    // Chức năng: Đếm user theo role
+    // Chức năng: Tìm user theo role
     // Đầu vào: role (Role)
     // Đầu ra: int
     int countByRole(Role role);

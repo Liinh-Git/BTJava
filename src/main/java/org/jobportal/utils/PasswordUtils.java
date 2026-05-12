@@ -14,7 +14,7 @@ public class PasswordUtils {
             }
             return sb.toString();
         } catch (Exception e) {
-            throw new RuntimeException("Loi hash password", e);
+            throw new RuntimeException("Lỗi hash password", e);
         }
     }
 
