@@ -10,6 +10,7 @@ import org.jobportal.enums.Role;
 import org.jobportal.model.Employer;
 import org.jobportal.model.User;
 import org.jobportal.utils.SessionManager;
+import org.jobportal.utils.ValidationUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -145,6 +146,47 @@ public class UserService implements IUserService {
         employer.setCompanyDescription(description != null ? description.trim() : null);
 
         return employerDAO.update(employer);
+    }
+
+    // ------------------------------------------------------------------
+    // updateUserProfile
+    // ------------------------------------------------------------------
+
+    /**
+     * Cap nhat thong tin ca nhan (ten hien thi, so dien thoai) cho user dang dang nhap.
+     */
+    @Override
+    public boolean updateUserProfile(String fullName, String phoneNumber) {
+        if (!session.isLoggedIn()) {
+            System.err.println("[UserService] updateUserProfile: chua dang nhap.");
+            return false;
+        }
+
+        if (ValidationUtils.isNullOrEmpty(fullName)) {
+            System.err.println("[UserService] updateUserProfile: fullName khong duoc de trong.");
+            return false;
+        }
+
+        String userId = session.getCurrentUserId();
+        User user = userDAO.findById(userId);
+        if (user == null) {
+            System.err.println("[UserService] updateUserProfile: khong tim thay user.");
+            return false;
+        }
+
+        user.setFullName(fullName.trim());
+        String phone = (phoneNumber != null) ? phoneNumber.trim() : null;
+        user.setPhoneNumber((phone != null && !phone.isEmpty()) ? phone : null);
+
+        boolean updated = userDAO.update(user);
+        if (updated) {
+            UserDTO current = session.getCurrentUser();
+            if (current != null) {
+                current.setFullName(user.getFullName());
+                current.setPhoneNumber(user.getPhoneNumber());
+            }
+        }
+        return updated;
     }
 
     // ------------------------------------------------------------------

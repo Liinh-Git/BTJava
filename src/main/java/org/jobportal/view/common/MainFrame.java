@@ -11,6 +11,7 @@ import org.jobportal.view.employer.ApplicationReviewPanel;
 import org.jobportal.view.employer.CompanyInfoPanel;
 import org.jobportal.view.employer.RecruitmentFormPanel;
 import org.jobportal.view.employer.RecruitmentListPanel;
+import org.jobportal.view.common.UserProfilePanel;
 import org.jobportal.enums.Role;
 import org.jobportal.utils.SessionManager;
 
@@ -85,13 +86,13 @@ public class MainFrame extends JFrame {
                 mainContentPanel.add(new RecruitmentListPanel(), "Quản lý tin tuyển dụng");
                 mainContentPanel.add(new ApplicationReviewPanel(), "Danh sách các ứng viên");
                 mainContentPanel.add(new CompanyInfoPanel(), "Thông tin công ty");
-                mainContentPanel.add(new JPanel(), "Thông tin người dùng"); // Placeholder
+                mainContentPanel.add(new UserProfilePanel(), "Thông tin người dùng");
                 firstMenu = "Tổng quan";
             } else if (currentRole == Role.CANDIDATE) {
                 mainContentPanel.add(new JobSearchPanel(), "Tìm việc");
                 mainContentPanel.add(new AppliedJobsPanel(), "Đã ứng tuyển");
                 mainContentPanel.add(new CVEditorPanel(), "Quản lý CV");
-                mainContentPanel.add(new JPanel(), "Thông tin người dùng"); // Placeholder
+                mainContentPanel.add(new UserProfilePanel(), "Thông tin người dùng");
                 firstMenu = "Tìm việc";
             }
 
