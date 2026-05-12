@@ -27,6 +27,9 @@ public class ApplicationReviewPanel extends JPanel {
     private final IRecruitmentService recruitmentService = new RecruitmentService();
     private JPanel tableContainer;
     private JLabel lblCount;
+    private JPanel paginationPanel;
+    private int currentPage = 1;
+    private int pageSize = 10;
 
     public ApplicationReviewPanel() {
         setLayout(new BorderLayout());
@@ -160,10 +163,10 @@ public class ApplicationReviewPanel extends JPanel {
         // header
         tableContainer.add(createTableRow("ỨNG VIÊN", "NGÀY NỘP", "VỊ TRÍ HIỆN TẠI", "TRẠNG THÁI", "THAO TÁC", true, null, null, null));
 
-        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        String employerId = SessionManager.getInstance().getEmployerId();
         List<ApplicationDTO> allApps = new ArrayList<>();
-        if (user != null) {
-            List<RecruitmentDTO> recruitments = recruitmentService.getRecruitmentsByEmployer(user.getUserId());
+        if (employerId != null && !employerId.isEmpty()) {
+            List<RecruitmentDTO> recruitments = recruitmentService.getRecruitmentsByEmployer(employerId);
             if (recruitments != null) {
                 for (RecruitmentDTO r : recruitments) {
                     List<ApplicationDTO> apps = applicationService.getApplicationsByRecruitmentId(r.getRecruitmentId());
@@ -175,7 +178,11 @@ public class ApplicationReviewPanel extends JPanel {
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        for (ApplicationDTO app : allApps) {
+        int start = (currentPage - 1) * pageSize;
+        int end = Math.min(start + pageSize, allApps.size());
+        
+        for (int i = start; i < end; i++) {
+            ApplicationDTO app = allApps.get(i);
             String name = app.getCandidateName();
             String email = (app.getEmail() != null) ? app.getEmail() : "No email";
             String initials = name != null && name.length() > 0 ? name.substring(0, 1).toUpperCase() : "?";
@@ -197,16 +204,47 @@ public class ApplicationReviewPanel extends JPanel {
             lblCount.setForeground(Color.GRAY);
         }
         lblCount.setText("Tổng cộng: " + allApps.size() + " hồ sơ");
-        footer.add(lblCount, BorderLayout.WEST);
-
-        JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        pagination.setBackground(Color.WHITE);
-        pagination.add(createPageBtn("1", true));
-        footer.add(pagination, BorderLayout.EAST);
+        paginationPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        paginationPanel.setBackground(Color.WHITE);
+        updatePaginationUI(allApps.size());
+        footer.add(paginationPanel, BorderLayout.EAST);
 
         tableContainer.add(footer);
         tableContainer.revalidate();
         tableContainer.repaint();
+    }
+    
+    private void updatePaginationUI(int totalItems) {
+        if (paginationPanel == null) return;
+        paginationPanel.removeAll();
+        
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / pageSize));
+
+        JButton btnPrev = createPageBtn("<", true);
+        btnPrev.addActionListener(e -> {
+            if (currentPage > 1) {
+                currentPage--;
+                loadData();
+            }
+        });
+        paginationPanel.add(btnPrev);
+
+        JButton btnPage = createPageBtn(String.valueOf(currentPage), true);
+        btnPage.setBorder(new LineBorder(new Color(13, 110, 253), 2));
+        btnPage.setForeground(new Color(13, 110, 253));
+        paginationPanel.add(btnPage);
+
+        JButton btnNext = createPageBtn(">", true);
+        btnNext.addActionListener(e -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadData();
+            }
+        });
+        paginationPanel.add(btnNext);
+        
+        paginationPanel.revalidate();
+        paginationPanel.repaint();
     }
 
     private JPanel createTableRow(String col1, String col2, String col3, String status, String action, boolean isHeader, String email, String initials, ApplicationDTO app) {

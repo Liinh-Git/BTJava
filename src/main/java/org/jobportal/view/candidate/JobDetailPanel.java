@@ -222,6 +222,13 @@ public class JobDetailPanel extends JPanel {
         btnShare.setPreferredSize(new Dimension(120, 45));
         btnShare.setFocusPainted(false);
         btnShare.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
+        btnShare.addActionListener(e -> {
+            if (recruitment != null) {
+                String shareText = "Job: " + recruitment.getTitle() + " - ID: " + recruitment.getRecruitmentId();
+                java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(shareText), null);
+                JOptionPane.showMessageDialog(this, "Đã copy thông tin công việc vào clipboard!");
+            }
+        });
 
         JButton btnApply = new JButton("Apply / Send CV");
         btnApply.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -232,7 +239,12 @@ public class JobDetailPanel extends JPanel {
         btnApply.setBorderPainted(false);
         btnApply.addActionListener(e -> {
             if (recruitmentId != null && SessionManager.getInstance().getCurrentUser() != null) {
-                boolean success = applicationService.applyRecruitment(SessionManager.getInstance().getCurrentUser().getUserId(), recruitmentId);
+                String candidateId = SessionManager.getInstance().getCandidateId();
+                if (candidateId == null) {
+                    JOptionPane.showMessageDialog(this, "Bạn phải là ứng viên (Candidate) mới có thể nộp hồ sơ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                boolean success = applicationService.applyRecruitment(candidateId, recruitmentId);
                 if (success) {
                     JOptionPane.showMessageDialog(this, "Nộp hồ sơ thành công!");
                 } else {

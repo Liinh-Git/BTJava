@@ -27,6 +27,9 @@ public class JobSearchPanel extends JPanel {
     private JTextField txtSearch;
     private JComboBox<String> cbCategory;
     private JPanel jobsGrid;
+    private JPanel paginationPanel;
+    private int currentPage = 1;
+    private int pageSize = 10;
 
     public JobSearchPanel() {
         setBackground(new Color(248, 249, 250));
@@ -68,7 +71,9 @@ public class JobSearchPanel extends JPanel {
         mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
 
         // 4. phan trang
-        mainContent.add(createPaginationSection());
+        // 4. phan trang
+        paginationPanel = createPaginationSection();
+        mainContent.add(paginationPanel);
 
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
@@ -97,7 +102,22 @@ public class JobSearchPanel extends JPanel {
         panel.add(createLabel("Category"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.7;
-        txtSearch = new JTextField();
+        txtSearch = new JTextField("Tìm kiếm việc làm, công ty...");
+        txtSearch.setForeground(Color.GRAY);
+        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().equals("Tìm kiếm việc làm, công ty...")) {
+                    txtSearch.setText("");
+                    txtSearch.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().isEmpty()) {
+                    txtSearch.setText("Tìm kiếm việc làm, công ty...");
+                    txtSearch.setForeground(Color.GRAY);
+                }
+            }
+        });
         txtSearch.setPreferredSize(new Dimension(0, 35));
         panel.add(txtSearch, gbc);
 
@@ -113,7 +133,7 @@ public class JobSearchPanel extends JPanel {
         btnSearch.setForeground(Color.WHITE);
         btnSearch.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnSearch.setPreferredSize(new Dimension(100, 35));
-        btnSearch.addActionListener(e -> performSearch());
+        btnSearch.addActionListener(e -> performSearch(1));
         panel.add(btnSearch, gbc);
 
         return panel;
@@ -132,14 +152,20 @@ public class JobSearchPanel extends JPanel {
     }
     
     private void performSearch() {
+        performSearch(1);
+    }
+    
+    private void performSearch(int page) {
+        this.currentPage = page;
         String keyword = txtSearch != null ? txtSearch.getText().trim() : "";
+        if (keyword.equals("Tìm kiếm việc làm, công ty...")) keyword = "";
         int catIdx = cbCategory != null ? cbCategory.getSelectedIndex() : 0;
         String catId = null;
         if (catIdx > 0 && categoryList != null && catIdx - 1 < categoryList.size()) {
             catId = categoryList.get(catIdx - 1).getCategoryId();
         }
         
-        List<RecruitmentDTO> jobs = recruitmentService.searchRecruitments(keyword, catId, 1, 20);
+        List<RecruitmentDTO> jobs = recruitmentService.searchRecruitments(keyword, catId, currentPage, pageSize);
         jobsGrid.removeAll();
         if (jobs != null) {
             for (RecruitmentDTO job : jobs) {
@@ -175,31 +201,49 @@ public class JobSearchPanel extends JPanel {
         }
         jobsGrid.revalidate();
         jobsGrid.repaint();
+        updatePaginationUI();
     }
 
-    // ham tao nut phan trang
     private JPanel createPaginationSection() {
-        JPanel paginationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        paginationPanel.setBackground(new Color(248, 249, 250));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        panel.setBackground(new Color(248, 249, 250));
+        return panel;
+    }
+    
+    private void updatePaginationUI() {
+        if (paginationPanel == null) return;
+        paginationPanel.removeAll();
+        
+        JButton btnPrev = new JButton("<");
+        btnPrev.setBackground(Color.WHITE);
+        btnPrev.setFocusPainted(false);
+        btnPrev.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+        btnPrev.addActionListener(e -> {
+            if (currentPage > 1) performSearch(currentPage - 1);
+        });
+        paginationPanel.add(btnPrev);
 
-        String[] pages = {"<", "1", "2", "3", "...", "12", ">"};
-        for (String p : pages) {
-            JButton btnPage = new JButton(p);
-            btnPage.setBackground(Color.WHITE);
-            btnPage.setFocusPainted(false);
-            if (p.equals("1")) {
-                btnPage.setBorder(new LineBorder(new Color(13, 110, 253), 2));
-                btnPage.setForeground(new Color(13, 110, 253));
-            } else if (p.equals("...")) {
-                btnPage.setBorderPainted(false);
-                btnPage.setContentAreaFilled(false);
-            } else {
-                btnPage.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+        JButton btnPage = new JButton(String.valueOf(currentPage));
+        btnPage.setBackground(Color.WHITE);
+        btnPage.setFocusPainted(false);
+        btnPage.setBorder(new LineBorder(new Color(13, 110, 253), 2));
+        btnPage.setForeground(new Color(13, 110, 253));
+        paginationPanel.add(btnPage);
+
+        JButton btnNext = new JButton(">");
+        btnNext.setBackground(Color.WHITE);
+        btnNext.setFocusPainted(false);
+        btnNext.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+        btnNext.addActionListener(e -> {
+            // Neu jobsGrid dang co bang pageSize thi co the con trang tiep theo
+            if (jobsGrid.getComponentCount() == pageSize) {
+                performSearch(currentPage + 1);
             }
-            paginationPanel.add(btnPage);
-        }
-
-        return paginationPanel;
+        });
+        paginationPanel.add(btnNext);
+        
+        paginationPanel.revalidate();
+        paginationPanel.repaint();
     }
 
     private JLabel createLabel(String text) {

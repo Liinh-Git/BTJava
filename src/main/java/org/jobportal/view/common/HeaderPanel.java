@@ -47,6 +47,20 @@ public class HeaderPanel extends JPanel {
         add(rightActionPanel, BorderLayout.EAST);
 
         btnNotification.addActionListener(e -> openNotificationDialog());
+        
+        btnSettings.addActionListener(e -> {
+            Window ancestor = SwingUtilities.getWindowAncestor(this);
+            if (ancestor instanceof MainFrame) {
+                ((MainFrame) ancestor).navigateToMenu("Cài đặt");
+            }
+        });
+        
+        btnUser.addActionListener(e -> {
+            Window ancestor = SwingUtilities.getWindowAncestor(this);
+            if (ancestor instanceof MainFrame) {
+                ((MainFrame) ancestor).navigateToMenu("Thông tin người dùng");
+            }
+        });
     }
 
     private void openNotificationDialog() {

@@ -68,11 +68,11 @@ public class EmployerDashboardPanel extends JPanel {
         headerPanel.setBackground(new Color(248, 249, 250));
         headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitle = new JLabel("Tong quan nha tuyen dung");
+        JLabel lblTitle = new JLabel("Tổng quan nhà tuyển dụng");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(new Color(33, 37, 41));
 
-        JLabel lblSub = new JLabel("Theo doi hieu suat tuyen dung va luong ung vien theo thoi gian thuc.");
+        JLabel lblSub = new JLabel("Theo dõi hiệu suất tuyển dụng và lượng ứng viên theo thời gian thực.");
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblSub.setForeground(new Color(108, 117, 125));
 
@@ -94,10 +94,10 @@ public class EmployerDashboardPanel extends JPanel {
         lblTotalApplicants = new JLabel("0");
         lblNewApplicants = new JLabel("0");
 
-        panel.add(createStatCard("T", "TONG TIN DANG", lblTotalRecruitments, "Tat ca", new Color(230, 240, 255), new Color(13, 110, 253)));
-        panel.add(createStatCard("O", "TIN DANG MO", lblOpenRecruitments, "Dang hoat dong", new Color(230, 250, 240), new Color(40, 167, 69)));
-        panel.add(createStatCard("U", "TONG UNG VIEN", lblTotalApplicants, "Tat ca", new Color(255, 244, 230), new Color(255, 140, 0)));
-        panel.add(createStatCard("N", "UNG VIEN HOM NAY", lblNewApplicants, "Hom nay", new Color(240, 240, 240), new Color(70, 70, 70)));
+        panel.add(createStatCard("T", "TỔNG TIN ĐĂNG", lblTotalRecruitments, "Tất cả", new Color(230, 240, 255), new Color(13, 110, 253)));
+        panel.add(createStatCard("O", "TIN ĐĂNG MỞ", lblOpenRecruitments, "Đang hoạt động", new Color(230, 250, 240), new Color(40, 167, 69)));
+        panel.add(createStatCard("U", "TỔNG ỨNG VIÊN", lblTotalApplicants, "Tất cả", new Color(255, 244, 230), new Color(255, 140, 0)));
+        panel.add(createStatCard("N", "ỨNG VIÊN HÔM NAY", lblNewApplicants, "Hôm nay", new Color(240, 240, 240), new Color(70, 70, 70)));
 
         return panel;
     }
@@ -160,7 +160,7 @@ public class EmployerDashboardPanel extends JPanel {
                 new EmptyBorder(20, 25, 20, 25)
         ));
 
-        JLabel title = new JLabel("Trang thai tin dang");
+        JLabel title = new JLabel("Trạng thái tin đăng");
         title.setFont(new Font("Segoe UI", Font.BOLD, 14));
         title.setForeground(new Color(33, 37, 41));
 
@@ -171,9 +171,9 @@ public class EmployerDashboardPanel extends JPanel {
         lblApprovedCount = new JLabel("0");
         lblRejectedCount = new JLabel("0");
 
-        row.add(createStatusItem("Cho duyet", lblPendingCount, new Color(255, 193, 7)));
-        row.add(createStatusItem("Da duyet", lblApprovedCount, new Color(40, 167, 69)));
-        row.add(createStatusItem("Bi tu choi", lblRejectedCount, new Color(220, 53, 69)));
+        row.add(createStatusItem("Chờ duyệt", lblPendingCount, new Color(255, 193, 7)));
+        row.add(createStatusItem("Đã duyệt", lblApprovedCount, new Color(40, 167, 69)));
+        row.add(createStatusItem("Bị từ chối", lblRejectedCount, new Color(220, 53, 69)));
 
         container.add(title);
         container.add(Box.createRigidArea(new Dimension(0, 12)));
@@ -218,10 +218,10 @@ public class EmployerDashboardPanel extends JPanel {
         container.setBackground(new Color(248, 249, 250));
         container.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitle = new JLabel("Tin dang gan day");
+        JLabel lblTitle = new JLabel("Tin đăng gần đây");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-        JLabel lblSub = new JLabel("Toi da 5 tin moi nhat cua ban.");
+        JLabel lblSub = new JLabel("Tối đa 5 tin mới nhất của bạn.");
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblSub.setForeground(Color.GRAY);
 
@@ -267,7 +267,7 @@ public class EmployerDashboardPanel extends JPanel {
 
     private void loadRecentRecruitments(String employerId) {
         recentContainer.removeAll();
-        recentContainer.add(createRecentRow("TIEU DE", "NGAY DANG", "TRANG THAI", true, null));
+        recentContainer.add(createRecentRow("TIÊU ĐỀ", "NGÀY ĐĂNG", "TRẠNG THÁI", true, null));
 
         List<RecruitmentDTO> list = recruitmentService.getRecruitmentsByEmployer(employerId);
         if (list != null && !list.isEmpty()) {
@@ -326,20 +326,20 @@ public class EmployerDashboardPanel extends JPanel {
         row.setBackground(Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        row.add(new JLabel("Chua co tin dang nao."));
+        row.add(new JLabel("Chưa có tin đăng nào."));
         return row;
     }
 
     private String buildStatusText(RecruitmentDTO job) {
         if (job == null) return "N/A";
-        if (job.getAdminStatus() == AdminStatus.PENDING) return "Cho duyet";
-        if (job.getAdminStatus() == AdminStatus.REJECTED) return "Bi tu choi";
+        if (job.getAdminStatus() == AdminStatus.PENDING) return "Chờ duyệt";
+        if (job.getAdminStatus() == AdminStatus.REJECTED) return "Bị từ chối";
         if (job.getAdminStatus() == AdminStatus.APPROVED) {
             RecruitmentStatus status = job.getStatus();
-            if (status == RecruitmentStatus.OPEN) return "Dang hoat dong";
-            if (status == RecruitmentStatus.CLOSED) return "Da dong";
-            if (status == RecruitmentStatus.EXPIRED) return "Het han";
+            if (status == RecruitmentStatus.OPEN) return "Đang hoạt động";
+            if (status == RecruitmentStatus.CLOSED) return "Đã đóng";
+            if (status == RecruitmentStatus.EXPIRED) return "Hết hạn";
         }
-        return "Ban nhap";
+        return "Bản nháp";
     }
 }

@@ -87,15 +87,21 @@ public class MainFrame extends JFrame {
                 mainContentPanel.add(new RecruitmentListPanel(), "Quản lý tin tuyển dụng");
                 mainContentPanel.add(new ApplicationReviewPanel(), "Danh sách các ứng viên");
                 mainContentPanel.add(new CompanyInfoPanel(), "Thông tin công ty");
-                mainContentPanel.add(new UserProfilePanel(), "Thông tin người dùng");
                 firstMenu = "Tổng quan";
             } else if (currentRole == Role.CANDIDATE) {
                 mainContentPanel.add(new JobSearchPanel(), "Tìm việc");
                 mainContentPanel.add(new AppliedJobsPanel(), "Đã ứng tuyển");
                 mainContentPanel.add(new CVEditorPanel(), "Quản lý CV");
-                mainContentPanel.add(new UserProfilePanel(), "Thông tin người dùng");
                 firstMenu = "Tìm việc";
             }
+            
+            // Common panels
+            mainContentPanel.add(new UserProfilePanel(), "Thông tin người dùng");
+            JPanel settingsPanel = new JPanel(new BorderLayout());
+            JLabel lblSettings = new JLabel("Chức năng Cài đặt đang được phát triển", SwingConstants.CENTER);
+            lblSettings.setFont(new Font("Segoe UI", Font.BOLD, 24));
+            settingsPanel.add(lblSettings, BorderLayout.CENTER);
+            mainContentPanel.add(settingsPanel, "Cài đặt");
 
             if (!firstMenu.isEmpty()) {
                 mainCardLayout.show(mainContentPanel, firstMenu);
@@ -129,6 +135,12 @@ public class MainFrame extends JFrame {
     
     public void showLogin() {
         rootCardLayout.show(rootPanel, "Login");
+    }
+    
+    public void navigateToMenu(String menuTitle) {
+        if (mainContentPanel != null && mainCardLayout != null) {
+            mainCardLayout.show(mainContentPanel, menuTitle);
+        }
     }
 
     public static void main(String[] args) {

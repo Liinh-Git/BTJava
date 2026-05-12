@@ -23,6 +23,9 @@ public class RecruitmentListPanel extends JPanel {
     private final IRecruitmentService recruitmentService = new RecruitmentService();
     private JPanel tableContainer;
     private JLabel lblCount;
+    private JPanel paginationPanel;
+    private int currentPage = 1;
+    private int pageSize = 10;
 
     public RecruitmentListPanel() {
         // thiet lap layout chinh
@@ -118,6 +121,20 @@ public class RecruitmentListPanel extends JPanel {
         txtSearch.setPreferredSize(new Dimension(300, 38));
         txtSearch.setText("Tìm kiếm theo tiêu đề...");
         txtSearch.setForeground(Color.GRAY);
+        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().equals("Tìm kiếm theo tiêu đề...")) {
+                    txtSearch.setText("");
+                    txtSearch.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().isEmpty()) {
+                    txtSearch.setText("Tìm kiếm theo tiêu đề...");
+                    txtSearch.setForeground(Color.GRAY);
+                }
+            }
+        });
 
         JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Tất cả trạng thái", "Đang hoạt động", "Hết hạn", "Bản nháp"});
         cbStatus.setPreferredSize(new Dimension(150, 38));
@@ -141,15 +158,19 @@ public class RecruitmentListPanel extends JPanel {
         // header cua bang
         tableContainer.add(createRow("TIÊU ĐỀ CÔNG VIỆC", "NGÀY ĐĂNG - HẾT HẠN", "TRẠNG THÁI", "ỨNG VIÊN", "THAO TÁC", true, null));
 
-        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        String employerId = SessionManager.getInstance().getEmployerId();
         List<RecruitmentDTO> jobs = null;
-        if (user != null) {
-            jobs = recruitmentService.getRecruitmentsByEmployer(user.getUserId());
+        if (employerId != null && !employerId.isEmpty()) {
+            jobs = recruitmentService.getRecruitmentsByEmployer(employerId);
         }
 
         if (jobs != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            for (RecruitmentDTO job : jobs) {
+            int start = (currentPage - 1) * pageSize;
+            int end = Math.min(start + pageSize, jobs.size());
+            
+            for (int i = start; i < end; i++) {
+                RecruitmentDTO job = jobs.get(i);
                 String title = job.getTitle();
                 String dateStr = (job.getCreatedDate() != null ? job.getCreatedDate().format(formatter) : "N/A") + " - " + 
                                  (job.getDueDate() != null ? job.getDueDate().format(formatter) : "N/A");
@@ -184,14 +205,47 @@ public class RecruitmentListPanel extends JPanel {
         lblCount.setText("Hiển thị " + (jobs != null ? jobs.size() : 0) + " tin đăng");
         footer.add(lblCount, BorderLayout.WEST);
 
-        JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        pagination.setBackground(Color.WHITE);
-        pagination.add(createPageBtn("1", true));
-        footer.add(pagination, BorderLayout.EAST);
+        paginationPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        paginationPanel.setBackground(Color.WHITE);
+        updatePaginationUI(jobs != null ? jobs.size() : 0);
+        footer.add(paginationPanel, BorderLayout.EAST);
 
         tableContainer.add(footer);
         tableContainer.revalidate();
         tableContainer.repaint();
+    }
+    
+    private void updatePaginationUI(int totalItems) {
+        if (paginationPanel == null) return;
+        paginationPanel.removeAll();
+        
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / pageSize));
+
+        JButton btnPrev = createPageBtn("<", true);
+        btnPrev.addActionListener(e -> {
+            if (currentPage > 1) {
+                currentPage--;
+                loadData();
+            }
+        });
+        paginationPanel.add(btnPrev);
+
+        JButton btnPage = createPageBtn(String.valueOf(currentPage), true);
+        btnPage.setBorder(new LineBorder(new Color(13, 110, 253), 2));
+        btnPage.setForeground(new Color(13, 110, 253));
+        paginationPanel.add(btnPage);
+
+        JButton btnNext = createPageBtn(">", true);
+        btnNext.addActionListener(e -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadData();
+            }
+        });
+        paginationPanel.add(btnNext);
+        
+        paginationPanel.revalidate();
+        paginationPanel.repaint();
     }
 
     private JPanel createRow(String col1, String col2, String status, String applicants, String action, boolean isHeader, RecruitmentDTO job) {
