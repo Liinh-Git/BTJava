@@ -251,6 +251,30 @@ public class RecruitmentService implements IRecruitmentService {
     }
 
     // ------------------------------------------------------------------
+    // Employer dashboard stats
+    // ------------------------------------------------------------------
+
+    @Override
+    public int countRecruitmentsByEmployer(String employerId) {
+        return countByEmployerWithFilters(employerId, null, null);
+    }
+
+    @Override
+    public int countOpenRecruitmentsByEmployer(String employerId) {
+        return countByEmployerWithFilters(employerId, RecruitmentStatus.OPEN, AdminStatus.APPROVED);
+    }
+
+    @Override
+    public int countPendingRecruitmentsByEmployer(String employerId) {
+        return countByEmployerWithFilters(employerId, null, AdminStatus.PENDING);
+    }
+
+    @Override
+    public int countRejectedRecruitmentsByEmployer(String employerId) {
+        return countByEmployerWithFilters(employerId, null, AdminStatus.REJECTED);
+    }
+
+    // ------------------------------------------------------------------
     // Private helpers
     // ------------------------------------------------------------------
 
@@ -298,5 +322,20 @@ public class RecruitmentService implements IRecruitmentService {
         List<RecruitmentDTO> result = new ArrayList<>();
         for (Recruitment r : list) result.add(mapToDTO(r));
         return result;
+    }
+
+    private int countByEmployerWithFilters(String employerId, RecruitmentStatus statusFilter,
+                                           AdminStatus adminStatusFilter) {
+        if (employerId == null || employerId.isBlank()) return 0;
+        List<Recruitment> list = recruitmentDAO.findByEmployerId(employerId);
+        if (list == null || list.isEmpty()) return 0;
+
+        int count = 0;
+        for (Recruitment r : list) {
+            if (statusFilter != null && r.getStatus() != statusFilter) continue;
+            if (adminStatusFilter != null && r.getAdminStatus() != adminStatusFilter) continue;
+            count++;
+        }
+        return count;
     }
 }

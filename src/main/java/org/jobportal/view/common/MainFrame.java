@@ -9,6 +9,7 @@ import org.jobportal.view.candidate.CVEditorPanel;
 import org.jobportal.view.candidate.JobSearchPanel;
 import org.jobportal.view.employer.ApplicationReviewPanel;
 import org.jobportal.view.employer.CompanyInfoPanel;
+import org.jobportal.view.employer.EmployerDashboardPanel;
 import org.jobportal.view.employer.RecruitmentFormPanel;
 import org.jobportal.view.employer.RecruitmentListPanel;
 import org.jobportal.view.common.UserProfilePanel;
@@ -81,7 +82,7 @@ public class MainFrame extends JFrame {
                 mainContentPanel.add(new JobModerationPanel(), "Kiểm duyệt tin tuyển dụng");
                 firstMenu = "Thống kê hệ thống";
             } else if (currentRole == Role.EMPLOYER) {
-                mainContentPanel.add(new JPanel(), "Tổng quan"); // Placeholder
+                mainContentPanel.add(new EmployerDashboardPanel(), "Tổng quan");
                 mainContentPanel.add(new RecruitmentFormPanel(), "Đăng tin tuyển dụng");
                 mainContentPanel.add(new RecruitmentListPanel(), "Quản lý tin tuyển dụng");
                 mainContentPanel.add(new ApplicationReviewPanel(), "Danh sách các ứng viên");

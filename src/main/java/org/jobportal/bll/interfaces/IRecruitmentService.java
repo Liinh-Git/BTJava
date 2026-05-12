@@ -61,4 +61,24 @@ public interface IRecruitmentService {
     // Dau vao: (void)
     // Dau ra: List<Map<String, Object>>
     List<Map<String, Object>> getTopEmployers();
+
+    // Chuc nang: Dem tong so tin dang theo employer
+    // Dau vao: employerId (String)
+    // Dau ra: int
+    int countRecruitmentsByEmployer(String employerId);
+
+    // Chuc nang: Dem so tin dang OPEN theo employer
+    // Dau vao: employerId (String)
+    // Dau ra: int
+    int countOpenRecruitmentsByEmployer(String employerId);
+
+    // Chuc nang: Dem so tin dang cho duyet theo employer
+    // Dau vao: employerId (String)
+    // Dau ra: int
+    int countPendingRecruitmentsByEmployer(String employerId);
+
+    // Chuc nang: Dem so tin dang bi tu choi theo employer
+    // Dau vao: employerId (String)
+    // Dau ra: int
+    int countRejectedRecruitmentsByEmployer(String employerId);
 }
