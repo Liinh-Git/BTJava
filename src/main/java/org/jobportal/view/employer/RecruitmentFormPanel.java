@@ -1,11 +1,33 @@
 package org.jobportal.view.employer;
 
+import org.jobportal.bll.impl.CategoryService;
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.model.Category;
+import org.jobportal.bll.interfaces.IRecruitmentService;
+import org.jobportal.enums.JobType;
+import org.jobportal.utils.SessionManager;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecruitmentFormPanel extends JPanel {
+
+    private final IRecruitmentService recruitmentService = new RecruitmentService();
+    private final CategoryService categoryService = new CategoryService();
+    private List<Category> categoryList = new ArrayList<>();
+
+    private JTextField txtTitle;
+    private JComboBox<String> cbCategory;
+    private JComboBox<String> cbJobType;
+    private JTextField txtSalary;
+    private JTextField txtDueDate;
+    private JTextArea txtDescription;
 
     public RecruitmentFormPanel() {
         // thiet lap layout chinh
@@ -81,7 +103,8 @@ public class RecruitmentFormPanel extends JPanel {
         formGrid.add(createLabel("TIÊU ĐỀ CÔNG VIỆC"), gbc);
 
         gbc.gridy = 1; gbc.insets = new Insets(0, 0, 20, 0);
-        formGrid.add(createTextField("VD: Senior Frontend Developer (Tailwind CSS)"), gbc);
+        txtTitle = createTextField("VD: Senior Frontend Developer (Tailwind CSS)");
+        formGrid.add(txtTitle, gbc);
 
         // dong 2: Nganh nghe & Loai hinh
         gbc.gridwidth = 1; gbc.insets = new Insets(0, 0, 8, 20);
@@ -92,10 +115,14 @@ public class RecruitmentFormPanel extends JPanel {
         formGrid.add(createLabel("LOẠI HÌNH"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.insets = new Insets(0, 0, 20, 20);
-        formGrid.add(createComboBox(new String[]{"Công nghệ thông tin", "Marketing", "Kế toán"}), gbc);
+        categoryList = categoryService.getAllCategories();
+        String[] catNames = categoryList.stream().map(Category::getCategoryName).toArray(String[]::new);
+        cbCategory = createComboBox(catNames.length > 0 ? catNames : new String[]{"Công nghệ thông tin", "Marketing", "Kế toán"});
+        formGrid.add(cbCategory, gbc);
 
         gbc.gridx = 1; gbc.insets = new Insets(0, 0, 20, 0);
-        formGrid.add(createComboBox(new String[]{"Toàn thời gian", "Bán thời gian", "Thực tập"}), gbc);
+        cbJobType = createComboBox(new String[]{"Toàn thời gian", "Bán thời gian", "Thực tập", "Freelance"});
+        formGrid.add(cbJobType, gbc);
 
         // dong 3: Muc luong & Han nop ho so
         gbc.gridx = 0; gbc.gridy = 4; gbc.insets = new Insets(0, 0, 8, 20);
@@ -105,17 +132,21 @@ public class RecruitmentFormPanel extends JPanel {
         formGrid.add(createLabel("HẠN NỘP HỒ SƠ"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 5; gbc.insets = new Insets(0, 0, 20, 20);
-        formGrid.add(createTextField("VD: 20 - 30 triệu"), gbc);
+        txtSalary = createTextField("VD: 20000000"); // Numeric only for BLL double parsing
+        formGrid.add(txtSalary, gbc);
 
         gbc.gridx = 1; gbc.insets = new Insets(0, 0, 20, 0);
-        formGrid.add(createTextField("mm/dd/yyyy"), gbc);
+        txtDueDate = createTextField("dd/MM/yyyy");
+        formGrid.add(txtDueDate, gbc);
 
         // dong 4: Mo ta cong viec (chiem 2 cot)
         gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2; gbc.insets = new Insets(0, 0, 8, 0);
         formGrid.add(createLabel("MÔ TẢ CÔNG VIỆC"), gbc);
 
         gbc.gridy = 7; gbc.insets = new Insets(0, 0, 20, 0);
-        formGrid.add(createEditorField("Nhập chi tiết công việc, yêu cầu và quyền lợi..."), gbc);
+        JPanel editorPanel = createEditorField("Nhập chi tiết công việc, yêu cầu và quyền lợi...");
+        txtDescription = (JTextArea) ((JScrollPane) editorPanel.getComponent(1)).getViewport().getView();
+        formGrid.add(editorPanel, gbc);
 
         card.add(formGrid);
 
@@ -221,6 +252,7 @@ public class RecruitmentFormPanel extends JPanel {
         btnPublish.setPreferredSize(new Dimension(160, 45));
         btnPublish.setFocusPainted(false);
         btnPublish.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnPublish.addActionListener(e -> submitRecruitment());
 
         actionPanel.add(btnDraft);
         actionPanel.add(btnPublish);
@@ -260,5 +292,35 @@ public class RecruitmentFormPanel extends JPanel {
         banner.add(textPanel, BorderLayout.CENTER);
 
         return banner;
+    }
+
+    private void submitRecruitment() {
+        if (SessionManager.getInstance().getCurrentUser() == null) return;
+        
+        try {
+            String title = txtTitle.getText().trim();
+            double salary = Double.parseDouble(txtSalary.getText().trim());
+            LocalDate dueDate = LocalDate.parse(txtDueDate.getText().trim(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            String desc = txtDescription.getText().trim();
+            
+            int catIdx = cbCategory.getSelectedIndex();
+            String catId = (catIdx >= 0 && catIdx < categoryList.size()) ? categoryList.get(catIdx).getCategoryId() : null;
+            
+            JobType jobType = JobType.FULLTIME;
+            if (cbJobType.getSelectedIndex() == 1) jobType = JobType.PARTTIME;
+            else if (cbJobType.getSelectedIndex() == 2) jobType = JobType.INTERNSHIP;
+            // No FREELANCE in enum, fallback to PARTTIME
+            else if (cbJobType.getSelectedIndex() == 3) jobType = JobType.PARTTIME;
+            
+            boolean success = recruitmentService.postRecruitment(title, catId, jobType, salary, dueDate, desc, "Địa chỉ mặc định công ty"); // The BLL requires location
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Đăng tin tuyển dụng thành công, chờ kiểm duyệt!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                txtTitle.setText(""); txtSalary.setText(""); txtDueDate.setText("dd/MM/yyyy"); txtDescription.setText("");
+            } else {
+                JOptionPane.showMessageDialog(this, "Không thể đăng tin. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập đúng định dạng lương (số) và ngày (dd/MM/yyyy)!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

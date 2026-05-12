@@ -1,0 +1,45 @@
+DANH SÁCH CÁC TÍNH NĂNG VÀ GIAO DIỆN CÒN THIẾU (MISSING FEATURES)
+=============================================================================
+Quá trình rà soát dự án cho thấy có một số module vẫn đang ở dạng Placeholder (mới chỉ khai báo, chưa có logic BLL hoặc chưa có giao diện UI hoàn chỉnh).
+
+I. PHÂN HỆ CHUNG (COMMON)
+-----------------------------------------------------------------------------
+1. Tính năng Quên mật khẩu / Đổi mật khẩu
+   - BLL còn thiếu: `IAuthService` chưa có phương thức `resetPassword(email)` hoặc `changePassword(userId, oldPass, newPass)`.
+   - UI còn thiếu: `ForgotPasswordPanel`, `ChangePasswordPanel`.
+
+2. Hệ thống Thông báo (Notification)
+   - BLL còn thiếu: `INotificationService` đã được định nghĩa nhưng chưa được tích hợp (trigger) tự động vào các luồng nghiệp vụ khác. Ví dụ: Khi ứng viên nộp đơn, tự động tạo 1 notification cho Employer.
+   - UI còn thiếu: Giao diện `NotificationPanel` (hoặc popup góc màn hình) để người dùng xem thông báo.
+
+3. Upload tệp tin / Hình ảnh
+   - BLL còn thiếu: Chưa có service xử lý upload và lưu trữ file (ví dụ: `FileStorageService`).
+   - UI còn thiếu: Chức năng tải lên Avatar, Logo công ty hoặc CV dưới dạng file PDF (hiện tại tất cả chỉ đang là form nhập text).
+
+II. PHÂN HỆ ỨNG VIÊN (CANDIDATE)
+-----------------------------------------------------------------------------
+1. Quản lý thông tin tài khoản cá nhân
+   - BLL còn thiếu: `IUserService.updateUserProfile()` chưa được xử lý trọn vẹn cho việc cập nhật số điện thoại, mật khẩu, tên hiển thị.
+   - UI còn thiếu: `UserProfilePanel`. Trong `MainFrame.java`, menu "Thông tin người dùng" hiện đang trỏ vào một `new JPanel()` trống.
+
+2. Quản lý nhiều CV
+   - BLL còn thiếu: `ICVService` hiện chỉ đang hỗ trợ 1 CV mặc định cho mỗi ứng viên. Thiếu luồng CRUD để tạo/quản lý nhiều mẫu CV.
+   - UI còn thiếu: Giao diện danh sách các CV đã tạo.
+
+III. PHÂN HỆ NHÀ TUYỂN DỤNG (EMPLOYER)
+-----------------------------------------------------------------------------
+1. Giao diện Tổng quan (Dashboard) của Employer
+   - BLL còn thiếu: Thiếu các API thống kê cụ thể cho nhà tuyển dụng (như: Lấy tổng số lượng ứng viên theo ngày, tỷ lệ chuyển đổi, v.v.).
+   - UI còn thiếu: `EmployerDashboardPanel` đang tồn tại nhưng chỉ là một class rỗng (chưa có code UI bên trong), và trong `MainFrame.java` mục "Tổng quan" đang load `new JPanel()`.
+
+2. Quản lý thông tin tài khoản
+   - UI còn thiếu: Giống như Candidate, Employer cần một `UserProfilePanel` để đổi mật khẩu và quản lý thông tin đăng nhập (khác với `CompanyInfoPanel` là thông tin công ty).
+
+IV. PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN)
+-----------------------------------------------------------------------------
+1. Cấu hình hệ thống (System Settings)
+   - BLL còn thiếu: Các BLL liên quan đến tham số hệ thống (ví dụ: Cấu hình giới hạn số lượng tin đăng, cấu hình backup database).
+   - UI còn thiếu: `SettingsPanel` cho Admin.
+   
+2. Phân quyền chi tiết
+   - BLL còn thiếu: Phân tách quyền Super Admin và Moderator (hiện tại tất cả dùng chung Role.ADMIN).

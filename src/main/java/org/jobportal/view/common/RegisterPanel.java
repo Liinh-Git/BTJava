@@ -1,5 +1,9 @@
 package org.jobportal.view.common;
 
+import org.jobportal.bll.impl.AuthService;
+import org.jobportal.bll.interfaces.IAuthService;
+import org.jobportal.enums.Role;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -9,6 +13,7 @@ import java.awt.event.MouseEvent;
 public class RegisterPanel extends JPanel {
 
     private MainFrame mainFrame;
+    private final IAuthService authService = new AuthService();
 
     public RegisterPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -168,11 +173,19 @@ public class RegisterPanel extends JPanel {
                 return;
             }
 
-            // Ghi nhận tài khoản vào LoginPanel (Dùng email làm tên đăng nhập)
-            LoginPanel.registerAccount(email, pass);
-            JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
-            if (mainFrame != null) {
-                mainFrame.showLogin();
+            Role selectedRole = cbRole.getSelectedIndex() == 0 ? Role.CANDIDATE : Role.EMPLOYER;
+
+            String username = email.contains("@") ? email.split("@")[0] : email;
+
+            boolean registered = authService.register(username, email, pass, confirm, selectedRole);
+
+            if (registered) {
+                JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                if (mainFrame != null) {
+                    mainFrame.showLogin();
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 

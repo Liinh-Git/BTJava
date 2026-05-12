@@ -1,5 +1,8 @@
 package org.jobportal.view.common;
 
+import org.jobportal.dto.UserDTO;
+import org.jobportal.utils.SessionManager;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -31,7 +34,9 @@ public class HeaderPanel extends JPanel {
         // tao cac element tam thoi bang text
         JButton btnNotification = createFlatButton("Thong bao");
         JButton btnSettings = createFlatButton("Cai dat");
-        JButton btnUser = createFlatButton("Tai khoan");
+        UserDTO currentUser = SessionManager.getInstance().getCurrentUser();
+        String usernameText = (currentUser != null) ? currentUser.getUsername() : "Tài khoản";
+        JButton btnUser = createFlatButton(usernameText);
 
         // them cac element vao panel ben phai
         rightActionPanel.add(btnNotification);

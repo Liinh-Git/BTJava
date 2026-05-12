@@ -3,12 +3,23 @@ package org.jobportal.view.admin;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.UserService;
+import org.jobportal.bll.interfaces.IUserService;
+import org.jobportal.dto.UserDTO;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class UserManagementPanel extends JPanel {
+
+    private final IUserService userService = new UserService();
+    private JPanel tableContainer;
+    private JLabel lblCount;
 
     public UserManagementPanel() {
         // thiet lap layout chinh
@@ -28,8 +39,16 @@ public class UserManagementPanel extends JPanel {
         mainContent.add(createFilterSection());
         mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // 3. bang danh sach nguoi dung
-        mainContent.add(createUserTable());
+        // 3. bang du lieu
+        tableContainer = new JPanel();
+        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
+        tableContainer.setBackground(Color.WHITE);
+        tableContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tableContainer.setBorder(new LineBorder(new Color(226, 230, 234), 1));
+        
+        mainContent.add(tableContainer);
+        
+        loadData();
 
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
@@ -97,47 +116,52 @@ public class UserManagementPanel extends JPanel {
         return filterPanel;
     }
 
-    private JPanel createUserTable() {
-        JPanel tableContainer = new JPanel();
-        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
-        tableContainer.setBackground(Color.WHITE);
-        tableContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        tableContainer.setBorder(new LineBorder(new Color(226, 230, 234), 1));
-
+    private void loadData() {
+        tableContainer.removeAll();
         // header
-        tableContainer.add(createTableRow("NAME", "EMAIL", "ROLE", "STATUS", "ACTIONS", true, "", null));
+        tableContainer.add(createTableRow("NAME", "EMAIL", "ROLE", "STATUS", "ACTIONS", true, "", null, null));
 
-        // rows
-        tableContainer.add(createTableRow("Jane Doe", "jane.doe@adminportal.com", "SUPER ADMIN", "Active", "", false, "JD", new Color(220, 230, 255)));
-        tableContainer.add(createTableRow("Mark Smith", "m.smith@support.com", "MODERATOR", "Active", "", false, "MS", new Color(240, 240, 245)));
-        tableContainer.add(createTableRow("Alice Lawson", "alice.l@contractor.io", "REVIEWER", "Suspended", "", false, "AL", new Color(255, 235, 235)));
-        tableContainer.add(createTableRow("Robert White", "robert.white@dev.team", "DEVELOPER", "Pending", "", false, "RW", new Color(226, 232, 240)));
+        List<UserDTO> users = userService.getAllUsers(null, null);
+        
+        Color[] bgColors = {
+            new Color(220, 230, 255), new Color(240, 240, 245), 
+            new Color(255, 235, 235), new Color(226, 232, 240)
+        };
+        
+        int colorIdx = 0;
+        for (UserDTO user : users) {
+            String initials = user.getUsername().length() >= 2 ? user.getUsername().substring(0, 2).toUpperCase() : "U";
+            tableContainer.add(createTableRow(user.getUsername(), user.getEmail(), 
+                                                user.getRole().name(), 
+                                                user.isActive() ? "Active" : "Inactive", 
+                                                "", false, initials, bgColors[colorIdx % 4], user));
+            colorIdx++;
+        }
 
         // phan trang
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(Color.WHITE);
         footer.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel lblCount = new JLabel("Showing 4 of 124 users");
-        lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblCount.setForeground(Color.GRAY);
+        if (lblCount == null) {
+            lblCount = new JLabel();
+            lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            lblCount.setForeground(Color.GRAY);
+        }
+        lblCount.setText("Showing " + users.size() + " users");
         footer.add(lblCount, BorderLayout.WEST);
 
         JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         pagination.setBackground(Color.WHITE);
         pagination.add(createPageBtn("1", true));
-        pagination.add(createPageBtn("2", false));
-        pagination.add(createPageBtn("3", false));
-        pagination.add(createPageBtn("...", false));
-        pagination.add(createPageBtn("12", false));
         footer.add(pagination, BorderLayout.EAST);
 
         tableContainer.add(footer);
-
-        return tableContainer;
+        tableContainer.revalidate();
+        tableContainer.repaint();
     }
 
-    private JPanel createTableRow(String col1, String col2, String role, String status, String action, boolean isHeader, String initials, Color avatarBg) {
+    private JPanel createTableRow(String col1, String col2, String role, String status, String action, boolean isHeader, String initials, Color avatarBg, UserDTO user) {
         JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
@@ -211,16 +235,52 @@ public class UserManagementPanel extends JPanel {
             JLabel l5 = new JLabel(action);
             l5.setFont(font); l5.setForeground(textColor);
             p5.add(l5);
-        } else {
-            JLabel btnEdit = new JLabel("✎");
+            JLabel btnEdit = new JLabel(status.equals("Active") ? "🔒" : "🔓");
             btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 18));
             btnEdit.setForeground(Color.GRAY);
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnEdit.setToolTipText(status.equals("Active") ? "Khóa tài khoản" : "Mở khóa tài khoản");
+            btnEdit.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (user != null) {
+                        int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, 
+                            (user.isActive() ? "Khóa" : "Mở khóa") + " tài khoản này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                        if (choice == JOptionPane.YES_OPTION) {
+                            boolean success = userService.updateUserStatus(user.getUserId(), !user.isActive());
+                            if (success) {
+                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
+                                loadData();
+                            } else {
+                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            });
 
             JLabel btnDelete = new JLabel("🗑");
             btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 18));
             btnDelete.setForeground(Color.GRAY);
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnDelete.setToolTipText("Xóa tài khoản");
+            btnDelete.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (user != null) {
+                        int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, "Xóa tài khoản này vĩnh viễn?", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        if (choice == JOptionPane.YES_OPTION) {
+                            boolean success = userService.deleteUser(user.getUserId());
+                            if (success) {
+                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
+                                loadData();
+                            } else {
+                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            });
 
             p5.add(btnEdit);
             p5.add(Box.createRigidArea(new Dimension(5, 0)));
@@ -309,7 +369,7 @@ public class UserManagementPanel extends JPanel {
             HeaderPanel header = new HeaderPanel();
             frame.add(header, BorderLayout.NORTH);
 
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.ADMIN);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.ADMIN);
             frame.add(sidebar, BorderLayout.WEST);
 
             UserManagementPanel userPanel = new UserManagementPanel();

@@ -3,12 +3,9 @@ package org.jobportal.view.common;
 import javax.swing.*;
 import java.awt.*;
 
-public class SidebarPanel extends JPanel {
+import org.jobportal.enums.Role;
 
-    // gia lap enum Role de test, khi ghep code hay dung org.jobportal.enums.Role
-    public enum Role {
-        ADMIN, EMPLOYER, CANDIDATE
-    }
+public class SidebarPanel extends JPanel {
 
     private JPanel menuContainer;
 

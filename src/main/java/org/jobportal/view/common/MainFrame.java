@@ -4,6 +4,15 @@ import org.jobportal.view.admin.AdminDashboardPanel;
 import org.jobportal.view.admin.CategoryManagementPanel;
 import org.jobportal.view.admin.JobModerationPanel;
 import org.jobportal.view.admin.UserManagementPanel;
+import org.jobportal.view.candidate.AppliedJobsPanel;
+import org.jobportal.view.candidate.CVEditorPanel;
+import org.jobportal.view.candidate.JobSearchPanel;
+import org.jobportal.view.employer.ApplicationReviewPanel;
+import org.jobportal.view.employer.CompanyInfoPanel;
+import org.jobportal.view.employer.RecruitmentFormPanel;
+import org.jobportal.view.employer.RecruitmentListPanel;
+import org.jobportal.enums.Role;
+import org.jobportal.utils.SessionManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +24,10 @@ public class MainFrame extends JFrame {
     
     private CardLayout mainCardLayout;
     private JPanel mainContentPanel;
+    
+    private JPanel appPanel;
+    private HeaderPanel headerPanel;
+    private SidebarPanel sidebarPanel;
 
     public MainFrame() {
         setTitle("Job Portal Application");
@@ -27,43 +40,8 @@ public class MainFrame extends JFrame {
         LoginPanel loginPanel = new LoginPanel(this);
         RegisterPanel registerPanel = new RegisterPanel(this);
         
-        JPanel appPanel = new JPanel(new BorderLayout());
-
-        // Header
-        HeaderPanel headerPanel = new HeaderPanel();
-        appPanel.add(headerPanel, BorderLayout.NORTH);
-
-        // Sidebar
-        SidebarPanel sidebarPanel = new SidebarPanel(SidebarPanel.Role.ADMIN);
-        appPanel.add(sidebarPanel, BorderLayout.WEST);
-
-        // Center content area with CardLayout
-        mainCardLayout = new CardLayout();
-        mainContentPanel = new JPanel(mainCardLayout);
-
-        // Add admin panels to the CardLayout
-        mainContentPanel.add(new AdminDashboardPanel(), "Thống kê hệ thống");
-        mainContentPanel.add(new UserManagementPanel(), "Quản lý người dùng");
-        mainContentPanel.add(new CategoryManagementPanel(), "Quản lý danh mục");
-        mainContentPanel.add(new JobModerationPanel(), "Kiểm duyệt tin tuyển dụng");
-
-        // Set default view
-        mainCardLayout.show(mainContentPanel, "Thống kê hệ thống");
-
-        // Handle menu selection from SidebarPanel
-        sidebarPanel.setMenuListener(menuTitle -> {
-            if ("Đăng xuất".equals(menuTitle)) {
-                showLogin();
-            } else {
-                mainCardLayout.show(mainContentPanel, menuTitle);
-            }
-        });
-
-        appPanel.add(mainContentPanel, BorderLayout.CENTER);
-        
         rootPanel.add(loginPanel, "Login");
         rootPanel.add(registerPanel, "Register");
-        rootPanel.add(appPanel, "App");
         
         add(rootPanel);
         rootCardLayout.show(rootPanel, "Login"); // Show login initially
@@ -71,8 +49,76 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
     }
     
-    public void showApp() {
-        rootCardLayout.show(rootPanel, "App");
+    public void onLoginSuccess() {
+        try {
+            Role currentRole = SessionManager.getInstance().getCurrentRole();
+            
+            if (appPanel != null) {
+                rootPanel.remove(appPanel);
+            }
+
+            appPanel = new JPanel(new BorderLayout());
+
+            // Header
+            headerPanel = new HeaderPanel();
+            appPanel.add(headerPanel, BorderLayout.NORTH);
+
+            // Sidebar
+            sidebarPanel = new SidebarPanel(currentRole);
+            appPanel.add(sidebarPanel, BorderLayout.WEST);
+
+            // Center content area with CardLayout
+            mainCardLayout = new CardLayout();
+            mainContentPanel = new JPanel(mainCardLayout);
+
+            String firstMenu = "";
+
+            if (currentRole == Role.ADMIN) {
+                mainContentPanel.add(new AdminDashboardPanel(), "Thống kê hệ thống");
+                mainContentPanel.add(new UserManagementPanel(), "Quản lý người dùng");
+                mainContentPanel.add(new CategoryManagementPanel(), "Quản lý danh mục");
+                mainContentPanel.add(new JobModerationPanel(), "Kiểm duyệt tin tuyển dụng");
+                firstMenu = "Thống kê hệ thống";
+            } else if (currentRole == Role.EMPLOYER) {
+                mainContentPanel.add(new JPanel(), "Tổng quan"); // Placeholder
+                mainContentPanel.add(new RecruitmentFormPanel(), "Đăng tin tuyển dụng");
+                mainContentPanel.add(new RecruitmentListPanel(), "Quản lý tin tuyển dụng");
+                mainContentPanel.add(new ApplicationReviewPanel(), "Danh sách các ứng viên");
+                mainContentPanel.add(new CompanyInfoPanel(), "Thông tin công ty");
+                mainContentPanel.add(new JPanel(), "Thông tin người dùng"); // Placeholder
+                firstMenu = "Tổng quan";
+            } else if (currentRole == Role.CANDIDATE) {
+                mainContentPanel.add(new JobSearchPanel(), "Tìm việc");
+                mainContentPanel.add(new AppliedJobsPanel(), "Đã ứng tuyển");
+                mainContentPanel.add(new CVEditorPanel(), "Quản lý CV");
+                mainContentPanel.add(new JPanel(), "Thông tin người dùng"); // Placeholder
+                firstMenu = "Tìm việc";
+            }
+
+            if (!firstMenu.isEmpty()) {
+                mainCardLayout.show(mainContentPanel, firstMenu);
+            }
+
+            // Handle menu selection from SidebarPanel
+            sidebarPanel.setMenuListener(menuTitle -> {
+                if ("Đăng xuất".equals(menuTitle)) {
+                    SessionManager.getInstance().logout();
+                    showLogin();
+                } else {
+                    mainCardLayout.show(mainContentPanel, menuTitle);
+                }
+            });
+
+            appPanel.add(mainContentPanel, BorderLayout.CENTER);
+            
+            rootPanel.add(appPanel, "App");
+            rootPanel.revalidate();
+            rootPanel.repaint();
+            rootCardLayout.show(rootPanel, "App");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi khi nạp giao diện: " + e.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     public void showRegister() {

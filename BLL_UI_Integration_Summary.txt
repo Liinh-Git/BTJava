@@ -1,0 +1,82 @@
+BÁO CÁO TỔNG HỢP KẾT NỐI BUSINESS LOGIC LAYER (BLL) VỚI USER INTERFACE (UI)
+=============================================================================
+Dưới đây là danh sách toàn bộ các thành phần giao diện (UI) đã được tích hợp thành công với lớp xử lý nghiệp vụ (BLL) trong ứng dụng Job Portal.
+
+I. PHÂN HỆ CHUNG (COMMON)
+-----------------------------------------------------------------------------
+1. LoginPanel (Giao diện Đăng nhập)
+   - BLL sử dụng: AuthService (IAuthService)
+   - Chức năng: 
+     + Xác thực tài khoản (so khớp hash mật khẩu SHA-256).
+     + Khởi tạo phiên làm việc (SessionManager) và lưu trạng thái người dùng (UserDTO, Role).
+     + Điều hướng vào hệ thống (gọi MainFrame.onLoginSuccess).
+
+2. RegisterPanel (Giao diện Đăng ký)
+   - BLL sử dụng: AuthService (IAuthService)
+   - Chức năng: Đăng ký tài khoản mới cho Ứng viên (Candidate) và Nhà tuyển dụng (Employer).
+
+II. PHÂN HỆ ỨNG VIÊN (CANDIDATE)
+-----------------------------------------------------------------------------
+1. JobSearchPanel (Giao diện Tìm kiếm việc làm)
+   - BLL sử dụng: RecruitmentService, CategoryService
+   - Chức năng: 
+     + Lấy danh sách ngành nghề động từ cơ sở dữ liệu.
+     + Tìm kiếm việc làm đang mở (OPEN) theo từ khóa và ngành nghề.
+
+2. JobDetailPanel (Giao diện Chi tiết & Ứng tuyển)
+   - BLL sử dụng: ApplicationService, RecruitmentService
+   - Chức năng: 
+     + Xem chi tiết công việc.
+     + Thực hiện nộp đơn ứng tuyển trực tiếp (tạo Application).
+
+3. CVEditorPanel (Giao diện Quản lý Hồ sơ/CV)
+   - BLL sử dụng: CVService (ICVService)
+   - Chức năng: 
+     + Nạp thông tin CV của ứng viên, hiển thị danh sách học vấn (Education).
+     + Lưu/cập nhật thông tin cá nhân và định hướng nghề nghiệp.
+
+4. AppliedJobsPanel (Giao diện Lịch sử ứng tuyển)
+   - BLL sử dụng: ApplicationService
+   - Chức năng: 
+     + Xem danh sách các công việc đã nộp đơn và trạng thái duyệt.
+     + Hủy đơn ứng tuyển (nếu đang ở trạng thái PENDING).
+
+III. PHÂN HỆ NHÀ TUYỂN DỤNG (EMPLOYER)
+-----------------------------------------------------------------------------
+1. CompanyInfoPanel (Giao diện Thông tin Công ty)
+   - BLL sử dụng: UserService (IUserService)
+   - Chức năng: Hiển thị thông tin công ty dựa trên tài khoản Employer đăng nhập.
+
+2. RecruitmentFormPanel (Giao diện Đăng tin tuyển dụng)
+   - BLL sử dụng: RecruitmentService, CategoryService
+   - Chức năng: 
+     + Tải danh sách các danh mục nghề nghiệp.
+     + Cho phép nhà tuyển dụng đăng tin mới (trạng thái chờ duyệt PENDING).
+
+3. ApplicationReviewPanel (Giao diện Quản lý Ứng viên)
+   - BLL sử dụng: ApplicationService
+   - Chức năng: 
+     + Xem danh sách đơn ứng tuyển của các ứng viên vào các bài đăng của công ty.
+     + Phê duyệt (Approve) hoặc Từ chối (Reject) đơn ứng tuyển.
+
+IV. PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN)
+-----------------------------------------------------------------------------
+1. AdminDashboardPanel (Giao diện Thống kê Tổng quan)
+   - BLL sử dụng: UserService, RecruitmentService, ApplicationService, CategoryService
+   - Chức năng: Hiển thị các chỉ số tổng quan (tổng số người dùng, số tin tuyển dụng, tin chờ duyệt, số hồ sơ).
+
+2. CategoryManagementPanel (Giao diện Quản lý Danh mục)
+   - BLL sử dụng: CategoryService
+   - Chức năng: Xem, Thêm mới và Sửa tên danh mục ngành nghề (Category).
+
+3. JobModerationPanel (Giao diện Kiểm duyệt Tin tuyển dụng)
+   - BLL sử dụng: RecruitmentService
+   - Chức năng: 
+     + Lấy danh sách các bài đăng đang chờ duyệt (PENDING) từ các công ty.
+     + Phê duyệt (APPROVED) hoặc Từ chối (REJECTED) bài đăng.
+
+4. UserManagementPanel (Giao diện Quản lý Người dùng)
+   - BLL sử dụng: UserService
+   - Chức năng: 
+     + Xem danh sách người dùng trong hệ thống.
+     + Kích hoạt hoặc Khóa tài khoản người dùng (Active/Inactive).

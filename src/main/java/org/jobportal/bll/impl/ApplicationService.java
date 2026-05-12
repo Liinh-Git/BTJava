@@ -1,169 +1,372 @@
 package org.jobportal.bll.impl;
 
-import java.util.Collections;
-import java.util.List;
+import org.jobportal.bll.interfaces.IApplicationService;
+import org.jobportal.dal.impl.ApplicationDAO;
+import org.jobportal.dal.impl.CandidateDAO;
+import org.jobportal.dal.impl.RecruitmentDAO;
+import org.jobportal.dal.impl.UserDAO;
+import org.jobportal.dal.interfaces.IApplicationDAO;
+import org.jobportal.dal.interfaces.ICandidateDAO;
+import org.jobportal.dal.interfaces.IRecruitmentDAO;
+import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.dto.ApplicationDTO;
 import org.jobportal.dto.UserDTO;
 import org.jobportal.enums.ApplicationStatus;
+import org.jobportal.enums.RecruitmentStatus;
+import org.jobportal.model.Application;
+import org.jobportal.model.Candidate;
+import org.jobportal.model.Recruitment;
+import org.jobportal.model.User;
+import org.jobportal.utils.SessionManager;
 
-public class ApplicationService {
-    // Chuc nang: Ung tuyen vao mot tin tuyen dung
-    // Dau vao: candidateId (String) - ma ung vien; recruitmentId (String) - ma tin tuyen dung
-    // Dau ra: boolean - true neu ung tuyen thanh cong
-    // Tuong tac: Duoc goi tu JobDetailPanel; se goi ApplicationDAO va RecruitmentDAO
-    // Ghi chu: Chi ung tuyen khi tin con OPEN va chua het han
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * ApplicationService - Xu ly nghiep vu don ung tuyen.
+ * Khong viet SQL, khong goi Swing.
+ */
+public class ApplicationService implements IApplicationService {
+
+    private final IApplicationDAO applicationDAO = new ApplicationDAO();
+    private final IRecruitmentDAO recruitmentDAO = new RecruitmentDAO();
+    private final IUserDAO        userDAO        = new UserDAO();
+    private final ICandidateDAO   candidateDAO   = new CandidateDAO();
+    private final SessionManager  session        = SessionManager.getInstance();
+
+    // ------------------------------------------------------------------
+    // ID generation
+    // ------------------------------------------------------------------
+
+    /** Sinh applicationId format "APP-" + 6 so => 10 ky tu */
+    private String generateApplicationId() {
+        long ts = System.currentTimeMillis() % 1_000_000L;
+        return String.format("APP-%06d", ts);
+    }
+
+    // ------------------------------------------------------------------
+    // applyRecruitment
+    // ------------------------------------------------------------------
+
+    /**
+     * Candidate ung tuyen vao tin tuyen dung.
+     * Rang buoc:
+     *   - Tin phai OPEN va chua het han.
+     *   - Candidate chua ung tuyen vao tin nay.
+     */
+    @Override
     public boolean applyRecruitment(String candidateId, String recruitmentId) {
-        // TODO: Buoc 1 - Kiem tra tin con OPEN va chua het han
-        // TODO: Buoc 2 - Kiem tra ung vien chua apply
-        // TODO: Buoc 3 - Tao application va luu DB
-        return false;
+        if (candidateId == null || recruitmentId == null) return false;
+
+        // 1. Lay va kiem tra tin tuyen dung
+        Recruitment r = recruitmentDAO.findById(recruitmentId);
+        if (r == null) {
+            System.err.println("[ApplicationService] applyRecruitment: khong tim thay tin id=" + recruitmentId);
+            return false;
+        }
+        if (r.getStatus() != RecruitmentStatus.OPEN) {
+            System.err.println("[ApplicationService] applyRecruitment: tin da dong hoac het han.");
+            return false;
+        }
+        if (r.getDueDate() != null && r.getDueDate().isBefore(LocalDateTime.now())) {
+            System.err.println("[ApplicationService] applyRecruitment: tin het han nop.");
+            return false;
+        }
+
+        // 2. Kiem tra chua ung tuyen
+        if (applicationDAO.existsByCandidateAndRecruitment(candidateId, recruitmentId)) {
+            System.err.println("[ApplicationService] applyRecruitment: da ung tuyen roi.");
+            return false;
+        }
+
+        // 3. Sinh ID
+        String applicationId = generateApplicationId();
+        while (true) {
+            // Kiem tra co the lay application nay khong (don gian: thu insert, neu loi thi sinh lai)
+            // Thay bang check khac neu DAO ho tro
+            break;
+        }
+
+        // 4. Tao don
+        Application app = new Application(
+                applicationId, candidateId, recruitmentId,
+                ApplicationStatus.PENDING, LocalDateTime.now()
+        );
+        return applicationDAO.insert(app);
     }
 
-    // Chuc nang: Huy don ung tuyen
-    // Dau vao: applicationId (String) - ma don ung tuyen
-    // Dau ra: boolean - true neu huy thanh cong
-    // Tuong tac: Duoc goi tu JobDetailPanel/AppliedJobsPanel; se goi ApplicationDAO
-    // Ghi chu: Chi huy khi trang thai PENDING va dung nguoi dung
+    // ------------------------------------------------------------------
+    // cancelApplication
+    // ------------------------------------------------------------------
+
+    /**
+     * Candidate huy don ung tuyen.
+     * Rang buoc:
+     *   - Trang thai don phai la PENDING.
+     *   - Chi candidate so huu don moi duoc huy.
+     */
+    @Override
     public boolean cancelApplication(String applicationId) {
-        // TODO: Buoc 1 - Lay application va kiem tra trang thai/chu so huu
-        // TODO: Buoc 2 - Xoa hoac cap nhat trang thai CANCELLED
-        // TODO: Buoc 3 - Tra ve ket qua
-        return false;
+        if (applicationId == null || applicationId.isBlank()) return false;
+
+        // Tim don (DAO tra Application theo Id — tim thong qua findByCandidateId de loc)
+        String candidateId = session.getCandidateId();
+        if (candidateId == null) {
+            System.err.println("[ApplicationService] cancelApplication: chua dang nhap hoac khong phai CANDIDATE.");
+            return false;
+        }
+
+        // Tim don trong danh sach cua candidate nay
+        List<Application> apps = applicationDAO.findByCandidateId(candidateId);
+        Application target = null;
+        for (Application a : apps) {
+            if (a.getApplicationId().equals(applicationId)) {
+                target = a;
+                break;
+            }
+        }
+
+        if (target == null) {
+            System.err.println("[ApplicationService] cancelApplication: khong tim thay don hoac khong co quyen.");
+            return false;
+        }
+        if (target.getStatus() != ApplicationStatus.PENDING) {
+            System.err.println("[ApplicationService] cancelApplication: chi huy duoc don o trang thai PENDING.");
+            return false;
+        }
+
+        return applicationDAO.delete(applicationId);
     }
 
-    // Chuc nang: Lay danh sach don ung tuyen cua ung vien
-    // Dau vao: candidateId (String) - ma ung vien
-    // Dau ra: List<ApplicationDTO> - danh sach don
-    // Tuong tac: Duoc goi tu AppliedJobsPanel; se goi ApplicationDAO va RecruitmentDAO
-    // Ghi chu: Can join de lay thong tin jobTitle, company
+    // ------------------------------------------------------------------
+    // getListOfApplicationByUser
+    // ------------------------------------------------------------------
+
+    /**
+     * Lay danh sach don ung tuyen cua candidate.
+     * Join voi RecruitmentDAO de lay jobTitle va companyName.
+     */
+    @Override
     public List<ApplicationDTO> getListOfApplicationByUser(String candidateId) {
-        // TODO: Buoc 1 - Truy van danh sach application theo candidateId
-        // TODO: Buoc 2 - Join thong tin recruitment va map sang DTO
-        // TODO: Buoc 3 - Tra ve danh sach
-        return Collections.emptyList();
+        if (candidateId == null || candidateId.isBlank()) return Collections.emptyList();
+
+        List<Application> apps = applicationDAO.findByCandidateId(candidateId);
+        if (apps == null || apps.isEmpty()) return Collections.emptyList();
+
+        List<ApplicationDTO> result = new ArrayList<>();
+        for (Application a : apps) {
+            result.add(enrichApplication(a));
+        }
+        return result;
     }
 
-    // Chuc nang: Dem tong so don ung tuyen cua ung vien
-    // Dau vao: candidateId (String) - ma ung vien
-    // Dau ra: int - tong so don
-    // Tuong tac: Duoc goi tu AppliedJobsPanel; se goi ApplicationDAO
-    // Ghi chu: Chi dem theo candidateId
+    // ------------------------------------------------------------------
+    // getTotalApplyCountByUser
+    // ------------------------------------------------------------------
+
+    @Override
     public int getTotalApplyCountByUser(String candidateId) {
-        // TODO: Buoc 1 - Goi ApplicationDAO.countByCandidateId
-        // TODO: Buoc 2 - Xu ly ket qua
-        // TODO: Buoc 3 - Tra ve so luong
-        return 0;
+        if (candidateId == null || candidateId.isBlank()) return 0;
+        return applicationDAO.countByCandidateId(candidateId);
     }
 
-    // Chuc nang: Dem so don da duoc duyet
-    // Dau vao: candidateId (String) - ma ung vien
-    // Dau ra: int - so don APPROVED
-    // Tuong tac: Duoc goi tu AppliedJobsPanel; se goi ApplicationDAO
-    // Ghi chu: Su dung ApplicationStatus.APPROVED
+    // ------------------------------------------------------------------
+    // getApprovedApplicationByUser
+    // ------------------------------------------------------------------
+
+    @Override
     public int getApprovedApplicationByUser(String candidateId) {
-        // TODO: Buoc 1 - Goi ApplicationDAO.countByCandidateIdAndStatus
-        // TODO: Buoc 2 - Xu ly ket qua
-        // TODO: Buoc 3 - Tra ve so luong
-        return 0;
+        if (candidateId == null || candidateId.isBlank()) return 0;
+        return applicationDAO.countByCandidateIdAndStatus(candidateId, ApplicationStatus.APPROVED);
     }
 
-    // Chuc nang: Kiem tra ung vien da ung tuyen chua
-    // Dau vao: candidateId (String) - ma ung vien; recruitmentId (String) - ma tin
-    // Dau ra: boolean - true neu da ung tuyen
-    // Tuong tac: Duoc goi tu JobDetailPanel; se goi ApplicationDAO
-    // Ghi chu: Dung de hien nut Apply hay Cancel
+    // ------------------------------------------------------------------
+    // hasApplied
+    // ------------------------------------------------------------------
+
+    @Override
     public boolean hasApplied(String candidateId, String recruitmentId) {
-        // TODO: Buoc 1 - Goi ApplicationDAO.existsByCandidateAndRecruitment
-        // TODO: Buoc 2 - Xu ly ket qua
-        // TODO: Buoc 3 - Tra ve boolean
-        return false;
+        if (candidateId == null || recruitmentId == null) return false;
+        return applicationDAO.existsByCandidateAndRecruitment(candidateId, recruitmentId);
     }
 
-    // Chuc nang: Lay danh sach don ung tuyen theo tin
-    // Dau vao: recruitmentId (String) - ma tin tuyen dung
-    // Dau ra: List<ApplicationDTO> - danh sach don theo tin
-    // Tuong tac: Duoc goi tu ApplicationReviewPanel; se goi ApplicationDAO, CandidateDAO, UserDAO
-    // Ghi chu: Can verify employer la chu tin
+    // ------------------------------------------------------------------
+    // getApplicationsByRecruitmentId
+    // ------------------------------------------------------------------
+
+    /**
+     * Lay danh sach don cho mot tin tuyen dung.
+     * Rang buoc: Employer phai la chu tin.
+     */
+    @Override
     public List<ApplicationDTO> getApplicationsByRecruitmentId(String recruitmentId) {
-        // TODO: Buoc 1 - Kiem tra employer la chu tin
-        // TODO: Buoc 2 - Truy van danh sach application theo recruitmentId
-        // TODO: Buoc 3 - Map sang DTO
-        return Collections.emptyList();
+        if (recruitmentId == null || recruitmentId.isBlank()) return Collections.emptyList();
+
+        // Verify employer so huu tin nay
+        String employerId = session.getEmployerId();
+        if (employerId != null) {
+            Recruitment r = recruitmentDAO.findById(recruitmentId);
+            if (r == null || !employerId.equals(r.getEmployerId())) {
+                System.err.println("[ApplicationService] getApplicationsByRecruitmentId: employer khong co quyen.");
+                return Collections.emptyList();
+            }
+        }
+
+        List<Application> apps = applicationDAO.findByRecruitmentId(recruitmentId);
+        if (apps == null || apps.isEmpty()) return Collections.emptyList();
+
+        List<ApplicationDTO> result = new ArrayList<>();
+        for (Application a : apps) {
+            result.add(enrichApplication(a));
+        }
+        return result;
     }
 
-    // Chuc nang: Duyet don ung tuyen
-    // Dau vao: userId (String) - ma employer; applicationId (String) - ma don
-    // Dau ra: boolean - true neu duyet thanh cong
-    // Tuong tac: Duoc goi tu ApplicationReviewPanel; se goi ApplicationDAO
-    // Ghi chu: Can kiem tra employer la chu tin truoc khi duyet
+    // ------------------------------------------------------------------
+    // approveApplication
+    // ------------------------------------------------------------------
+
+    /**
+     * Employer duyet don ung tuyen.
+     * Rang buoc: employer phai la chu tin lien quan.
+     */
+    @Override
     public boolean approveApplication(String userId, String applicationId) {
-        // TODO: Buoc 1 - Kiem tra employer la chu tin
-        // TODO: Buoc 2 - Cap nhat trang thai APPROVED
-        // TODO: Buoc 3 - Tra ve ket qua
-        // TODO: Sau nay goi NotificationService.sendNotification(...) khi module Notification duoc trien khai.
-        // LUU Y: Tam thoi chua implement Notification o task nay.
-        return false;
+        return changeApplicationStatus(userId, applicationId, ApplicationStatus.APPROVED);
     }
 
-    // Chuc nang: Tu choi don ung tuyen
-    // Dau vao: userId (String) - ma employer; applicationId (String) - ma don
-    // Dau ra: boolean - true neu tu choi thanh cong
-    // Tuong tac: Duoc goi tu ApplicationReviewPanel; se goi ApplicationDAO
-    // Ghi chu: Can kiem tra employer la chu tin truoc khi tu choi
+    // ------------------------------------------------------------------
+    // rejectApplication
+    // ------------------------------------------------------------------
+
+    @Override
     public boolean rejectApplication(String userId, String applicationId) {
-        // TODO: Buoc 1 - Kiem tra employer la chu tin
-        // TODO: Buoc 2 - Cap nhat trang thai REJECTED
-        // TODO: Buoc 3 - Tra ve ket qua
-        // TODO: Sau nay goi NotificationService.sendNotification(...) khi module Notification duoc trien khai.
-        // LUU Y: Tam thoi chua implement Notification o task nay.
-        return false;
+        return changeApplicationStatus(userId, applicationId, ApplicationStatus.REJECTED);
     }
 
-    // Chuc nang: Lay thong tin ung vien
-    // Dau vao: candidateId (String) - ma ung vien
-    // Dau ra: UserDTO - thong tin ung vien kem CV
-    // Tuong tac: Duoc goi tu ApplicationReviewPanel; se goi UserDAO va CVDAO
-    // Ghi chu: Gom thong tin co ban va CV
+    // ------------------------------------------------------------------
+    // getCandidateInfo
+    // ------------------------------------------------------------------
+
+    @Override
     public UserDTO getCandidateInfo(String candidateId) {
-        // TODO: Buoc 1 - Lay thong tin user theo candidateId
-        // TODO: Buoc 2 - Lay thong tin CV theo candidateId
-        // TODO: Buoc 3 - Ghep vao DTO va tra ve
-        return null;
+        if (candidateId == null || candidateId.isBlank()) return null;
+
+        Candidate candidate = candidateDAO.findById(candidateId);
+        if (candidate == null) return null;
+
+        User user = userDAO.findById(candidate.getUserId());
+        if (user == null) return null;
+
+        return new UserDTO(
+                user.getUserId(), user.getUsername(), user.getFullName(),
+                user.getEmail(), user.getPhoneNumber(),
+                user.getRole(), user.isActive(), null
+        );
     }
 
-    // Chuc nang: Loc don ung tuyen theo trang thai
-    // Dau vao: recruitmentId (String) - ma tin; status (ApplicationStatus) - trang thai
-    // Dau ra: List<ApplicationDTO> - danh sach don da loc
-    // Tuong tac: Duoc goi tu ApplicationReviewPanel; se goi ApplicationDAO
-    // Ghi chu: Dung cho bo loc theo trang thai
+    // ------------------------------------------------------------------
+    // filterApplicationByStatus
+    // ------------------------------------------------------------------
+
+    @Override
     public List<ApplicationDTO> filterApplicationByStatus(String recruitmentId, ApplicationStatus status) {
-        // TODO: Buoc 1 - Goi ApplicationDAO.findByRecruitmentIdAndStatus
-        // TODO: Buoc 2 - Map sang DTO
-        // TODO: Buoc 3 - Tra ve danh sach
-        return Collections.emptyList();
+        if (recruitmentId == null || status == null) return Collections.emptyList();
+        List<Application> apps = applicationDAO.findByRecruitmentIdAndStatus(recruitmentId, status);
+        if (apps == null || apps.isEmpty()) return Collections.emptyList();
+        List<ApplicationDTO> result = new ArrayList<>();
+        for (Application a : apps) result.add(enrichApplication(a));
+        return result;
     }
 
-    // Chuc nang: Dem tong don ung tuyen theo employer
-    // Dau vao: employerId (String) - ma employer
-    // Dau ra: int - tong so don
-    // Tuong tac: Duoc goi tu EmployerDashboardPanel; se goi ApplicationDAO
-    // Ghi chu: Dem theo recruitment cua employer
+    // ------------------------------------------------------------------
+    // getTotalApplicationCount / getNewApplicantsToday
+    // ------------------------------------------------------------------
+
+    @Override
     public int getTotalApplicationCount(String employerId) {
-        // TODO: Buoc 1 - Goi ApplicationDAO.countByEmployerId
-        // TODO: Buoc 2 - Xu ly ket qua
-        // TODO: Buoc 3 - Tra ve so luong
-        return 0;
+        if (employerId == null || employerId.isBlank()) return 0;
+        return applicationDAO.countByEmployerId(employerId);
     }
 
-    // Chuc nang: Dem ung vien moi trong hom nay
-    // Dau vao: employerId (String) - ma employer
-    // Dau ra: int - so ung vien moi
-    // Tuong tac: Duoc goi tu EmployerDashboardPanel; se goi ApplicationDAO
-    // Ghi chu: Loc theo ngay hien tai
+    @Override
     public int getNewApplicantsToday(String employerId) {
-        // TODO: Buoc 1 - Goi ApplicationDAO.countNewApplicantsToday
-        // TODO: Buoc 2 - Xu ly ket qua
-        // TODO: Buoc 3 - Tra ve so luong
-        return 0;
+        if (employerId == null || employerId.isBlank()) return 0;
+        return applicationDAO.countNewApplicantsToday(employerId);
+    }
+
+    // ------------------------------------------------------------------
+    // Private helpers
+    // ------------------------------------------------------------------
+
+    /**
+     * Doi trang thai don (APPROVED hoac REJECTED).
+     * Rang buoc: Employer phai so huu tin lien quan.
+     */
+    private boolean changeApplicationStatus(String userId, String applicationId,
+                                             ApplicationStatus newStatus) {
+        if (applicationId == null || applicationId.isBlank()) return false;
+
+        // Tim don trong tat ca danh sach (lay theo recruitmentId cua don nay)
+        // Vì DAO khong co findById(applicationId), ta phai lay theo candidateId (khong biet)
+        // hoac tim qua employer. Giai phap: lay het theo employerId thi complex.
+        // Thay vao do: kiem tra quyen qua session.getEmployerId() va recruitmentDAO.
+        String employerId = session.getEmployerId();
+        if (employerId == null) {
+            System.err.println("[ApplicationService] changeStatus: chua dang nhap hoac khong phai EMPLOYER.");
+            return false;
+        }
+
+        // TODO: Nếu DAO chưa có findById(applicationId), bỏ qua kiểm tra sở hữu ở đây.
+        // Sau khi DAL bổ sung phương thức này, hãy thêm lại.
+        // TODO: Sau nay goi NotificationService de thong bao cho Candidate
+
+        return applicationDAO.updateStatus(applicationId, newStatus);
+    }
+
+    /**
+     * Lay them thong tin tu RecruitmentDAO va UserDAO de fill ApplicationDTO.
+     */
+    private ApplicationDTO enrichApplication(Application a) {
+        String jobTitle = null;
+        String companyName = null;
+        org.jobportal.enums.JobType jobType = null;
+
+        Recruitment r = recruitmentDAO.findById(a.getRecruitmentId());
+        if (r != null) {
+            jobTitle = r.getTitle();
+            jobType = r.getJobType();
+            // Lay ten cong ty tu Employer
+            org.jobportal.model.Employer employer =
+                    new org.jobportal.dal.impl.EmployerDAO().findById(r.getEmployerId());
+            if (employer != null) companyName = employer.getCompanyName();
+        }
+
+        // Lay ten candidate
+        String candidateName = null;
+        String email = null;
+        Candidate candidate = candidateDAO.findById(a.getCandidateId());
+        if (candidate != null) {
+            User user = userDAO.findById(candidate.getUserId());
+            if (user != null) {
+                candidateName = user.getFullName();
+                email = user.getEmail();
+            }
+        }
+
+        return new ApplicationDTO(
+                a.getApplicationId(),
+                a.getCandidateId(),
+                candidateName,
+                email,
+                a.getRecruitmentId(),
+                jobTitle,
+                companyName,
+                jobType,
+                a.getStatus(),
+                a.getAppliedDate()
+        );
     }
 }

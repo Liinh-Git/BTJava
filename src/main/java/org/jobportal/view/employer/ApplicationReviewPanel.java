@@ -3,12 +3,30 @@ package org.jobportal.view.employer;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.ApplicationService;
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.bll.interfaces.IApplicationService;
+import org.jobportal.bll.interfaces.IRecruitmentService;
+import org.jobportal.dto.ApplicationDTO;
+import org.jobportal.dto.RecruitmentDTO;
+import org.jobportal.dto.UserDTO;
+import org.jobportal.enums.ApplicationStatus;
+import org.jobportal.utils.SessionManager;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApplicationReviewPanel extends JPanel {
+
+    private final IApplicationService applicationService = new ApplicationService();
+    private final IRecruitmentService recruitmentService = new RecruitmentService();
+    private JPanel tableContainer;
+    private JLabel lblCount;
 
     public ApplicationReviewPanel() {
         setLayout(new BorderLayout());
@@ -28,7 +46,13 @@ public class ApplicationReviewPanel extends JPanel {
         mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // 3. bang danh sach ung vien
-        mainContent.add(createCandidateTable());
+        tableContainer = new JPanel();
+        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
+        tableContainer.setBackground(Color.WHITE);
+        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
+        mainContent.add(tableContainer);
+        
+        loadData();
         mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
 
         // 4. phan goi y AI va quang cao ben duoi
@@ -131,45 +155,61 @@ public class ApplicationReviewPanel extends JPanel {
         return card;
     }
 
-    private JPanel createCandidateTable() {
-        JPanel tableContainer = new JPanel();
-        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
-        tableContainer.setBackground(Color.WHITE);
-        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
-
+    private void loadData() {
+        tableContainer.removeAll();
         // header
-        tableContainer.add(createTableRow("ỨNG VIÊN", "NGÀY NỘP", "VỊ TRÍ HIỆN TẠI", "TRẠNG THÁI", "THAO TÁC", true, null, null));
+        tableContainer.add(createTableRow("ỨNG VIÊN", "NGÀY NỘP", "VỊ TRÍ HIỆN TẠI", "TRẠNG THÁI", "THAO TÁC", true, null, null, null));
 
-        // rows
-        tableContainer.add(createTableRow("Nguyễn Hoàng Nam", "12/10/2023", "UI/UX Designer", "PENDING", "", false, "nam.nguyen@example.com", "NH"));
-        tableContainer.add(createTableRow("Lê Thị Thu Thảo", "10/10/2023", "Senior Frontend Engineer", "REVIEWING", "", false, "thao.le@company.vn", "LT"));
-        tableContainer.add(createTableRow("Trần Minh Quân", "08/10/2023", "Fullstack Developer", "HIRED", "", false, "quan.tm@techflow.io", "TM"));
-        tableContainer.add(createTableRow("Phạm Văn Duy", "05/10/2023", "Lead Developer", "PENDING", "", false, "duy.pv@outlook.com", "PV"));
+        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        List<ApplicationDTO> allApps = new ArrayList<>();
+        if (user != null) {
+            List<RecruitmentDTO> recruitments = recruitmentService.getRecruitmentsByEmployer(user.getUserId());
+            if (recruitments != null) {
+                for (RecruitmentDTO r : recruitments) {
+                    List<ApplicationDTO> apps = applicationService.getApplicationsByRecruitmentId(r.getRecruitmentId());
+                    if (apps != null) {
+                        allApps.addAll(apps);
+                    }
+                }
+            }
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (ApplicationDTO app : allApps) {
+            String name = app.getCandidateName();
+            String email = (app.getEmail() != null) ? app.getEmail() : "No email";
+            String initials = name != null && name.length() > 0 ? name.substring(0, 1).toUpperCase() : "?";
+            String dateStr = app.getAppliedDate() != null ? app.getAppliedDate().format(formatter) : "N/A";
+            String pos = app.getJobTitle();
+            String status = app.getStatus().name();
+            
+            tableContainer.add(createTableRow(name, dateStr, pos, status, "", false, email, initials, app));
+        }
 
         // pagination footer
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(Color.WHITE);
         footer.setBorder(new EmptyBorder(10, 20, 10, 20));
 
-        JLabel lblCount = new JLabel("Hiển thị 1 - 4 của 12 ứng viên");
-        lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblCount.setForeground(Color.GRAY);
+        if (lblCount == null) {
+            lblCount = new JLabel();
+            lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            lblCount.setForeground(Color.GRAY);
+        }
+        lblCount.setText("Tổng cộng: " + allApps.size() + " hồ sơ");
         footer.add(lblCount, BorderLayout.WEST);
 
         JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         pagination.setBackground(Color.WHITE);
-        pagination.add(createPageBtn("<", false));
         pagination.add(createPageBtn("1", true));
-        pagination.add(createPageBtn("2", false));
-        pagination.add(createPageBtn("3", false));
-        pagination.add(createPageBtn(">", false));
         footer.add(pagination, BorderLayout.EAST);
 
         tableContainer.add(footer);
-        return tableContainer;
+        tableContainer.revalidate();
+        tableContainer.repaint();
     }
 
-    private JPanel createTableRow(String col1, String col2, String col3, String status, String action, boolean isHeader, String email, String initials) {
+    private JPanel createTableRow(String col1, String col2, String col3, String status, String action, boolean isHeader, String email, String initials, ApplicationDTO app) {
         JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
@@ -251,9 +291,34 @@ public class ApplicationReviewPanel extends JPanel {
             l5.setForeground(textColor);
             p5.add(l5);
         } else {
+            JButton btnCheck = createActionBtn("V", new Color(160, 50, 50));
+            btnCheck.addActionListener(e -> {
+                if (app != null && SessionManager.getInstance().getCurrentUser() != null) {
+                    boolean success = applicationService.approveApplication(SessionManager.getInstance().getCurrentUser().getUserId(), app.getApplicationId());
+                    if (success) {
+                        JOptionPane.showMessageDialog(this, "Đã chấp nhận hồ sơ!");
+                        loadData();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Không thể thao tác!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            JButton btnCross = createActionBtn("X", new Color(220, 53, 69));
+            btnCross.addActionListener(e -> {
+                if (app != null && SessionManager.getInstance().getCurrentUser() != null) {
+                    boolean success = applicationService.rejectApplication(SessionManager.getInstance().getCurrentUser().getUserId(), app.getApplicationId());
+                    if (success) {
+                        JOptionPane.showMessageDialog(this, "Đã từ chối hồ sơ!");
+                        loadData();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Không thể thao tác!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+
             p5.add(createActionBtn("O", new Color(13, 110, 253))); // eye
-            p5.add(createActionBtn("V", new Color(160, 50, 50)));  // check
-            p5.add(createActionBtn("X", new Color(220, 53, 69)));  // cross
+            p5.add(btnCheck);  // check
+            p5.add(btnCross);  // cross
         }
         row.add(p5, gbc);
 
@@ -400,7 +465,7 @@ public class ApplicationReviewPanel extends JPanel {
             frame.add(header, BorderLayout.NORTH);
 
             // Sidebar o WEST
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.EMPLOYER);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.EMPLOYER);
             frame.add(sidebar, BorderLayout.WEST);
 
             // Panel chinh o CENTER

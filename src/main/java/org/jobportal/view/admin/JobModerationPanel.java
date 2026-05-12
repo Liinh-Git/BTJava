@@ -3,12 +3,20 @@ package org.jobportal.view.admin;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.bll.interfaces.IRecruitmentService;
+import org.jobportal.dto.RecruitmentDTO;
+import java.util.List;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class JobModerationPanel extends JPanel {
+
+    private final IRecruitmentService recruitmentService = new RecruitmentService();
+    private JPanel gridPanel;
 
     public JobModerationPanel() {
         // thiet lap layout chinh
@@ -28,8 +36,14 @@ public class JobModerationPanel extends JPanel {
         mainContent.add(createSearchBar());
         mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // 2. luoi danh sach cac the can duyet
-        mainContent.add(createCardsGrid());
+        // 2. danh sach the tin dang cho duyet
+        gridPanel = new JPanel(new GridLayout(0, 2, 20, 20));
+        gridPanel.setBackground(new Color(248, 249, 250));
+        gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        mainContent.add(gridPanel);
+        
+        loadData();
         mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
 
         // 3. phan trang
@@ -116,53 +130,23 @@ public class JobModerationPanel extends JPanel {
         return searchPanel;
     }
 
-    private JPanel createCardsGrid() {
-        // su dung GridLayout de chia 2 cot, khoang cach 20px
-        JPanel gridPanel = new JPanel(new GridLayout(0, 2, 20, 20));
-        gridPanel.setBackground(new Color(248, 249, 250));
-        gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        gridPanel.add(createModerationJobCard(
-                "Senior Product Designer", "Velocity Digital Systems", "$2000 - $3500", "San Francisco / Remote",
-                "Seeking an experienced designer to lead our core product ecosystem. Requires 8+ years experience and a strong portfolio...",
-                new String[]{"UI/UX", "Figma", "Design"}
-        ));
-
-        gridPanel.add(createModerationJobCard(
-                "Full-Stack Engineer", "CloudArch Solutions", "Thoả thuận", "Hà Nội",
-                "Join our infrastructure team to build scalable serverless applications. Expertise in Node.js and AWS required...",
-                new String[]{"NodeJS", "AWS", "React"}
-        ));
-
-        gridPanel.add(createModerationJobCard(
-                "Marketing Director", "GreenCycle Growth", "$1500 - $2000", "Hồ Chí Minh",
-                "Developing brand strategy and overseeing performance marketing channels for our sustainable consumer goods...",
-                new String[]{"Marketing", "SEO", "Leadership"}
-        ));
-
-        gridPanel.add(createModerationJobCard(
-                "Data Scientist, ML", "Aether AI", "$3000+", "Đà Nẵng",
-                "Building large language models for medical diagnostics. PhD in Computer Science or related field preferred...",
-                new String[]{"Python", "Machine Learning", "AI"}
-        ));
-
-        gridPanel.add(createModerationJobCard(
-                "Customer Success Lead", "Nexus SaaS", "$1000 - $1500", "Hà Nội",
-                "Managing key enterprise accounts and ensuring customer satisfaction through proactive support and training...",
-                new String[]{"Customer Service", "SaaS"}
-        ));
-
-        gridPanel.add(createModerationJobCard(
-                "HR Operations Specialist", "Global Logistics Corp", "$800 - $1200", "Hồ Chí Minh",
-                "Handling payroll processing and benefits administration for a multi-regional workforce of 500+ employees...",
-                new String[]{"HR", "Operations"}
-        ));
-
-        return gridPanel;
+    private void loadData() {
+        gridPanel.removeAll();
+        List<RecruitmentDTO> pendingJobs = recruitmentService.getPendingRecruitments();
+        for (RecruitmentDTO job : pendingJobs) {
+            gridPanel.add(createModerationJobCard(job));
+        }
+        gridPanel.revalidate();
+        gridPanel.repaint();
     }
 
-    private JPanel createModerationJobCard(String title, String company, String salary, String location, String desc, String[] tags) {
-        org.jobportal.view.common.JobCardPanel card = new org.jobportal.view.common.JobCardPanel(title, company, salary, location, desc, tags);
+    private JPanel createModerationJobCard(RecruitmentDTO job) {
+        String company = job.getCompanyName() != null ? job.getCompanyName() : "Unknown Company";
+        String desc = job.getDescription().length() > 100 ? job.getDescription().substring(0, 100) + "..." : job.getDescription();
+        String[] tags = {job.getCategoryName() != null ? job.getCategoryName() : "Khác"};
+        
+        org.jobportal.view.common.JobCardPanel card = new org.jobportal.view.common.JobCardPanel(
+            job.getTitle(), company, String.valueOf(job.getSalary()), job.getLocation(), desc, tags);
 
         JPanel btnPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         btnPanel.setBackground(Color.WHITE);
@@ -174,6 +158,15 @@ public class JobModerationPanel extends JPanel {
         btnApprove.setFocusPainted(false);
         btnApprove.setBorderPainted(false);
         btnApprove.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnApprove.addActionListener(e -> {
+            boolean success = recruitmentService.adminModerate(job.getRecruitmentId(), "APPROVED");
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Đã duyệt tin tuyển dụng!");
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(this, "Lỗi khi duyệt tin!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         JButton btnReject = new JButton("Reject");
         btnReject.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -182,6 +175,15 @@ public class JobModerationPanel extends JPanel {
         btnReject.setBorder(new LineBorder(new Color(226, 230, 234), 1));
         btnReject.setFocusPainted(false);
         btnReject.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnReject.addActionListener(e -> {
+            boolean success = recruitmentService.adminModerate(job.getRecruitmentId(), "REJECTED");
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Đã từ chối tin tuyển dụng!");
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(this, "Lỗi khi từ chối tin!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         btnPanel.add(btnApprove);
         btnPanel.add(btnReject);
@@ -240,7 +242,7 @@ public class JobModerationPanel extends JPanel {
             frame.add(header, BorderLayout.NORTH);
 
             // Sidebar o WEST (quyen ADMIN)
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.ADMIN);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.ADMIN);
             frame.add(sidebar, BorderLayout.WEST);
 
             // Giao dien chinh o CENTER

@@ -284,7 +284,7 @@ public class AdminDashboardPanel extends JPanel {
             HeaderPanel header = new HeaderPanel();
             frame.add(header, BorderLayout.NORTH);
 
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.ADMIN);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.ADMIN);
             frame.add(sidebar, BorderLayout.WEST);
 
             AdminDashboardPanel dashboardPanel = new AdminDashboardPanel();

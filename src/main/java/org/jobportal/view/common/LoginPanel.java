@@ -1,5 +1,10 @@
 package org.jobportal.view.common;
 
+import org.jobportal.bll.impl.AuthService;
+import org.jobportal.bll.interfaces.IAuthService;
+import org.jobportal.dto.UserDTO;
+import org.jobportal.enums.Role;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -9,16 +14,8 @@ import java.awt.event.MouseEvent;
 public class LoginPanel extends JPanel {
 
     private MainFrame mainFrame;
-    private static java.util.Map<String, String> testAccounts = new java.util.HashMap<>();
+    private final IAuthService authService = new AuthService();
 
-    static {
-        // Tài khoản mẫu để test
-        testAccounts.put("admin", "admin123");
-    }
-
-    public static void registerAccount(String username, String password) {
-        testAccounts.put(username, password);
-    }
 
     public LoginPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -148,13 +145,23 @@ public class LoginPanel extends JPanel {
         btnLogin.addActionListener(e -> {
             String user = txtUsername.getText();
             String pass = new String(txtPassword.getPassword());
-            if (testAccounts.containsKey(user) && testAccounts.get(user).equals(pass)) {
+
+            Role role = Role.CANDIDATE;
+            if (btnEmployer.isSelected()) {
+                role = Role.EMPLOYER;
+            } else if (btnAdmin.isSelected()) {
+                role = Role.ADMIN;
+            }
+
+            UserDTO loggedInUser = authService.login(user, pass, role);
+
+            if (loggedInUser != null) {
                 JOptionPane.showMessageDialog(this, "Đăng nhập thành công!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 if (mainFrame != null) {
-                    mainFrame.showApp();
+                    mainFrame.onLoginSuccess();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Sai tài khoản, mật khẩu hoặc vai trò!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 

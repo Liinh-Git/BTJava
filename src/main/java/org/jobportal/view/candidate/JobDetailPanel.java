@@ -3,14 +3,32 @@ package org.jobportal.view.candidate;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.ApplicationService;
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.bll.interfaces.IApplicationService;
+import org.jobportal.bll.interfaces.IRecruitmentService;
+import org.jobportal.dto.RecruitmentDTO;
+import org.jobportal.utils.SessionManager;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 
 public class JobDetailPanel extends JPanel {
 
-    public JobDetailPanel() {
+    private final IRecruitmentService recruitmentService = new RecruitmentService();
+    private final IApplicationService applicationService = new ApplicationService();
+    
+    private String recruitmentId;
+    private JDialog parentDialog;
+    private RecruitmentDTO recruitment;
+
+    public JobDetailPanel(String recruitmentId, JDialog parentDialog) {
+        this.recruitmentId = recruitmentId;
+        this.parentDialog = parentDialog;
+        this.recruitment = recruitmentService.getRecruitmentById(recruitmentId);
         // thiet lap layout chinh la border layout de ghim thanh bottom va top
         setLayout(new BorderLayout());
         setBackground(new Color(248, 249, 250));
@@ -54,6 +72,14 @@ public class JobDetailPanel extends JPanel {
         lblBack.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblBack.setForeground(Color.DARK_GRAY);
         lblBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        lblBack.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (parentDialog != null) {
+                    parentDialog.dispose();
+                }
+            }
+        });
 
         panel.add(lblBack);
         return panel;
@@ -67,23 +93,27 @@ public class JobDetailPanel extends JPanel {
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBackground(Color.WHITE);
 
-        JLabel lblTitle = new JLabel("Senior Software Engineer");
+        JLabel lblTitle = new JLabel(recruitment != null ? recruitment.getTitle() : "Unknown");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titlePanel.add(lblTitle, BorderLayout.WEST);
 
         JPanel tagsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         tagsPanel.setBackground(Color.WHITE);
-        tagsPanel.add(createTag("FULLTIME", new Color(225, 230, 255), new Color(50, 70, 150)));
-        tagsPanel.add(createTag("OPEN", new Color(210, 245, 220), new Color(40, 120, 60)));
+        if (recruitment != null) {
+            tagsPanel.add(createTag(recruitment.getJobType() != null ? recruitment.getJobType().name() : "FULL_TIME", new Color(225, 230, 255), new Color(50, 70, 150)));
+            tagsPanel.add(createTag(recruitment.getStatus() != null ? recruitment.getStatus().name() : "OPEN", new Color(210, 245, 220), new Color(40, 120, 60)));
+        }
         titlePanel.add(tagsPanel, BorderLayout.EAST);
 
         card.add(titlePanel);
         card.add(Box.createRigidArea(new Dimension(0, 15)));
 
         // dong 2 & 3: thong tin cong ty va dia diem
-        card.add(createIconTextRow("::", "TechFlow Systems Inc.", true));
-        card.add(Box.createRigidArea(new Dimension(0, 8)));
-        card.add(createIconTextRow("o", "TechFlow HQ, SOMA District, San Francisco, CA 94103, United States", false));
+        if (recruitment != null) {
+            card.add(createIconTextRow("::", recruitment.getCompanyName(), true));
+            card.add(Box.createRigidArea(new Dimension(0, 8)));
+            card.add(createIconTextRow("o", recruitment.getLocation(), false));
+        }
 
         return card;
     }
@@ -93,12 +123,20 @@ public class JobDetailPanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(3, 2, 20, 15));
         grid.setBackground(new Color(248, 249, 250));
 
-        grid.add(createSummaryBox("LOCATION", "San Francisco, CA"));
-        grid.add(createSummaryBox("SALARY", "$120k - $150k"));
-        grid.add(createSummaryBox("EXPERIENCE", "3-5 years"));
-        grid.add(createSummaryBox("APPLICANTS", "12 applicants"));
-        grid.add(createSummaryBox("CREATED DATE", "Oct 1, 2023"));
-        grid.add(createSummaryBox("DUE DATE", "Oct 31, 2023"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
+        String location = recruitment != null && recruitment.getLocation() != null ? recruitment.getLocation() : "N/A";
+        String salary = recruitment != null && recruitment.getSalary() != null ? "$" + recruitment.getSalary().intValue() : "Negotiable";
+        String exp = recruitment != null && recruitment.getExperienceRequired() != null ? recruitment.getExperienceRequired() : "Not specified";
+        String apps = recruitment != null ? String.valueOf(recruitment.getApplicationCount()) + " applicants" : "0 applicants";
+        String created = recruitment != null && recruitment.getCreatedDate() != null ? recruitment.getCreatedDate().format(formatter) : "N/A";
+        String due = recruitment != null && recruitment.getDueDate() != null ? recruitment.getDueDate().format(formatter) : "N/A";
+
+        grid.add(createSummaryBox("LOCATION", location));
+        grid.add(createSummaryBox("SALARY", salary));
+        grid.add(createSummaryBox("EXPERIENCE", exp));
+        grid.add(createSummaryBox("APPLICANTS", apps));
+        grid.add(createSummaryBox("CREATED DATE", created));
+        grid.add(createSummaryBox("DUE DATE", due));
 
         return grid;
     }
@@ -115,7 +153,7 @@ public class JobDetailPanel extends JPanel {
         card.add(Box.createRigidArea(new Dimension(0, 15)));
 
         // doan van mo ta chung
-        String desc = "We are seeking a high-performing Senior Software Engineer to join our core platform team. You will be responsible for architecting and implementing scalable backend services that power millions of real-time transactions daily. The ideal candidate has a deep understanding of distributed systems and a passion for clean, maintainable code.";
+        String desc = recruitment != null ? recruitment.getDescription() : "No description available.";
         JTextArea txtDesc = new JTextArea(desc);
         txtDesc.setWrapStyleWord(true);
         txtDesc.setLineWrap(true);
@@ -192,6 +230,16 @@ public class JobDetailPanel extends JPanel {
         btnApply.setPreferredSize(new Dimension(160, 45));
         btnApply.setFocusPainted(false);
         btnApply.setBorderPainted(false);
+        btnApply.addActionListener(e -> {
+            if (recruitmentId != null && SessionManager.getInstance().getCurrentUser() != null) {
+                boolean success = applicationService.applyRecruitment(SessionManager.getInstance().getCurrentUser().getUserId(), recruitmentId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Nộp hồ sơ thành công!");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Bạn đã nộp hồ sơ hoặc có lỗi xảy ra!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
 
         rightPanel.add(btnShare);
         rightPanel.add(btnApply);
@@ -273,12 +321,12 @@ public class JobDetailPanel extends JPanel {
             HeaderPanel header = new HeaderPanel();
             frame.add(header, BorderLayout.NORTH);
 
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.CANDIDATE);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.CANDIDATE);
             frame.add(sidebar, BorderLayout.WEST);
 
             JPanel rightPanel = new JPanel(new BorderLayout());
 
-            JobDetailPanel jobDetailPanel = new JobDetailPanel();
+            JobDetailPanel jobDetailPanel = new JobDetailPanel(null, null);
             rightPanel.add(jobDetailPanel, BorderLayout.CENTER);
 
             frame.add(rightPanel);

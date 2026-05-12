@@ -4,12 +4,29 @@ import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.JobCardPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.CategoryService;
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.model.Category;
+import org.jobportal.dto.RecruitmentDTO;
+import org.jobportal.bll.interfaces.IRecruitmentService;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JobSearchPanel extends JPanel {
+
+    private final IRecruitmentService recruitmentService = new RecruitmentService();
+    private final CategoryService categoryService = new CategoryService();
+    private List<Category> categoryList = new ArrayList<>();
+    private java.util.Map<String, String> categoryMap = new java.util.HashMap<>();
+    
+    private JTextField txtSearch;
+    private JComboBox<String> cbCategory;
+    private JPanel jobsGrid;
 
     public JobSearchPanel() {
         setBackground(new Color(248, 249, 250));
@@ -41,16 +58,13 @@ public class JobSearchPanel extends JPanel {
         mainContent.add(Box.createRigidArea(new Dimension(0, 15)));
 
         // 3. danh sach cong viec
-        JPanel jobsGrid = new JPanel(new GridLayout(2, 2, 20, 20));
+        jobsGrid = new JPanel(new GridLayout(0, 2, 20, 20));
         jobsGrid.setBackground(new Color(248, 249, 250));
 
-        // khoi tao the viec lam thong qua component dung chung
-        jobsGrid.add(new JobCardPanel("Senior UI/UX Designer", "Aperture Systems", "$120k - $150k", "San Francisco (Hybrid)", "We are looking for a creative UI/UX Designer to join our team. You will be responsible for creating amazing user experiences and...", new String[]{"Full-time", "Remote-friendly"}));
-        jobsGrid.add(new JobCardPanel("Frontend Developer", "Nebula Cloud Services", "$90k - $130k", "Remote, USA", "Join our fast-growing engineering team as a Frontend Developer. You'll be working with React, Tailwind CSS, and TypeScript to bui...", new String[]{"Contract", "Junior-Mid"}));
-        jobsGrid.add(new JobCardPanel("Product Manager", "Zenith FinTech", "$140k - $180k", "New York, NY", "Zenith FinTech is looking for a strategic Product Manager to lead our mobile banking initiative. You will drive the product vision and...", new String[]{"Full-time", "Senior"}));
-        jobsGrid.add(new JobCardPanel("Sustainability Analyst", "GreenPath Solutions", "$75k - $95k", "Austin, TX", "Passionate about the planet? We are seeking an Analyst to evaluate corporate carbon footprints and suggest actionable...", new String[]{"Full-time", "Entry Level"}));
-
         mainContent.add(jobsGrid);
+        
+        loadCategories();
+        performSearch();
         mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
 
         // 4. phan trang
@@ -83,13 +97,12 @@ public class JobSearchPanel extends JPanel {
         panel.add(createLabel("Category"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.7;
-        JTextField txtSearch = new JTextField();
+        txtSearch = new JTextField();
         txtSearch.setPreferredSize(new Dimension(0, 35));
         panel.add(txtSearch, gbc);
 
         gbc.gridx = 1; gbc.weightx = 0.2;
-        // IMPLEMENT: THÊM CÁC CATEGORIES VÀO
-        JComboBox<String> cbCategory = new JComboBox<>(new String[]{"All Categories", "IT", "Design", "Marketing"});
+        cbCategory = new JComboBox<>(new String[]{"All Categories"});
         cbCategory.setPreferredSize(new Dimension(0, 35));
         cbCategory.setBackground(Color.WHITE);
         panel.add(cbCategory, gbc);
@@ -100,9 +113,68 @@ public class JobSearchPanel extends JPanel {
         btnSearch.setForeground(Color.WHITE);
         btnSearch.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnSearch.setPreferredSize(new Dimension(100, 35));
+        btnSearch.addActionListener(e -> performSearch());
         panel.add(btnSearch, gbc);
 
         return panel;
+    }
+    
+    private void loadCategories() {
+        List<Category> categories = categoryService.getAllCategories();
+        cbCategory.removeAllItems();
+        cbCategory.addItem("All Categories");
+        if (categories != null) {
+            for (Category cat : categories) {
+                categoryMap.put(cat.getCategoryName(), cat.getCategoryId());
+                cbCategory.addItem(cat.getCategoryName());
+            }
+        }
+    }
+    
+    private void performSearch() {
+        String keyword = txtSearch != null ? txtSearch.getText().trim() : "";
+        int catIdx = cbCategory != null ? cbCategory.getSelectedIndex() : 0;
+        String catId = null;
+        if (catIdx > 0 && categoryList != null && catIdx - 1 < categoryList.size()) {
+            catId = categoryList.get(catIdx - 1).getCategoryId();
+        }
+        
+        List<RecruitmentDTO> jobs = recruitmentService.searchRecruitments(keyword, catId, 1, 20);
+        jobsGrid.removeAll();
+        if (jobs != null) {
+            for (RecruitmentDTO job : jobs) {
+                String title = job.getTitle();
+                String company = job.getCompanyName() != null ? job.getCompanyName() : "Unknown Company";
+                String salary = job.getSalary() != null ? "$" + job.getSalary().intValue() : "Negotiable";
+                String location = job.getLocation() != null ? job.getLocation() : "Unknown Location";
+                String desc = job.getDescription() != null ? job.getDescription() : "";
+                if (desc.length() > 100) desc = desc.substring(0, 100) + "...";
+                String[] tags = {job.getJobType() != null ? job.getJobType().name() : "FULL_TIME"};
+                
+                JobCardPanel card = new JobCardPanel(title, company, salary, location, desc, tags);
+                
+                JButton btnApply = new JButton("Details & Apply");
+                btnApply.setBackground(new Color(13, 110, 253));
+                btnApply.setForeground(Color.WHITE);
+                btnApply.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                btnApply.setFocusPainted(false);
+                btnApply.addActionListener(e -> {
+                    Window ancestor = SwingUtilities.getWindowAncestor(this);
+                    if (ancestor instanceof Frame) {
+                        JDialog dialog = new JDialog((Frame) ancestor, "Chi tiết việc làm", true);
+                        dialog.setSize(1000, 800);
+                        dialog.setLocationRelativeTo(ancestor);
+                        dialog.add(new JobDetailPanel(job.getRecruitmentId(), dialog));
+                        dialog.setVisible(true);
+                    }
+                });
+                card.setActionComponent(btnApply);
+                
+                jobsGrid.add(card);
+            }
+        }
+        jobsGrid.revalidate();
+        jobsGrid.repaint();
     }
 
     // ham tao nut phan trang
@@ -155,7 +227,7 @@ public class JobSearchPanel extends JPanel {
             HeaderPanel header = new HeaderPanel();
             frame.add(header, BorderLayout.NORTH);
 
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.CANDIDATE);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.CANDIDATE);
             frame.add(sidebar, BorderLayout.WEST);
 
             JPanel rightPanel = new JPanel(new BorderLayout());
