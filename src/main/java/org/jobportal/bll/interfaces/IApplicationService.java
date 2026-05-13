@@ -3,7 +3,6 @@ package org.jobportal.bll.interfaces;
 import java.util.List;
 import org.jobportal.dto.ApplicationDTO;
 import org.jobportal.dto.UserDTO;
-import org.jobportal.enums.ApplicationStatus;
 
 public interface IApplicationService {
     // Chuc nang: Ung tuyen vao mot tin tuyen dung
@@ -56,11 +55,6 @@ public interface IApplicationService {
     // Dau ra: UserDTO
     UserDTO getCandidateInfo(String candidateId);
 
-    // Chuc nang: Loc don ung tuyen theo trang thai
-    // Dau vao: recruitmentId (String), status (ApplicationStatus)
-    // Dau ra: List<ApplicationDTO>
-    List<ApplicationDTO> filterApplicationByStatus(String recruitmentId, ApplicationStatus status);
-
     // Chuc nang: Dem tong don ung tuyen theo employer
     // Dau vao: employerId (String)
     // Dau ra: int
@@ -70,4 +64,5 @@ public interface IApplicationService {
     // Dau vao: employerId (String)
     // Dau ra: int
     int getNewApplicantsToday(String employerId);
+
 }

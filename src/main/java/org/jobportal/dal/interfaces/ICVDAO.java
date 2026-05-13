@@ -1,6 +1,8 @@
 package org.jobportal.dal.interfaces;
 
+import java.util.List;
 import org.jobportal.model.CV;
+import org.jobportal.model.Education;
 
 public interface ICVDAO {
     // Chức năng: Lấy CV theo candidateId
@@ -17,4 +19,7 @@ public interface ICVDAO {
     // Đầu vào: cv (CV)
     // Đầu ra: boolean
     boolean update(CV cv);
+    List<Education> findEducationsByCvId(String cvId);
+
+    boolean replaceEducations(String cvId, List<Education> educations);
 }

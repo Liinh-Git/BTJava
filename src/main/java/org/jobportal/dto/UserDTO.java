@@ -11,6 +11,8 @@ public class UserDTO {
     private Role role;
     private boolean active;
     private String companyName;
+    private String companyAddress;
+    private String companyDescription;
 
     public UserDTO() {
     }
@@ -89,5 +91,21 @@ public class UserDTO {
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+
+    public String getCompanyAddress() {
+        return companyAddress;
+    }
+
+    public void setCompanyAddress(String companyAddress) {
+        this.companyAddress = companyAddress;
+    }
+
+    public String getCompanyDescription() {
+        return companyDescription;
+    }
+
+    public void setCompanyDescription(String companyDescription) {
+        this.companyDescription = companyDescription;
     }
 }

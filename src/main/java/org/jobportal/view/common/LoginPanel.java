@@ -1,12 +1,24 @@
 package org.jobportal.view.common;
 
+import org.jobportal.bll.impl.AuthService;
+import org.jobportal.bll.interfaces.IAuthService;
+import org.jobportal.dto.UserDTO;
+import org.jobportal.enums.Role;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class LoginPanel extends JPanel {
 
-    public LoginPanel() {
+    private MainFrame mainFrame;
+    private final IAuthService authService = new AuthService();
+
+
+    public LoginPanel(MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
         // thiet lap layout chinh de can giua form
         setLayout(new GridBagLayout());
         setBackground(new Color(245, 247, 250));
@@ -39,7 +51,9 @@ public class LoginPanel extends JPanel {
         // chon quyen
         JPanel rolePanel = new JPanel(new GridLayout(1, 3, 10, 0));
         rolePanel.setBackground(Color.WHITE);
-        rolePanel.setMaximumSize(new Dimension(400, 50));
+        rolePanel.setPreferredSize(new Dimension(370, 45));
+        rolePanel.setMaximumSize(new Dimension(370, 45));
+        rolePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JToggleButton btnCandidate = createRoleButton("Candidate");
         JToggleButton btnEmployer = createRoleButton("Employer");
@@ -59,10 +73,20 @@ public class LoginPanel extends JPanel {
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
         inputPanel.setBackground(Color.WHITE);
+        inputPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        inputPanel.add(createLabel("USERNAME"));
+        JPanel userHeaderPanel = new JPanel(new BorderLayout());
+        userHeaderPanel.setBackground(Color.WHITE);
+        userHeaderPanel.add(createLabel("USERNAME"), BorderLayout.WEST);
+        userHeaderPanel.setPreferredSize(new Dimension(370, 20));
+        userHeaderPanel.setMaximumSize(new Dimension(370, 20));
+        userHeaderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        inputPanel.add(userHeaderPanel);
+
         JTextField txtUsername = new JTextField();
-        txtUsername.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        txtUsername.setPreferredSize(new Dimension(370, 35));
+        txtUsername.setMaximumSize(new Dimension(370, 35));
+        txtUsername.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputPanel.add(txtUsername);
         inputPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
@@ -70,34 +94,29 @@ public class LoginPanel extends JPanel {
         passHeaderPanel.setBackground(Color.WHITE);
         passHeaderPanel.add(createLabel("PASSWORD"), BorderLayout.WEST);
 
-        JLabel lblForgot = new JLabel("Forgot password?");
-        lblForgot.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblForgot.setForeground(new Color(13, 110, 253));
-        lblForgot.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        passHeaderPanel.add(lblForgot, BorderLayout.EAST);
-
-        passHeaderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        passHeaderPanel.setPreferredSize(new Dimension(370, 20));
+        passHeaderPanel.setMaximumSize(new Dimension(370, 20));
+        passHeaderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputPanel.add(passHeaderPanel);
 
         JPasswordField txtPassword = new JPasswordField();
-        txtPassword.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        txtPassword.setPreferredSize(new Dimension(370, 35));
+        txtPassword.setMaximumSize(new Dimension(370, 35));
+        txtPassword.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputPanel.add(txtPassword);
 
-        // nho dang nhap
-        JCheckBox chkKeep = new JCheckBox("Keep me signed in");
-        chkKeep.setBackground(Color.WHITE);
-        chkKeep.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        chkKeep.setForeground(Color.DARK_GRAY);
 
         // nut submit
         JButton btnLogin = new JButton("Login");
         btnLogin.setBackground(new Color(13, 110, 253));
         btnLogin.setForeground(Color.WHITE);
         btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        btnLogin.setPreferredSize(new Dimension(370, 40));
+        btnLogin.setMaximumSize(new Dimension(370, 40));
         btnLogin.setFocusPainted(false);
         btnLogin.setBorderPainted(false);
         btnLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // chuyen den dang ky
         JLabel lblRegister = new JLabel("<html>New to JobPortal? <font color='#0d6efd'>Create an account</font></html>");
@@ -115,19 +134,49 @@ public class LoginPanel extends JPanel {
         formPanel.add(rolePanel);
         formPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         formPanel.add(inputPanel);
-        formPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        JPanel checkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        checkPanel.setBackground(Color.WHITE);
-        checkPanel.add(chkKeep);
-        formPanel.add(checkPanel);
-
         formPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         formPanel.add(btnLogin);
         formPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         formPanel.add(lblRegister);
 
         add(formPanel);
+
+        // Event listeners
+        btnLogin.addActionListener(e -> {
+            String user = txtUsername.getText();
+            String pass = new String(txtPassword.getPassword());
+
+            Role role = Role.CANDIDATE;
+            if (btnEmployer.isSelected()) {
+                role = Role.EMPLOYER;
+            } else if (btnAdmin.isSelected()) {
+                role = Role.ADMIN;
+            }
+
+            UserDTO loggedInUser = authService.login(user, pass, role);
+
+            if (loggedInUser != null) {
+                JOptionPane.showMessageDialog(this, "Đăng nhập thành công!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                if (mainFrame != null) {
+                    mainFrame.onLoginSuccess();
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Sai tài khoản, mật khẩu hoặc vai trò!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        lblRegister.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (mainFrame != null) {
+                    mainFrame.showRegister();
+                }
+            }
+        });
+    }
+
+    public LoginPanel() {
+        this(null);
     }
 
     // ham ho tro tao nut role
@@ -144,6 +193,7 @@ public class LoginPanel extends JPanel {
         JLabel lbl = new JLabel(text);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lbl.setForeground(Color.DARK_GRAY);
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         return lbl;
     }
 

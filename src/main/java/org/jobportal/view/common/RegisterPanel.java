@@ -1,12 +1,22 @@
 package org.jobportal.view.common;
 
+import org.jobportal.bll.impl.AuthService;
+import org.jobportal.bll.interfaces.IAuthService;
+import org.jobportal.enums.Role;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class RegisterPanel extends JPanel {
 
-    public RegisterPanel() {
+    private MainFrame mainFrame;
+    private final IAuthService authService = new AuthService();
+
+    public RegisterPanel(MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
         // thiet lap layout can giua
         setLayout(new GridBagLayout());
         setBackground(new Color(245, 247, 250));
@@ -40,23 +50,44 @@ public class RegisterPanel extends JPanel {
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
         inputPanel.setBackground(Color.WHITE);
+        inputPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        inputPanel.add(createLabel("FULL NAME"));
+        JPanel nameHeader = new JPanel(new BorderLayout());
+        nameHeader.setBackground(Color.WHITE);
+        nameHeader.add(createLabel("FULL NAME"), BorderLayout.WEST);
+        nameHeader.setPreferredSize(new Dimension(370, 20));
+        nameHeader.setMaximumSize(new Dimension(370, 20));
+        nameHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
+        inputPanel.add(nameHeader);
+
         JTextField txtFullName = new JTextField();
-        txtFullName.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        txtFullName.setPreferredSize(new Dimension(370, 35));
+        txtFullName.setMaximumSize(new Dimension(370, 35));
+        txtFullName.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputPanel.add(txtFullName);
         inputPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        inputPanel.add(createLabel("EMAIL ADDRESS"));
+        JPanel emailHeader = new JPanel(new BorderLayout());
+        emailHeader.setBackground(Color.WHITE);
+        emailHeader.add(createLabel("EMAIL ADDRESS"), BorderLayout.WEST);
+        emailHeader.setPreferredSize(new Dimension(370, 20));
+        emailHeader.setMaximumSize(new Dimension(370, 20));
+        emailHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
+        inputPanel.add(emailHeader);
+
         JTextField txtEmail = new JTextField();
-        txtEmail.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        txtEmail.setPreferredSize(new Dimension(370, 35));
+        txtEmail.setMaximumSize(new Dimension(370, 35));
+        txtEmail.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputPanel.add(txtEmail);
         inputPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // chia cot cho mat khau
         JPanel passPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         passPanel.setBackground(Color.WHITE);
-        passPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        passPanel.setPreferredSize(new Dimension(370, 50));
+        passPanel.setMaximumSize(new Dimension(370, 50));
+        passPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JPanel p1 = new JPanel();
         p1.setLayout(new BoxLayout(p1, BoxLayout.Y_AXIS));
@@ -75,16 +106,35 @@ public class RegisterPanel extends JPanel {
         passPanel.add(p1);
         passPanel.add(p2);
         inputPanel.add(passPanel);
+        inputPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JPanel roleHeader = new JPanel(new BorderLayout());
+        roleHeader.setBackground(Color.WHITE);
+        roleHeader.add(createLabel("LOẠI TÀI KHOẢN"), BorderLayout.WEST);
+        roleHeader.setPreferredSize(new Dimension(370, 20));
+        roleHeader.setMaximumSize(new Dimension(370, 20));
+        roleHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
+        inputPanel.add(roleHeader);
+
+        JComboBox<String> cbRole = new JComboBox<>(new String[]{"Ứng viên", "Nhà tuyển dụng"});
+        cbRole.setPreferredSize(new Dimension(370, 35));
+        cbRole.setMaximumSize(new Dimension(370, 35));
+        cbRole.setAlignmentX(Component.CENTER_ALIGNMENT);
+        cbRole.setBackground(Color.WHITE);
+        cbRole.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        inputPanel.add(cbRole);
 
         // nut dang ky
         JButton btnRegister = new JButton("Sign Up");
         btnRegister.setBackground(new Color(13, 110, 253));
         btnRegister.setForeground(Color.WHITE);
         btnRegister.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnRegister.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        btnRegister.setPreferredSize(new Dimension(370, 40));
+        btnRegister.setMaximumSize(new Dimension(370, 40));
         btnRegister.setFocusPainted(false);
         btnRegister.setBorderPainted(false);
         btnRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnRegister.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // link dang nhap
         JLabel lblLogin = new JLabel("<html>Already have an account? <font color='#0d6efd'>Log in</font></html>");
@@ -106,6 +156,51 @@ public class RegisterPanel extends JPanel {
         formPanel.add(lblLogin);
 
         add(formPanel);
+
+        // Event listeners
+        btnRegister.addActionListener(e -> {
+            String fullname = txtFullName.getText();
+            String email = txtEmail.getText();
+            String pass = new String(txtPass.getPassword());
+            String confirm = new String(txtConfirm.getPassword());
+
+            if (fullname.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!pass.equals(confirm)) {
+                JOptionPane.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Role selectedRole = cbRole.getSelectedIndex() == 0 ? Role.CANDIDATE : Role.EMPLOYER;
+
+            String username = email.contains("@") ? email.split("@")[0] : email;
+
+            boolean registered = authService.register(username, email, pass, confirm, selectedRole);
+
+            if (registered) {
+                JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                if (mainFrame != null) {
+                    mainFrame.showLogin();
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        lblLogin.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (mainFrame != null) {
+                    mainFrame.showLogin();
+                }
+            }
+        });
+    }
+
+    public RegisterPanel() {
+        this(null);
     }
 
     private JLabel createLabel(String text) {

@@ -1,52 +1,81 @@
 package org.jobportal.bll.impl;
 
-import java.util.Collections;
-import java.util.List;
+import org.jobportal.bll.interfaces.INotificationService;
+import org.jobportal.dal.impl.UserDAO;
+import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.dto.NotificationDTO;
+import org.jobportal.model.User;
 
-public class NotificationService {
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Lay danh sach thong bao theo user
-    // Dau vao: userId (String) - ma user
-    // Dau ra: List<NotificationDTO> - danh sach thong bao
-    // Tuong tac: Duoc goi tu HeaderPanel; se goi NotificationDAO
-    // Ghi chu: Sap xep giam dan theo thoi gian
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
+
+public class NotificationService implements INotificationService {
+
+    private static final List<NotificationDTO> STORE = new CopyOnWriteArrayList<>();
+    private static final AtomicLong COUNTER = new AtomicLong(0);
+
+    private final IUserDAO userDAO = new UserDAO();
+
+    @Override
     public List<NotificationDTO> getNotifications(String userId) {
-        // TODO: Buoc 1 - Truy van danh sach thong bao theo userId
-        // TODO: Buoc 2 - Sap xep va map sang DTO
-        // TODO: Buoc 3 - Tra ve danh sach
-        return Collections.emptyList();
+        if (userId == null || userId.isBlank()) return new ArrayList<>();
+
+        List<NotificationDTO> result = new ArrayList<>();
+        for (NotificationDTO n : STORE) {
+            if (userId.equals(n.getReceiverId())) {
+                result.add(n);
+            }
+        }
+
+        result.sort(Comparator.comparing(NotificationDTO::getDateTime,
+                Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+        return result;
     }
 
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Gui thong bao
-    // Dau vao: senderId (String) - nguoi gui; receiverId (String) - nguoi nhan; content (String) - noi dung
-    // Dau ra: boolean - true neu gui thanh cong
-    // Tuong tac: Duoc goi tu ApplicationService/RecruitmentService; se goi NotificationDAO
-    // Ghi chu: Tao notificationId va thoi gian gui
+    @Override
     public boolean sendNotification(String senderId, String receiverId, String content) {
-        // TODO: Buoc 1 - Tao doi tuong Notification
-        // TODO: Buoc 2 - Luu Notification vao DB
-        // TODO: Buoc 3 - Tra ve ket qua
-        return false;
+        if (receiverId == null || receiverId.isBlank()) return false;
+        if (content == null || content.isBlank()) return false;
+
+        String senderName = "System";
+        if (senderId != null && !senderId.isBlank()) {
+            User sender = userDAO.findById(senderId);
+            if (sender != null && sender.getFullName() != null && !sender.getFullName().isBlank()) {
+                senderName = sender.getFullName();
+            } else if (sender != null && sender.getUsername() != null && !sender.getUsername().isBlank()) {
+                senderName = sender.getUsername();
+            } else {
+                senderName = senderId;
+            }
+        }
+
+        String notificationId = String.format("NOT-%d-%04d", System.currentTimeMillis(), COUNTER.incrementAndGet());
+        NotificationDTO dto = new NotificationDTO(
+                notificationId,
+                senderId,
+                senderName,
+                receiverId,
+                content.trim(),
+                LocalDateTime.now(),
+                false
+        );
+        STORE.add(dto);
+        return true;
     }
 
-    // LUU Y DAC BIET: Chuc nang Notification CHUA THUC HIEN IMPLEMENT o giai doan nay.
-    // Hien tai chi tao prototype/skeleton va TODO de dev trien khai sau.
-    // Khong viet logic insert/update/select that va khong noi Notification vao flow xu ly chinh o task nay.
-    // Chuc nang: Danh dau thong bao da doc
-    // Dau vao: notificationId (String) - ma thong bao
-    // Dau ra: boolean - true neu cap nhat thanh cong
-    // Tuong tac: Duoc goi tu HeaderPanel; se goi NotificationDAO
-    // Ghi chu: Chi cap nhat is_read
+    @Override
     public boolean markAsRead(String notificationId) {
-        // TODO: Buoc 1 - Goi NotificationDAO.updateIsRead
-        // TODO: Buoc 2 - Xu ly ket qua
-        // TODO: Buoc 3 - Tra ve boolean
+        if (notificationId == null || notificationId.isBlank()) return false;
+        for (NotificationDTO n : STORE) {
+            if (notificationId.equals(n.getNotificationId())) {
+                n.setRead(true);
+                return true;
+            }
+        }
         return false;
     }
 }

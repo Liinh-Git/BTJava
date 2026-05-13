@@ -3,12 +3,24 @@ package org.jobportal.view.employer;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.UserService;
+import org.jobportal.bll.interfaces.IUserService;
+import org.jobportal.dto.UserDTO;
+import org.jobportal.utils.SessionManager;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class CompanyInfoPanel extends JPanel {
+
+    private final IUserService userService = new UserService();
+    private JTextField txtCompanyName;
+    private JTextField txtAddress;
+    private JTextArea txtDescription;
 
     public CompanyInfoPanel() {
         // thiet lap layout chinh
@@ -35,12 +47,28 @@ public class CompanyInfoPanel extends JPanel {
         // 4. cac the thong ke trang thai ben duoi
         mainContent.add(createStatsRow());
 
+        loadData();
+
         // boc vao scroll pane de co the cuon
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private void loadData() {
+        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        if (user != null) {
+            UserDTO empInfo = userService.getEmployerInfo(user.getUserId());
+            if (empInfo != null) {
+                if (empInfo.getCompanyName() != null) txtCompanyName.setText(empInfo.getCompanyName());
+                if (empInfo.getCompanyAddress() != null) txtAddress.setText(empInfo.getCompanyAddress());
+                else txtAddress.setText("");
+                if (empInfo.getCompanyDescription() != null) txtDescription.setText(empInfo.getCompanyDescription());
+                else txtDescription.setText("");
+            }
+        }
     }
 
     private JPanel createPageHeader() {
@@ -78,15 +106,22 @@ public class CompanyInfoPanel extends JPanel {
         ));
 
         // Ten cong ty
-        card.add(createInputGroup("TÊN CÔNG TY", "Nhập tên chính thức của công ty", false));
+        JPanel namePanel = createInputGroup("TÊN CÔNG TY", "Nhập tên chính thức của công ty", false);
+        txtCompanyName = (JTextField) namePanel.getComponent(2);
+        
+        card.add(namePanel);
         card.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Dia chi
-        card.add(createInputGroup("ĐỊA CHỈ TRỤ SỞ", "Số nhà, tên đường, quận/huyện, thành phố", false));
+        JPanel addrPanel = createInputGroup("ĐỊA CHỈ TRỤ SỞ", "Số nhà, tên đường, quận/huyện, thành phố", false);
+        txtAddress = (JTextField) addrPanel.getComponent(2);
+        card.add(addrPanel);
         card.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Mo ta cong ty (TextArea)
-        card.add(createInputGroup("MÔ TẢ CÔNG TY", "Giới thiệu chi tiết về lịch sử, sứ mệnh và định hướng phát triển của công ty...", true));
+        JPanel descPanel = createInputGroup("MÔ TẢ CÔNG TY", "Giới thiệu chi tiết về lịch sử, sứ mệnh và định hướng phát triển của công ty...", true);
+        txtDescription = (JTextArea) ((JScrollPane) descPanel.getComponent(2)).getViewport().getView();
+        card.add(descPanel);
 
         return card;
     }
@@ -159,6 +194,20 @@ public class CompanyInfoPanel extends JPanel {
         btnSave.setPreferredSize(new Dimension(140, 45));
         btnSave.setFocusPainted(false);
         btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnSave.addActionListener(e -> {
+            if (SessionManager.getInstance().getCurrentUser() != null) {
+                boolean success = userService.updateCompanyInfo(
+                    txtCompanyName.getText().trim(),
+                    txtAddress.getText().trim(),
+                    txtDescription.getText().trim()
+                );
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Cập nhật thông tin công ty thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
 
         actionPanel.add(btnCancel);
         actionPanel.add(btnSave);
@@ -227,7 +276,7 @@ public class CompanyInfoPanel extends JPanel {
             frame.add(header, BorderLayout.NORTH);
 
             // Sidebar o WEST
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.EMPLOYER);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.EMPLOYER);
             frame.add(sidebar, BorderLayout.WEST);
 
             // Giao dien chinh o CENTER

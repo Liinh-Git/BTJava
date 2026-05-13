@@ -10,6 +10,11 @@ public interface IUserService {
     // Dau ra: boolean
     boolean updateCompanyInfo(String companyName, String address, String description);
 
+    // Chuc nang: Cap nhat thong tin ca nhan cho user dang dang nhap
+    // Dau vao: fullName (String), phoneNumber (String)
+    // Dau ra: boolean
+    boolean updateUserProfile(String fullName, String phoneNumber);
+
     // Chuc nang: Lay thong tin employer
     // Dau vao: userId (String)
     // Dau ra: UserDTO

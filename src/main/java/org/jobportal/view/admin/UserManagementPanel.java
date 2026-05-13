@@ -3,12 +3,23 @@ package org.jobportal.view.admin;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.UserService;
+import org.jobportal.bll.interfaces.IUserService;
+import org.jobportal.dto.UserDTO;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class UserManagementPanel extends JPanel {
+
+    private final IUserService userService = new UserService();
+    private JPanel tableContainer;
+    private JLabel lblCount;
 
     public UserManagementPanel() {
         // thiet lap layout chinh
@@ -28,8 +39,16 @@ public class UserManagementPanel extends JPanel {
         mainContent.add(createFilterSection());
         mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // 3. bang danh sach nguoi dung
-        mainContent.add(createUserTable());
+        // 3. bang du lieu
+        tableContainer = new JPanel();
+        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
+        tableContainer.setBackground(Color.WHITE);
+        tableContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tableContainer.setBorder(new LineBorder(new Color(226, 230, 234), 1));
+        
+        mainContent.add(tableContainer);
+        
+        loadData();
 
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
@@ -48,7 +67,7 @@ public class UserManagementPanel extends JPanel {
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBackground(new Color(248, 249, 250));
 
-        JLabel lblTitle = new JLabel("User Management");
+        JLabel lblTitle = new JLabel("Quản lý người dùng");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(new Color(33, 37, 41));
 
@@ -60,17 +79,7 @@ public class UserManagementPanel extends JPanel {
         leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         leftPanel.add(lblSub);
 
-        JButton btnAdd = new JButton("+ Add User");
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAdd.setBackground(new Color(13, 110, 253));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setPreferredSize(new Dimension(130, 42));
-        btnAdd.setFocusPainted(false);
-        btnAdd.setBorderPainted(false);
-        btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         headerPanel.add(leftPanel, BorderLayout.WEST);
-        headerPanel.add(btnAdd, BorderLayout.EAST);
 
         return headerPanel;
     }
@@ -82,7 +91,7 @@ public class UserManagementPanel extends JPanel {
         filterPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // thanh tim kiem
-        JTextField txtSearch = new JTextField("Filter by name or email...");
+        JTextField txtSearch = new JTextField("Lọc theo tên hoặc email...");
         txtSearch.setPreferredSize(new Dimension(350, 42));
         txtSearch.setForeground(Color.GRAY);
         txtSearch.setBorder(BorderFactory.createCompoundBorder(
@@ -91,12 +100,12 @@ public class UserManagementPanel extends JPanel {
         ));
 
         // combobox role
-        JComboBox<String> cbRole = new JComboBox<>(new String[]{"Role: All", "SUPER ADMIN", "MODERATOR", "REVIEWER"});
+        JComboBox<String> cbRole = new JComboBox<>(new String[]{"Role: All", "ADMIN", "EMPLOYER", "CANDIDATE"});
         cbRole.setPreferredSize(new Dimension(200, 42));
         cbRole.setBackground(Color.WHITE);
 
         // combobox status
-        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Status: All", "Active", "Suspended", "Pending"});
+        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Status: All", "Active", "Inactive"});
         cbStatus.setPreferredSize(new Dimension(200, 42));
         cbStatus.setBackground(Color.WHITE);
 
@@ -107,47 +116,52 @@ public class UserManagementPanel extends JPanel {
         return filterPanel;
     }
 
-    private JPanel createUserTable() {
-        JPanel tableContainer = new JPanel();
-        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
-        tableContainer.setBackground(Color.WHITE);
-        tableContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        tableContainer.setBorder(new LineBorder(new Color(226, 230, 234), 1));
-
+    private void loadData() {
+        tableContainer.removeAll();
         // header
-        tableContainer.add(createTableRow("NAME", "EMAIL", "ROLE", "STATUS", "ACTIONS", true, "", null));
+        tableContainer.add(createTableRow("TÊN", "EMAIL", "VAI TRÒ", "TRẠNG THÁI", "THAO TÁC", true, "", null, null));
 
-        // rows
-        tableContainer.add(createTableRow("Jane Doe", "jane.doe@adminportal.com", "SUPER ADMIN", "Active", "", false, "JD", new Color(220, 230, 255)));
-        tableContainer.add(createTableRow("Mark Smith", "m.smith@support.com", "MODERATOR", "Active", "", false, "MS", new Color(240, 240, 245)));
-        tableContainer.add(createTableRow("Alice Lawson", "alice.l@contractor.io", "REVIEWER", "Suspended", "", false, "AL", new Color(255, 235, 235)));
-        tableContainer.add(createTableRow("Robert White", "robert.white@dev.team", "DEVELOPER", "Pending", "", false, "RW", new Color(226, 232, 240)));
+        List<UserDTO> users = userService.getAllUsers(null, null);
+        
+        Color[] bgColors = {
+            new Color(220, 230, 255), new Color(240, 240, 245), 
+            new Color(255, 235, 235), new Color(226, 232, 240)
+        };
+        
+        int colorIdx = 0;
+        for (UserDTO user : users) {
+            String initials = user.getUsername().length() >= 2 ? user.getUsername().substring(0, 2).toUpperCase() : "U";
+            tableContainer.add(createTableRow(user.getUsername(), user.getEmail(), 
+                                                user.getRole().name(), 
+                                                user.isActive() ? "Active" : "Inactive", 
+                                                "", false, initials, bgColors[colorIdx % 4], user));
+            colorIdx++;
+        }
 
         // phan trang
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(Color.WHITE);
         footer.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel lblCount = new JLabel("Showing 4 of 124 users");
-        lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblCount.setForeground(Color.GRAY);
+        if (lblCount == null) {
+            lblCount = new JLabel();
+            lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            lblCount.setForeground(Color.GRAY);
+        }
+        lblCount.setText("Showing " + users.size() + " users");
         footer.add(lblCount, BorderLayout.WEST);
 
         JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         pagination.setBackground(Color.WHITE);
         pagination.add(createPageBtn("1", true));
-        pagination.add(createPageBtn("2", false));
-        pagination.add(createPageBtn("3", false));
-        pagination.add(createPageBtn("...", false));
-        pagination.add(createPageBtn("12", false));
         footer.add(pagination, BorderLayout.EAST);
 
         tableContainer.add(footer);
-
-        return tableContainer;
+        tableContainer.revalidate();
+        tableContainer.repaint();
     }
 
-    private JPanel createTableRow(String col1, String col2, String role, String status, String action, boolean isHeader, String initials, Color avatarBg) {
+    private JPanel createTableRow(String col1, String col2, String role, String status, String action, boolean isHeader, String initials, Color avatarBg, UserDTO user) {
         JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
@@ -162,9 +176,10 @@ public class UserManagementPanel extends JPanel {
         Color textColor = isHeader ? new Color(108, 117, 125) : new Color(33, 37, 41);
 
         // Name
-        gbc.gridx = 0; gbc.weightx = 0.25;
+        gbc.gridx = 0; gbc.weightx = 0.20; // 20%
         JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 20));
         p1.setOpaque(false);
+        p1.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l1 = new JLabel(col1);
             l1.setFont(font); l1.setForeground(textColor);
@@ -178,9 +193,10 @@ public class UserManagementPanel extends JPanel {
         row.add(p1, gbc);
 
         // Email
-        gbc.gridx = 1; gbc.weightx = 0.35;
+        gbc.gridx = 1; gbc.weightx = 0.30; // 30%
         JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 25));
         p2.setOpaque(false);
+        p2.setMinimumSize(new Dimension(10, 10)); // Force alignment
         JLabel l2 = new JLabel(col2);
         l2.setFont(isHeader ? font : new Font("Segoe UI", Font.PLAIN, 14));
         l2.setForeground(isHeader ? textColor : Color.DARK_GRAY);
@@ -191,6 +207,7 @@ public class UserManagementPanel extends JPanel {
         gbc.gridx = 2; gbc.weightx = 0.15;
         JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 25));
         p3.setOpaque(false);
+        p3.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l3 = new JLabel(role);
             l3.setFont(font); l3.setForeground(textColor);
@@ -201,9 +218,10 @@ public class UserManagementPanel extends JPanel {
         row.add(p3, gbc);
 
         // Status
-        gbc.gridx = 3; gbc.weightx = 0.15;
+        gbc.gridx = 3; gbc.weightx = 0.10; // 10%
         JPanel p4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 25));
         p4.setOpaque(false);
+        p4.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l4 = new JLabel(status);
             l4.setFont(font); l4.setForeground(textColor);
@@ -214,26 +232,63 @@ public class UserManagementPanel extends JPanel {
         row.add(p4, gbc);
 
         // Actions
-        gbc.gridx = 4; gbc.weightx = 0.10;
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 20));
+        gbc.gridx = 4; gbc.weightx = 0.25; // 25% (Kéo dài cột này)
+        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 20)); // Adjusted spacing
         p5.setOpaque(false);
+        p5.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l5 = new JLabel(action);
             l5.setFont(font); l5.setForeground(textColor);
             p5.add(l5);
         } else {
-            JLabel btnEdit = new JLabel("✎");
-            btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-            btnEdit.setForeground(Color.GRAY);
+            JButton btnEdit = new JButton(status.equals("Active") ? "Khóa" : "Mở khóa");
+            btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 11)); // Nho font chu xuong 1 ti
+            btnEdit.setMargin(new Insets(4, 10, 4, 10)); // Thu nho padding cua nut
+            btnEdit.setBackground(status.equals("Active") ? new Color(255, 193, 7) : new Color(40, 167, 69)); // Warning or Success
+            btnEdit.setForeground(Color.WHITE);
+            btnEdit.setFocusPainted(false);
+            btnEdit.setBorderPainted(false);
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnEdit.addActionListener(e -> {
+                if (user != null) {
+                    int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, 
+                        (user.isActive() ? "Khóa" : "Mở khóa") + " tài khoản này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                    if (choice == JOptionPane.YES_OPTION) {
+                        boolean success = userService.updateUserStatus(user.getUserId(), !user.isActive());
+                        if (success) {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
+                            loadData();
+                        } else {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            });
 
-            JLabel btnDelete = new JLabel("🗑");
-            btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-            btnDelete.setForeground(Color.GRAY);
+            JButton btnDelete = new JButton("Xóa");
+            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); // Nho font chu xuong 1 ti
+            btnDelete.setMargin(new Insets(4, 10, 4, 10)); // Thu nho padding cua nut
+            btnDelete.setBackground(new Color(220, 53, 69)); // Danger red
+            btnDelete.setForeground(Color.WHITE);
+            btnDelete.setFocusPainted(false);
+            btnDelete.setBorderPainted(false);
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnDelete.addActionListener(e -> {
+                if (user != null) {
+                    int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, "Xóa tài khoản này vĩnh viễn?", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (choice == JOptionPane.YES_OPTION) {
+                        boolean success = userService.deleteUser(user.getUserId());
+                        if (success) {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
+                            loadData();
+                        } else {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            });
 
             p5.add(btnEdit);
-            p5.add(Box.createRigidArea(new Dimension(5, 0)));
             p5.add(btnDelete);
         }
         row.add(p5, gbc);
@@ -319,7 +374,7 @@ public class UserManagementPanel extends JPanel {
             HeaderPanel header = new HeaderPanel();
             frame.add(header, BorderLayout.NORTH);
 
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.ADMIN);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.ADMIN);
             frame.add(sidebar, BorderLayout.WEST);
 
             UserManagementPanel userPanel = new UserManagementPanel();

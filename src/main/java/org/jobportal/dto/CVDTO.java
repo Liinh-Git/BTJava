@@ -10,6 +10,7 @@ public class CVDTO {
     private String objective;
     private String skills;
     private String desiredPosition;
+    private String location;
     private Double desiredSalary;
     private LocalDateTime lastUpdated;
     private List<Education> educations;
@@ -68,6 +69,14 @@ public class CVDTO {
 
     public void setDesiredPosition(String desiredPosition) {
         this.desiredPosition = desiredPosition;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public Double getDesiredSalary() {

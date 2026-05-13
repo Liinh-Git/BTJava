@@ -1,53 +1,300 @@
 package org.jobportal.bll.impl;
 
+import org.jobportal.bll.interfaces.IAuthService;
+import org.jobportal.dal.impl.CandidateDAO;
+import org.jobportal.dal.impl.EmployerDAO;
+import org.jobportal.dal.impl.UserDAO;
+import org.jobportal.dal.interfaces.ICandidateDAO;
+import org.jobportal.dal.interfaces.IEmployerDAO;
+import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.dto.UserDTO;
 import org.jobportal.enums.Role;
+import org.jobportal.model.Candidate;
+import org.jobportal.model.Employer;
+import org.jobportal.model.User;
+import org.jobportal.utils.PasswordUtils;
+import org.jobportal.utils.SessionManager;
+import org.jobportal.utils.ValidationUtils;
 
-public class AuthService {
-    // Chức năng: Tạo tài khoản người dùng mới
-    // Đầu vào: username (String) - tên đăng nhập; email (String) - địa chỉ email; password (String) - mật khẩu; confirmPassword (String) - xác nhận; role (Role) - vai trò
-    // Đầu ra: boolean - true nếu tạo thành công
-    // Tương tác: Được gọi từ RegisterPanel; sẽ gọi UserDAO, CandidateDAO/EmployerDAO, PasswordUtils, ValidationUtils
-    // Ghi chú: Cần validate dữ liệu và tạo transaction khi ghi DB
-    public boolean register(String username, String email, String password, String confirmPassword, Role role) {
-        // TODO: Bước 1 - Validate dữ liệu đầu vào và trùng lặp username/email
-        // TODO: Bước 2 - Hash password và tạo user mới
-        // TODO: Bước 3 - Lưu user và thông tin candidate/employer
-        return false;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * AuthService - Xu ly nghiep vu xac thuc (dang ky, dang nhap, dang xuat, doi mat khau).
+ * Khong viet SQL, khong goi Swing/JOptionPane.
+ * Chi goi DAO / Utils / SessionManager.
+ */
+public class AuthService implements IAuthService {
+
+    // Dung DAO cu the (impl) vi project chua dung DI framework.
+    // Neu can test, co the doi sang interface va inject.
+    private final IUserDAO      userDAO      = new UserDAO();
+    private final ICandidateDAO candidateDAO = new CandidateDAO();
+    private final IEmployerDAO  employerDAO  = new EmployerDAO();
+    private final SessionManager session     = SessionManager.getInstance();
+
+    // ------------------------------------------------------------------
+    // ID generation helpers
+    // ------------------------------------------------------------------
+
+    /**
+     * Sinh userId theo format "U-" + 8 chu so zero-padded, tong 10 ky tu.
+     * Vi du: "U-00001234"
+     * Dung timestamp millis de giam xac suat trung (co the thay bang sequence sau).
+     */
+    private String generateUserId() {
+        long ts = System.currentTimeMillis() % 100_000_000L; // 8 chu so
+        return String.format("U-%08d", ts);
     }
 
-    // Chức năng: Xác thực đăng nhập và trả về thông tin người dùng
-    // Đầu vào: username (String) - tên đăng nhập; password (String) - mật khẩu; role (Role) - vai trò
-    // Đầu ra: UserDTO - thông tin người dùng (null nếu thất bại)
-    // Tương tác: Được gọi từ LoginPanel; sẽ gọi UserDAO, PasswordUtils, SessionManager
-    // Ghi chú: Cần kiểm tra role và trạng thái is_active
+    /** Sinh candidateId format "CAN-" + 6 so => 10 ky tu */
+    private String generateCandidateId() {
+        long ts = System.currentTimeMillis() % 1_000_000L;
+        return String.format("CAN-%06d", ts);
+    }
+
+    /** Sinh employerId format "EMP-" + 6 so => 10 ky tu */
+    private String generateEmployerId() {
+        long ts = System.currentTimeMillis() % 1_000_000L;
+        return String.format("EMP-%06d", ts);
+    }
+
+    // ------------------------------------------------------------------
+    // register
+    // ------------------------------------------------------------------
+
+    /**
+     * Dang ky tai khoan moi.
+     * Quy tac:
+     *   - Khong cho tao ADMIN tu UI.
+     *   - Validate day du truoc khi luu.
+     *   - Hash password bang PasswordUtils.hash().
+     *   - Tao ban ghi trong users + candidates hoac employers.
+     */
+    @Override
+    public boolean register(String username, String email, String password,
+                            String confirmPassword, Role role) {
+
+        // 1. Khong cho tao ADMIN tu giao dien
+        if (role == Role.ADMIN) {
+            System.err.println("[AuthService] register: khong the tao tai khoan ADMIN tu UI.");
+            return false;
+        }
+
+        // 2. Validate cac truong bat buoc
+        if (!ValidationUtils.isValidUsername(username)) {
+            System.err.println("[AuthService] register: username khong hop le.");
+            return false;
+        }
+        if (!ValidationUtils.isValidEmail(email)) {
+            System.err.println("[AuthService] register: email khong hop le.");
+            return false;
+        }
+        if (!ValidationUtils.isValidPassword(password)) {
+            System.err.println("[AuthService] register: mat khau qua ngan (toi thieu 6 ky tu).");
+            return false;
+        }
+        if (!ValidationUtils.isPasswordMatch(password, confirmPassword)) {
+            System.err.println("[AuthService] register: mat khau xac nhan khong khop.");
+            return false;
+        }
+
+        // 3. Kiem tra trung username / email
+        if (userDAO.existsByUsername(username)) {
+            System.err.println("[AuthService] register: username da ton tai.");
+            return false;
+        }
+        if (userDAO.existsByEmail(email)) {
+            System.err.println("[AuthService] register: email da ton tai.");
+            return false;
+        }
+
+        // 4. Sinh ID va hash password
+        String userId = generateUserId();
+        // Tranh trung neu may tinh nhanh
+        while (userDAO.findById(userId) != null) {
+            try { Thread.sleep(1); } catch (InterruptedException ignored) {}
+            userId = generateUserId();
+        }
+
+        String passwordHash = PasswordUtils.hash(password);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 5. Tao User va luu vao DB
+        User user = new User(userId, username, passwordHash,
+                username,   // fullName mac dinh = username; View co the cap nhat sau
+                null, null, null, email,
+                role, true, now);
+        boolean userSaved = userDAO.insert(user);
+        if (!userSaved) {
+            System.err.println("[AuthService] register: luu User vao DB that bai.");
+            return false;
+        }
+
+        // 6. Tao profile tuong ung theo role
+        if (role == Role.CANDIDATE) {
+            String candidateId = generateCandidateId();
+            while (candidateDAO.findById(candidateId) != null) {
+                try { Thread.sleep(1); } catch (InterruptedException ignored) {}
+                candidateId = generateCandidateId();
+            }
+            Candidate candidate = new Candidate(candidateId, userId);
+            boolean candidateSaved = candidateDAO.insert(candidate);
+            if (!candidateSaved) {
+                System.err.println("[AuthService] register: luu Candidate that bai. (User da duoc tao - can rollback thu cong neu co giao dich)");
+                return false;
+            }
+
+        } else if (role == Role.EMPLOYER) {
+            String employerId = generateEmployerId();
+            while (employerDAO.findById(employerId) != null) {
+                try { Thread.sleep(1); } catch (InterruptedException ignored) {}
+                employerId = generateEmployerId();
+            }
+            // companyName mac dinh = username, Employer co the cap nhat qua CompanyInfoPanel
+            Employer employer = new Employer(employerId, userId, username, null, null);
+            boolean employerSaved = employerDAO.insert(employer);
+            if (!employerSaved) {
+                System.err.println("[AuthService] register: luu Employer that bai.");
+                return false;
+            }
+        }
+
+        System.out.println("[AuthService] register: dang ky thanh cong - userId=" + userId);
+        return true;
+    }
+
+    // ------------------------------------------------------------------
+    // login
+    // ------------------------------------------------------------------
+
+    /**
+     * Dang nhap: xac thuc username + password + role + trang thai is_active.
+     * Neu thanh cong, luu session va tra ve UserDTO.
+     * Neu that bai, tra ve null.
+     */
+    @Override
     public UserDTO login(String username, String password, Role role) {
-        // TODO: Bước 1 - Hash password đầu vào
-        // TODO: Bước 2 - Tìm user theo username và password
-        // TODO: Bước 3 - Kiểm tra role, trạng thái và lưu session
-        return null;
+
+        // 1. Validate dau vao co ban
+        if (ValidationUtils.isNullOrEmpty(username) || ValidationUtils.isNullOrEmpty(password)) {
+            return null;
+        }
+
+        // 2. Hash password de so sanh
+        String passwordHash = PasswordUtils.hash(password);
+
+        // 3. Tim user trong DB
+        User user = userDAO.findByUsernameAndPassword(username, passwordHash);
+        if (user == null) {
+            System.err.println("[AuthService] login: sai ten dang nhap hoac mat khau.");
+            return null;
+        }
+
+        // 4. Kiem tra role khop
+        if (user.getRole() != role) {
+            System.err.println("[AuthService] login: role khong khop (chon sai loai tai khoan).");
+            return null;
+        }
+
+        // 5. Kiem tra tai khoan dang hoat dong
+        if (!user.isActive()) {
+            System.err.println("[AuthService] login: tai khoan da bi khoa.");
+            return null;
+        }
+
+        // 6. Map sang DTO
+        UserDTO dto = mapToDTO(user);
+
+        // 7. Lay profileId tuong ung va luu session
+        String profileId = null;
+        if (role == Role.CANDIDATE) {
+            Candidate c = candidateDAO.findByUserId(user.getUserId());
+            profileId = (c != null) ? c.getCandidateId() : null;
+        } else if (role == Role.EMPLOYER) {
+            Employer e = employerDAO.findByUserId(user.getUserId());
+            if (e != null) {
+                profileId = e.getEmployerId();
+                dto.setCompanyName(e.getCompanyName());
+            }
+        }
+
+        session.login(dto, profileId);
+        System.out.println("[AuthService] login: thanh cong - userId=" + user.getUserId() + ", role=" + role);
+        return dto;
     }
 
-    // Chức năng: Đăng xuất và xóa session
-    // Đầu vào: (void)
-    // Đầu ra: void
-    // Tương tác: Được gọi từ SidebarPanel; gọi SessionManager
-    // Ghi chú: Sau khi clear session thì quay về LoginPanel
+    // ------------------------------------------------------------------
+    // logout
+    // ------------------------------------------------------------------
+
+    @Override
     public void logout() {
-        // TODO: Bước 1 - Xóa session hiện tại
-        // TODO: Bước 2 - Điều hướng về màn hình đăng nhập
-        // TODO: Bước 3 - Xử lý các tài nguyên liên quan nếu cần
+        System.out.println("[AuthService] logout: userId=" + session.getCurrentUserId());
+        session.logout();
     }
 
-    // Chức năng: Đổi mật khẩu cho người dùng đăng nhập
-    // Đầu vào: oldPassword (String) - mật khẩu cũ; newPassword (String) - mật khẩu mới; confirmNewPassword (String) - xác nhận
-    // Đầu ra: boolean - true nếu đổi mật khẩu thành công
-    // Tương tác: Được gọi từ màn hình My Account (nếu có); gọi UserDAO, PasswordUtils, SessionManager
-    // Ghi chú: Cần kiểm tra mật khẩu cũ và validate mật khẩu mới
+    // ------------------------------------------------------------------
+    // changePassword
+    // ------------------------------------------------------------------
+
+    /**
+     * Doi mat khau: lay userId tu session, kiem tra mat khau cu, validate moi, cap nhat DB.
+     */
+    @Override
     public boolean changePassword(String oldPassword, String newPassword, String confirmNewPassword) {
-        // TODO: Bước 1 - Lấy userId từ session và kiểm tra mật khẩu cũ
-        // TODO: Bước 2 - Validate mật khẩu mới và hash
-        // TODO: Bước 3 - Cập nhật mật khẩu trong DB
-        return false;
+
+        // 1. Kiem tra da dang nhap
+        if (!session.isLoggedIn()) {
+            System.err.println("[AuthService] changePassword: chua dang nhap.");
+            return false;
+        }
+        String userId = session.getCurrentUserId();
+
+        // 2. Lay user va kiem tra mat khau cu
+        User user = userDAO.findById(userId);
+        if (user == null) {
+            return false;
+        }
+        String oldHash = PasswordUtils.hash(oldPassword);
+        if (!user.getPasswordHash().equals(oldHash)) {
+            System.err.println("[AuthService] changePassword: mat khau cu khong dung.");
+            return false;
+        }
+
+        // 3. Validate mat khau moi
+        if (!ValidationUtils.isValidPassword(newPassword)) {
+            System.err.println("[AuthService] changePassword: mat khau moi qua ngan.");
+            return false;
+        }
+        if (!ValidationUtils.isPasswordMatch(newPassword, confirmNewPassword)) {
+            System.err.println("[AuthService] changePassword: xac nhan mat khau khong khop.");
+            return false;
+        }
+
+        // 4. Cap nhat mat khau
+        String newHash = PasswordUtils.hash(newPassword);
+        boolean updated = userDAO.updatePassword(userId, newHash);
+        if (updated) {
+            System.out.println("[AuthService] changePassword: doi mat khau thanh cong.");
+        }
+        return updated;
+    }
+
+    // ------------------------------------------------------------------
+    // Private helpers
+    // ------------------------------------------------------------------
+
+    private UserDTO mapToDTO(User user) {
+        return new UserDTO(
+                user.getUserId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getRole(),
+                user.isActive(),
+                null   // companyName: se set sau neu la EMPLOYER
+        );
     }
 }

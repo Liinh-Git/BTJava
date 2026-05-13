@@ -106,6 +106,7 @@ CREATE TABLE cvs (
 	objective        TEXT,
 	skills           TEXT,
 	desired_position VARCHAR(200),
+	location         VARCHAR(200),
 	desired_salary   DOUBLE,
 	last_updated     DATETIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE CASCADE

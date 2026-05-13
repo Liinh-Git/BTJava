@@ -3,12 +3,31 @@ package org.jobportal.view.employer;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.bll.interfaces.IRecruitmentService;
+import org.jobportal.dto.RecruitmentDTO;
+import org.jobportal.dto.UserDTO;
+import org.jobportal.utils.SessionManager;
+import org.jobportal.enums.AdminStatus;
+import org.jobportal.enums.RecruitmentStatus;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class RecruitmentListPanel extends JPanel {
+
+    private final IRecruitmentService recruitmentService = new RecruitmentService();
+    private JPanel tableContainer;
+    private JLabel lblCount;
+    private JPanel paginationPanel;
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private String currentKeyword = "";
+    private String currentStatusFilter = "Tất cả trạng thái";
 
     public RecruitmentListPanel() {
         // thiet lap layout chinh
@@ -29,7 +48,14 @@ public class RecruitmentListPanel extends JPanel {
         mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // 3. bang danh sach tin dang
-        mainContent.add(createJobListTable());
+        tableContainer = new JPanel();
+        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
+        tableContainer.setBackground(Color.WHITE);
+        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
+        
+        mainContent.add(tableContainer);
+        
+        loadData();
 
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
@@ -79,6 +105,7 @@ public class RecruitmentListPanel extends JPanel {
                 // dua cai JPanel form cua ban vao trong JDialog nay
                 dialog.add(new RecruitmentFormPanel());
                 dialog.setVisible(true);
+                loadData();
             }
         });
 
@@ -97,8 +124,22 @@ public class RecruitmentListPanel extends JPanel {
         txtSearch.setPreferredSize(new Dimension(300, 38));
         txtSearch.setText("Tìm kiếm theo tiêu đề...");
         txtSearch.setForeground(Color.GRAY);
+        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().equals("Tìm kiếm theo tiêu đề...")) {
+                    txtSearch.setText("");
+                    txtSearch.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().isEmpty()) {
+                    txtSearch.setText("Tìm kiếm theo tiêu đề...");
+                    txtSearch.setForeground(Color.GRAY);
+                }
+            }
+        });
 
-        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Tất cả trạng thái", "Đang hoạt động", "Hết hạn", "Bản nháp"});
+        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Tất cả trạng thái", "Đang hoạt động", "Chờ duyệt", "Bị từ chối", "Đã đóng", "Hết hạn"});
         cbStatus.setPreferredSize(new Dimension(150, 38));
         cbStatus.setBackground(Color.WHITE);
 
@@ -107,6 +148,14 @@ public class RecruitmentListPanel extends JPanel {
         btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         btnSearch.setPreferredSize(new Dimension(100, 38));
         btnSearch.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
+        btnSearch.addActionListener(e -> {
+            String keyword = txtSearch.getText().trim();
+            if (keyword.equals("Tìm kiếm theo tiêu đề...")) keyword = "";
+            currentKeyword = keyword.toLowerCase();
+            currentStatusFilter = (String) cbStatus.getSelectedItem();
+            currentPage = 1;
+            loadData();
+        });
 
         filterPanel.add(txtSearch);
         filterPanel.add(cbStatus);
@@ -115,45 +164,168 @@ public class RecruitmentListPanel extends JPanel {
         return filterPanel;
     }
 
-    private JPanel createJobListTable() {
-        JPanel tableContainer = new JPanel();
-        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
-        tableContainer.setBackground(Color.WHITE);
-        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
-
+    private void loadData() {
+        tableContainer.removeAll();
         // header cua bang
-        tableContainer.add(createRow("TIÊU ĐỀ CÔNG VIỆC", "NGÀY ĐĂNG - HẾT HẠN", "TRẠNG THÁI", "ỨNG VIÊN", "THAO TÁC", true));
+        tableContainer.add(createRow("TIÊU ĐỀ CÔNG VIỆC", "NGÀY ĐĂNG - HẾT HẠN", "TRẠNG THÁI", "ỨNG VIÊN", "THAO TÁC", true, null));
 
-        // du lieu mau cac tin dang
-        tableContainer.add(createRow("Senior Frontend Developer", "01/04/2026 - 30/04/2026", "Đang hoạt động", "12", "", false));
-        tableContainer.add(createRow("Backend Engineer (Java/Spring)", "15/03/2026 - 15/04/2026", "Hết hạn", "45", "", false));
-        tableContainer.add(createRow("Product Manager", "25/04/2026 - 25/05/2026", "Bản nháp", "0", "", false));
-        tableContainer.add(createRow("UI/UX Designer", "10/02/2026 - 10/03/2026", "Hết hạn", "28", "", false));
+        String employerId = SessionManager.getInstance().getEmployerId();
+        List<RecruitmentDTO> allJobs = null;
+        if (employerId != null && !employerId.isEmpty()) {
+            allJobs = recruitmentService.getRecruitmentsByEmployer(employerId);
+        }
+
+        List<RecruitmentDTO> jobs = new java.util.ArrayList<>();
+        if (allJobs != null) {
+            for (RecruitmentDTO job : allJobs) {
+                if (!currentKeyword.isEmpty() && !job.getTitle().toLowerCase().contains(currentKeyword)) {
+                    continue;
+                }
+                String statusStr = "Bản nháp";
+                if (job.getAdminStatus() == AdminStatus.PENDING) {
+                    statusStr = "Chờ duyệt";
+                } else if (job.getAdminStatus() == AdminStatus.REJECTED) {
+                    statusStr = "Bị từ chối";
+                } else if (job.getAdminStatus() == AdminStatus.APPROVED) {
+                    if (job.getStatus() == RecruitmentStatus.OPEN) statusStr = "Đang hoạt động";
+                    else if (job.getStatus() == RecruitmentStatus.CLOSED) statusStr = "Đã đóng";
+                    else if (job.getStatus() == RecruitmentStatus.EXPIRED) statusStr = "Hết hạn";
+                }
+                
+                if (!currentStatusFilter.equals("Tất cả trạng thái") && !statusStr.equals(currentStatusFilter)) {
+                    continue;
+                }
+                jobs.add(job);
+            }
+        }
+
+        if (jobs != null) {
+            int maxPage = Math.max(1, (int) Math.ceil((double) jobs.size() / pageSize));
+            if (currentPage > maxPage) currentPage = maxPage;
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            int start = (currentPage - 1) * pageSize;
+            int end = Math.min(start + pageSize, jobs.size());
+            
+            for (int i = start; i < end; i++) {
+                RecruitmentDTO job = jobs.get(i);
+                String title = job.getTitle();
+                String dateStr = (job.getCreatedDate() != null ? job.getCreatedDate().format(formatter) : "N/A") + " - " + 
+                                 (job.getDueDate() != null ? job.getDueDate().format(formatter) : "N/A");
+                
+                String statusStr = "Bản nháp";
+                if (job.getAdminStatus() == AdminStatus.PENDING) {
+                    statusStr = "Chờ duyệt";
+                } else if (job.getAdminStatus() == AdminStatus.REJECTED) {
+                    statusStr = "Bị từ chối";
+                } else if (job.getAdminStatus() == AdminStatus.APPROVED) {
+                    if (job.getStatus() == RecruitmentStatus.OPEN) statusStr = "Đang hoạt động";
+                    else if (job.getStatus() == RecruitmentStatus.CLOSED) statusStr = "Đã đóng";
+                    else if (job.getStatus() == RecruitmentStatus.EXPIRED) statusStr = "Hết hạn";
+                }
+                
+                String applicants = String.valueOf(job.getApplicationCount());
+                
+                tableContainer.add(createRow(title, dateStr, statusStr, applicants, "", false, job));
+            }
+        }
 
         // phan trang
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(Color.WHITE);
         footer.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel lblCount = new JLabel("Hiển thị 4 trên tổng số 15 tin đăng");
-        lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblCount.setForeground(Color.GRAY);
+        if (lblCount == null) {
+            lblCount = new JLabel();
+            lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            lblCount.setForeground(Color.GRAY);
+        }
+        lblCount.setText("Hiển thị " + (jobs != null ? jobs.size() : 0) + " tin đăng");
         footer.add(lblCount, BorderLayout.WEST);
 
-        JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        pagination.setBackground(Color.WHITE);
-        pagination.add(createPageBtn("1", true));
-        pagination.add(createPageBtn("2", false));
-        pagination.add(createPageBtn("3", false));
-        pagination.add(createPageBtn(">", false));
-        footer.add(pagination, BorderLayout.EAST);
+        paginationPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        paginationPanel.setBackground(Color.WHITE);
+        updatePaginationUI(jobs != null ? jobs.size() : 0);
+        footer.add(paginationPanel, BorderLayout.EAST);
 
         tableContainer.add(footer);
+        tableContainer.revalidate();
+        tableContainer.repaint();
+        this.revalidate();
+        this.repaint();
+    }
+    
+    private void updatePaginationUI(int totalItems) {
+        if (paginationPanel == null) return;
+        paginationPanel.removeAll();
+        
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / pageSize));
 
-        return tableContainer;
+        JButton btnPrev = createPageBtn("<", false);
+        if (currentPage > 1) {
+            btnPrev.addActionListener(e -> {
+                currentPage--;
+                loadData();
+            });
+        } else {
+            btnPrev.setEnabled(false);
+        }
+        paginationPanel.add(btnPrev);
+
+        int startPage = Math.max(1, currentPage - 2);
+        int endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (startPage > 1) {
+            JButton btnFirst = createPageBtn("1", false);
+            btnFirst.addActionListener(e -> { currentPage = 1; loadData(); });
+            paginationPanel.add(btnFirst);
+            if (startPage > 2) {
+                JLabel dots = new JLabel("...");
+                dots.setBorder(new EmptyBorder(0, 5, 0, 5));
+                paginationPanel.add(dots);
+            }
+        }
+        
+        for (int i = startPage; i <= endPage; i++) {
+            final int pageToLoad = i;
+            boolean isCurrent = (i == currentPage);
+            JButton btnPage = createPageBtn(String.valueOf(i), isCurrent);
+            if (!isCurrent) {
+                btnPage.addActionListener(e -> {
+                    currentPage = pageToLoad;
+                    loadData();
+                });
+            }
+            paginationPanel.add(btnPage);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                JLabel dots = new JLabel("...");
+                dots.setBorder(new EmptyBorder(0, 5, 0, 5));
+                paginationPanel.add(dots);
+            }
+            JButton btnLast = createPageBtn(String.valueOf(totalPages), false);
+            btnLast.addActionListener(e -> { currentPage = totalPages; loadData(); });
+            paginationPanel.add(btnLast);
+        }
+
+        JButton btnNext = createPageBtn(">", false);
+        if (currentPage < totalPages) {
+            btnNext.addActionListener(e -> {
+                currentPage++;
+                loadData();
+            });
+        } else {
+            btnNext.setEnabled(false);
+        }
+        paginationPanel.add(btnNext);
+        
+        paginationPanel.revalidate();
+        paginationPanel.repaint();
     }
 
-    private JPanel createRow(String col1, String col2, String status, String applicants, String action, boolean isHeader) {
+    private JPanel createRow(String col1, String col2, String status, String applicants, String action, boolean isHeader, RecruitmentDTO job) {
         JPanel row = new JPanel(new GridLayout(1, 5));
         row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
@@ -215,14 +387,41 @@ public class RecruitmentListPanel extends JPanel {
             l5.setFont(font); l5.setForeground(textColor);
             p5.add(l5);
         } else {
-            JButton btnEdit = new JButton("Sửa");
+            JButton btnEdit = new JButton("Đóng");
             btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             btnEdit.setBackground(Color.WHITE);
+            btnEdit.addActionListener(e -> {
+                if (job != null && status.equals("Đang hoạt động")) {
+                    boolean success = recruitmentService.closeRecruitment(job.getRecruitmentId());
+                    if (success) {
+                        JOptionPane.showMessageDialog(this, "Đã đóng tin tuyển dụng thành công!");
+                        loadData();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Không thể đóng tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "Chỉ có thể đóng tin đang hoạt động!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                }
+            });
 
             JButton btnDelete = new JButton("Xóa");
             btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             btnDelete.setBackground(Color.WHITE);
             btnDelete.setForeground(Color.RED);
+            btnDelete.addActionListener(e -> {
+                if (job != null) {
+                    int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa tin này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        boolean success = recruitmentService.deleteRecruitment(job.getRecruitmentId());
+                        if (success) {
+                            JOptionPane.showMessageDialog(this, "Đã xóa tin tuyển dụng!");
+                            loadData();
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Không thể xóa tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            });
 
             p5.add(btnEdit);
             p5.add(btnDelete);
@@ -242,6 +441,12 @@ public class RecruitmentListPanel extends JPanel {
                 badge.setBackground(new Color(230, 250, 240));
                 badge.setForeground(new Color(40, 167, 69));
                 break;
+            case "Chờ duyệt":
+                badge.setBackground(new Color(255, 243, 205));
+                badge.setForeground(new Color(133, 100, 4));
+                break;
+            case "Bị từ chối":
+            case "Đã đóng":
             case "Hết hạn":
                 badge.setBackground(new Color(250, 230, 230));
                 badge.setForeground(new Color(220, 53, 69));
@@ -284,7 +489,7 @@ public class RecruitmentListPanel extends JPanel {
             frame.add(header, BorderLayout.NORTH);
 
             // Sidebar add vao WEST
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.EMPLOYER);
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.EMPLOYER);
             frame.add(sidebar, BorderLayout.WEST);
 
             // Panel danh sach tin dang add vao CENTER

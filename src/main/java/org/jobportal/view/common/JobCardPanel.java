@@ -7,10 +7,21 @@ import java.awt.*;
 
 public class JobCardPanel extends JPanel {
 
+    private static final int ACTION_BUTTON_WIDTH = 130;
+    private static final int ACTION_BUTTON_HEIGHT = 38;
+    private static final int CARD_HEIGHT = 230;
+    private static final int DESCRIPTION_HEIGHT = 54;
+
+    private JPanel bottomPanel;
+    private Component actionComponent;
+
     public JobCardPanel(String title, String company, String salary, String location, String description, String[] tags) {
         // thiet lap layout chinh cho the
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(Color.WHITE);
+        setPreferredSize(new Dimension(0, CARD_HEIGHT));
+        setMinimumSize(new Dimension(0, CARD_HEIGHT));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, CARD_HEIGHT));
         setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(220, 220, 220), 1),
                 new EmptyBorder(20, 20, 20, 20)
@@ -34,11 +45,6 @@ public class JobCardPanel extends JPanel {
         titlePanel.add(lblTitle);
         titlePanel.add(lblCompany);
         topPanel.add(titlePanel, BorderLayout.CENTER);
-
-        JButton btnBookmark = new JButton("W"); // gia lap icon
-        btnBookmark.setContentAreaFilled(false);
-        btnBookmark.setBorderPainted(false);
-        topPanel.add(btnBookmark, BorderLayout.EAST);
 
         add(topPanel);
         add(Box.createRigidArea(new Dimension(0, 15)));
@@ -68,12 +74,16 @@ public class JobCardPanel extends JPanel {
         txtDesc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtDesc.setForeground(new Color(80, 80, 80));
         txtDesc.setBackground(Color.WHITE);
+        txtDesc.setRows(3);
+        txtDesc.setPreferredSize(new Dimension(0, DESCRIPTION_HEIGHT));
+        txtDesc.setMinimumSize(new Dimension(0, DESCRIPTION_HEIGHT));
+        txtDesc.setMaximumSize(new Dimension(Integer.MAX_VALUE, DESCRIPTION_HEIGHT));
 
         add(txtDesc);
         add(Box.createRigidArea(new Dimension(0, 20)));
 
         // phan bottom: the tag va nut apply
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(Color.WHITE);
 
         JPanel tagPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -83,14 +93,41 @@ public class JobCardPanel extends JPanel {
         }
         bottomPanel.add(tagPanel, BorderLayout.CENTER);
 
-        JButton btnApply = new JButton("Details & Apply");
+        JButton btnApply = new JButton("Chi tiết");
         btnApply.setBackground(new Color(13, 110, 253));
         btnApply.setForeground(Color.WHITE);
         btnApply.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnApply.setFocusPainted(false);
-        bottomPanel.add(btnApply, BorderLayout.EAST);
+        applyActionButtonSizing(btnApply);
+        
+        actionComponent = btnApply;
+        bottomPanel.add(actionComponent, BorderLayout.EAST);
+        bottomPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, ACTION_BUTTON_HEIGHT));
 
         add(bottomPanel);
+    }
+
+    public void setActionComponent(Component comp) {
+        if (actionComponent != null) {
+            bottomPanel.remove(actionComponent);
+        }
+        actionComponent = comp;
+        if (actionComponent instanceof AbstractButton) {
+            applyActionButtonSizing((AbstractButton) actionComponent);
+        }
+        Dimension actionSize = actionComponent.getPreferredSize();
+        int bottomHeight = Math.max(ACTION_BUTTON_HEIGHT, actionSize.height);
+        bottomPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, bottomHeight));
+        bottomPanel.add(actionComponent, BorderLayout.EAST);
+        bottomPanel.revalidate();
+        bottomPanel.repaint();
+    }
+
+    private void applyActionButtonSizing(AbstractButton button) {
+        Dimension size = new Dimension(ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
+        button.setPreferredSize(size);
+        button.setMinimumSize(size);
+        button.setMaximumSize(size);
     }
 
     // ham tao label the tag
