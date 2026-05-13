@@ -11,12 +11,14 @@ public class UserDTO {
     private Role role;
     private boolean active;
     private String companyName;
+    private String companyAddress;
+    private String companyDescription;
 
     public UserDTO() {
     }
 
     public UserDTO(String userId, String username, String fullName, String email, String phoneNumber,
-                   Role role, boolean active, String companyName) {
+                   Role role, boolean active, String companyName, String companyAddress, String companyDescription) {
         this.userId = userId;
         this.username = username;
         this.fullName = fullName;
@@ -25,6 +27,8 @@ public class UserDTO {
         this.role = role;
         this.active = active;
         this.companyName = companyName;
+        this.companyAddress = companyAddress;
+        this.companyDescription = companyDescription;
     }
 
     public String getUserId() {
@@ -89,5 +93,21 @@ public class UserDTO {
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+
+    public String getCompanyAddress() {
+        return companyAddress;
+    }
+
+    public void setCompanyAddress(String companyAddress) {
+        this.companyAddress = companyAddress;
+    }
+
+    public String getCompanyDescription() {
+        return companyDescription;
+    }
+
+    public void setCompanyDescription(String companyDescription) {
+        this.companyDescription = companyDescription;
     }
 }

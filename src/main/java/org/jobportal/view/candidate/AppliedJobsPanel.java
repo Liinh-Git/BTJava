@@ -1,323 +1,345 @@
 package org.jobportal.view.candidate;
 
-import org.jobportal.view.common.HeaderPanel;
-import org.jobportal.view.common.SidebarPanel;
+import org.jobportal.bll.impl.ApplicationService;
+import org.jobportal.dto.ApplicationDTO;
+import org.jobportal.enums.ApplicationStatus;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.util.List;
+
+import static org.jobportal.view.util.DesignSystem.*;
 
 public class AppliedJobsPanel extends JPanel {
 
+    private final ApplicationService applicationService = new ApplicationService();
+    private JPanel tableContainer;
+    private JLabel lblTotal;
+    private JLabel lblSuccessRate;
+
     public AppliedJobsPanel() {
-        // thiet lap mau nen va layout chinh
-        setBackground(new Color(248, 249, 250));
         setLayout(new BorderLayout());
+        setBackground(BG_SURFACE);
 
-        // panel noi dung chinh co the cuon
-        JPanel mainContent = new JPanel();
-        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setBackground(new Color(248, 249, 250));
-        mainContent.setBorder(new EmptyBorder(30, 40, 30, 40));
+        JPanel mainContent = createContentPanel();
 
-        // 1. tieu de trang va cac nut thao tac (Filter, Export)
         mainContent.add(createPageHeader());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // 2. phan thong ke (3 the: Total, Active, Success Rate)
         mainContent.add(createStatsRow());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // 3. danh sach don ung tuyen (Gia lap bang)
-        mainContent.add(createApplicationsTable());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
+        tableContainer = createJobTable();
+        mainContent.add(tableContainer);
 
-        // 4. banner Pro Tip
-        mainContent.add(createProTipBanner());
+        add(createScrollPane(mainContent), BorderLayout.CENTER);
 
-        // boc vao scroll pane
-        JScrollPane scrollPane = new JScrollPane(mainContent);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        add(scrollPane, BorderLayout.CENTER);
+        loadData();
     }
 
-    // ham tao tieu de trang
-    private JPanel createPageHeader() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(248, 249, 250));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+    private void loadData() {
+        String candidateId = org.jobportal.utils.SessionManager.getCurrentUser().getUserId();
+        List<ApplicationDTO> apps = applicationService.getListOfApplicationByUser(candidateId);
+        int total = applicationService.getTotalApplyCountByUser(candidateId);
+        int approved = applicationService.getApprovedApplicationByUser(candidateId);
+        int rate = total == 0 ? 0 : (approved * 100 / total);
 
-        // ben trai: Tieu de va mo ta
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(new Color(248, 249, 250));
+        lblTotal.setText(String.valueOf(total));
+        lblSuccessRate.setText(rate + "%");
+
+        tableContainer.removeAll();
+        tableContainer.add(createTableHeader());
+        for (ApplicationDTO app : apps) {
+            String statusText = app.getStatus().name();
+            String statusColor = getStatusColor(app.getStatus());
+            tableContainer.add(createJobRow(
+                    app.getJobTitle(),
+                    new String[]{app.getJobType().name()},
+                    app.getCompanyName(),
+                    app.getAppliedDate() != null ? app.getAppliedDate().toLocalDate().toString() : "",
+                    statusText,
+                    statusColor
+            ));
+        }
+        tableContainer.add(createPaginationFooter(apps.size()));
+        tableContainer.revalidate();
+        tableContainer.repaint();
+    }
+
+    private String getStatusColor(ApplicationStatus status) {
+        switch (status) {
+            case PENDING: return "blue";
+            case APPROVED: return "green";
+            case REJECTED: return "grey";
+            default: return "blue";
+        }
+    }
+
+    private JPanel createPageHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(BG_SURFACE);
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel left = new JPanel();
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        left.setBackground(BG_SURFACE);
 
         JLabel lblTitle = new JLabel("Applied Jobs");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTitle.setFont(heading1());
+        lblTitle.setForeground(TEXT_PRIMARY);
+        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lblSub = new JLabel("Track the status of your current job applications in real-time.");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblSub.setForeground(Color.GRAY);
+        lblSub.setFont(body());
+        lblSub.setForeground(TEXT_SECONDARY);
+        lblSub.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        leftPanel.add(lblTitle);
-        leftPanel.add(lblSub);
+        left.add(lblTitle);
+        left.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
+        left.add(lblSub);
+        header.add(left, BorderLayout.WEST);
 
-        // ben phai: Filter va Export
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rightPanel.setBackground(new Color(248, 249, 250));
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_4, 0));
+        right.setBackground(BG_SURFACE);
 
-        JButton btnFilter = createOutlineButton("Filter", "Y"); // gia lap icon
-        JButton btnExport = createOutlineButton("Export", "v");
-        rightPanel.add(btnFilter);
-        rightPanel.add(btnExport);
+        JButton btnFilter = createOutlineButton("Filter");
+        btnFilter.setPreferredSize(new Dimension(100, BUTTON_HEIGHT));
+        right.add(btnFilter);
 
-        panel.add(leftPanel, BorderLayout.WEST);
-        panel.add(rightPanel, BorderLayout.EAST);
-        return panel;
+        header.add(right, BorderLayout.EAST);
+
+        return header;
     }
 
-    // ham tao 3 the thong ke
     private JPanel createStatsRow() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 20, 0));
-        panel.setBackground(new Color(248, 249, 250));
+        JPanel panel = new JPanel(new GridLayout(1, 2, SPACE_6, 0));
+        panel.setBackground(BG_SURFACE);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
-        panel.add(createStatCard("TOTAL APPLICATIONS", "24", null));
-        panel.add(createStatCard("ACTIVE INTERVIEWS", "3", "Coming up"));
-        panel.add(createStatCard("SUCCESS RATE", "12%", null));
+        lblTotal = new JLabel("0");
+        lblSuccessRate = new JLabel("0%");
+        panel.add(createStatCard("TOTAL APPLICATIONS", lblTotal));
+        panel.add(createStatCard("SUCCESS RATE", lblSuccessRate));
 
         return panel;
     }
 
-    private JPanel createStatCard(String label, String value, String badgeText) {
+    private JPanel createStatCard(String labelText, JLabel valueLabel) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
+        card.setBackground(BG_SURFACE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(230, 230, 230), 1),
-                new EmptyBorder(20, 20, 20, 20)
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
         ));
 
-        JLabel lblLabel = new JLabel(label);
-        lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblLabel.setForeground(Color.GRAY);
-
-        JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        valuePanel.setBackground(Color.WHITE);
-        JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        valuePanel.add(lblValue);
-
-        if (badgeText != null) {
-            JLabel badge = new JLabel(" " + badgeText + " ");
-            badge.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            badge.setOpaque(true);
-            badge.setBackground(new Color(230, 240, 255));
-            badge.setForeground(new Color(0, 100, 250));
-            valuePanel.add(badge);
-        }
-
+        JLabel lblLabel = new JLabel(labelText);
+        lblLabel.setFont(label());
+        lblLabel.setForeground(TEXT_MUTED);
         card.add(lblLabel);
-        card.add(Box.createRigidArea(new Dimension(0, 5)));
-        card.add(valuePanel);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_2)));
+
+        valueLabel.setFont(heading1());
+        valueLabel.setForeground(TEXT_PRIMARY);
+        card.add(valueLabel);
+
         return card;
     }
 
-    // ham tao bang danh sach ung tuyen
-    private JPanel createApplicationsTable() {
+    private JPanel createJobTable() {
         JPanel tableContainer = new JPanel();
         tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
-        tableContainer.setBackground(Color.WHITE);
-        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
+        tableContainer.setBackground(BG_SURFACE);
+        tableContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tableContainer.setBorder(new LineBorder(BORDER, 1));
 
-        // header cua bang
-        tableContainer.add(createRow("JOB TITLE", "COMPANY", "DATE APPLIED", "STATUS", "ACTIONS", true));
-
-        // du lieu cac dong
-        tableContainer.add(createRow("Senior Frontend Developer", "TechCorp Inc.", "Oct 24, 2023", "In Review", "...", false));
-        tableContainer.add(createRow("UI/UX Designer", "CreativePulse", "Oct 20, 2023", "Interview Scheduled", "...", false));
-        tableContainer.add(createRow("Backend Engineer (Go)", "Streamline Soft", "Oct 18, 2023", "Not Selected", "...", false));
-        tableContainer.add(createRow("Product Manager", "Nexus Labs", "Oct 15, 2023", "Applied", "...", false));
-
-        // phan footer cua bang co phan trang
-        JPanel footer = new JPanel(new BorderLayout());
-        footer.setBackground(Color.WHITE);
-        footer.setBorder(new EmptyBorder(15, 20, 15, 20));
-
-        JLabel lblCount = new JLabel("Showing 4 of 24 applications");
-        lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblCount.setForeground(Color.GRAY);
-        footer.add(lblCount, BorderLayout.WEST);
-
-        JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        pagination.setBackground(Color.WHITE);
-        pagination.add(createPageBtn("1", true));
-        pagination.add(createPageBtn("2", false));
-        pagination.add(createPageBtn("3", false));
-        pagination.add(createPageBtn(">", false));
-        footer.add(pagination, BorderLayout.EAST);
-
-        tableContainer.add(footer);
+        tableContainer.add(createTableHeader());
+        tableContainer.add(createPaginationFooter(0));
 
         return tableContainer;
     }
 
-    private JPanel createRow(String col1, String col2, String col3, String status, String action, boolean isHeader) {
-        JPanel row = new JPanel(new GridLayout(1, 5));
-        row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
-        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
-        row.setPreferredSize(new Dimension(0, 70));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+    private JPanel createTableHeader() {
+        JPanel row = new JPanel(new GridBagLayout());
+        row.setBackground(BG_PAGE);
+        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        row.setPreferredSize(new Dimension(0, 48));
 
-        Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
-        Color textColor = isHeader ? Color.GRAY : Color.BLACK;
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
 
-        // cot 1: Job Title
-        JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
-        p1.setOpaque(false);
-        JLabel l1 = new JLabel(col1);
-        l1.setFont(font); l1.setForeground(textColor);
-        p1.add(l1);
-        row.add(p1);
+        String[] headers = {"JOB TITLE", "COMPANY", "DATE APPLIED", "STATUS", "ACTIONS"};
+        double[] weights = {0.30, 0.20, 0.18, 0.18, 0.14};
+        int[] aligns = {SwingConstants.LEFT, SwingConstants.LEFT, SwingConstants.LEFT, SwingConstants.LEFT, SwingConstants.RIGHT};
 
-        // cot 2: Company
-        JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
-        p2.setOpaque(false);
-        JLabel l2 = new JLabel(col2);
-        l2.setFont(font); l2.setForeground(textColor);
-        p2.add(l2);
-        row.add(p2);
-
-        // cot 3: Date
-        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
-        p3.setOpaque(false);
-        JLabel l3 = new JLabel(col3);
-        l3.setFont(font); l3.setForeground(textColor);
-        p3.add(l3);
-        row.add(p3);
-
-        // cot 4: Status
-        JPanel p4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
-        p4.setOpaque(false);
-        if (isHeader) {
-            JLabel l4 = new JLabel(status);
-            l4.setFont(font); l4.setForeground(textColor);
-            p4.add(l4);
-        } else {
-            p4.add(createStatusBadge(status));
+        for (int i = 0; i < headers.length; i++) {
+            gbc.gridx = i;
+            gbc.weightx = weights[i];
+            gbc.insets = new Insets(0, SPACE_6, 0, SPACE_3);
+            JLabel lbl = new JLabel(headers[i]);
+            lbl.setFont(label());
+            lbl.setForeground(TEXT_MUTED);
+            lbl.setHorizontalAlignment(aligns[i]);
+            row.add(lbl, gbc);
         }
-        row.add(p4);
-
-        // cot 5: Actions
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 15));
-        p5.setOpaque(false);
-        JLabel l5 = new JLabel(action);
-        l5.setFont(new Font("Arial", Font.BOLD, 18));
-        l5.setForeground(Color.GRAY);
-        p5.add(l5);
-        row.add(p5);
 
         return row;
     }
 
-    private JLabel createStatusBadge(String status) {
-        JLabel badge = new JLabel("  " + status + "  ");
-        badge.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        badge.setOpaque(true);
+    private JPanel createJobRow(String title, String[] tags, String company, String date, String status, String statusColor) {
+        JPanel row = new JPanel(new GridBagLayout());
+        row.setBackground(BG_SURFACE);
+        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_LIGHT));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        row.setPreferredSize(new Dimension(0, 80));
 
-        switch (status) {
-            case "In Review":
-                badge.setBackground(new Color(230, 240, 255));
-                badge.setForeground(new Color(13, 110, 253));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
+
+        gbc.gridx = 0;
+        gbc.weightx = 0.30;
+        gbc.insets = new Insets(SPACE_3, SPACE_6, SPACE_3, SPACE_3);
+
+        JPanel titleCell = new JPanel();
+        titleCell.setLayout(new BoxLayout(titleCell, BoxLayout.Y_AXIS));
+        titleCell.setOpaque(false);
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(fontBold(FONT_SIZE_LG));
+        lblTitle.setForeground(TEXT_PRIMARY);
+        titleCell.add(lblTitle);
+
+        JPanel tagPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_1, 0));
+        tagPanel.setOpaque(false);
+        tagPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        for (String tag : tags) {
+            JLabel chip = new JLabel(tag);
+            chip.setFont(fontBold(FONT_SIZE_XS));
+            chip.setOpaque(true);
+            chip.setBackground(new Color(225, 227, 228));
+            chip.setForeground(TEXT_PRIMARY);
+            chip.setBorder(new EmptyBorder(2, SPACE_2, 2, SPACE_2));
+            tagPanel.add(chip);
+        }
+        titleCell.add(tagPanel);
+        row.add(titleCell, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.20;
+        gbc.insets = new Insets(SPACE_3, SPACE_3, SPACE_3, SPACE_3);
+
+        JPanel companyCell = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
+        companyCell.setOpaque(false);
+
+        JLabel compIcon = new JLabel("B");
+        compIcon.setFont(fontBold(FONT_SIZE_XS));
+        compIcon.setOpaque(true);
+        compIcon.setBackground(new Color(241, 245, 249));
+        compIcon.setForeground(TEXT_MUTED);
+        compIcon.setPreferredSize(new Dimension(24, 24));
+        compIcon.setHorizontalAlignment(SwingConstants.CENTER);
+        companyCell.add(compIcon);
+
+        JLabel lblCompany = new JLabel(company);
+        lblCompany.setFont(body());
+        lblCompany.setForeground(TEXT_SECONDARY);
+        companyCell.add(lblCompany);
+        row.add(companyCell, gbc);
+
+        gbc.gridx = 2;
+        gbc.weightx = 0.18;
+
+        JLabel lblDate = new JLabel(date);
+        lblDate.setFont(body());
+        lblDate.setForeground(TEXT_SECONDARY);
+        row.add(lblDate, gbc);
+
+        gbc.gridx = 3;
+        gbc.weightx = 0.18;
+
+        Color badgeBg, badgeFg, borderColor;
+        switch (statusColor) {
+            case "blue":
+                badgeBg = new Color(239, 246, 255);
+                badgeFg = new Color(29, 78, 216);
+                borderColor = new Color(191, 219, 254);
                 break;
-            case "Interview Scheduled":
-                badge.setBackground(new Color(255, 243, 230));
-                badge.setForeground(new Color(253, 126, 20));
+            case "green":
+                badgeBg = new Color(220, 252, 231);
+                badgeFg = new Color(22, 101, 52);
+                borderColor = new Color(134, 239, 172);
                 break;
-            case "Not Selected":
-                badge.setBackground(new Color(240, 240, 240));
-                badge.setForeground(Color.GRAY);
+            case "grey":
+                badgeBg = new Color(237, 238, 239);
+                badgeFg = new Color(65, 71, 84);
+                borderColor = BORDER;
                 break;
-            case "Applied":
-                badge.setBackground(new Color(230, 250, 240));
-                badge.setForeground(new Color(40, 167, 69));
+            default:
+                badgeBg = BADGE_BG;
+                badgeFg = BADGE_FG;
+                borderColor = BORDER;
                 break;
         }
 
-        badge.setBorder(new LineBorder(badge.getForeground(), 1, true));
-        return badge;
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        statusPanel.setOpaque(false);
+
+        JLabel statusBadge = new JLabel(status);
+        statusBadge.setFont(fontBold(FONT_SIZE_XS));
+        statusBadge.setOpaque(true);
+        statusBadge.setBackground(badgeBg);
+        statusBadge.setForeground(badgeFg);
+        statusBadge.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(borderColor, 1),
+                new EmptyBorder(3, SPACE_2, 3, SPACE_2)
+        ));
+        statusPanel.add(statusBadge);
+        row.add(statusPanel, gbc);
+
+        gbc.gridx = 4;
+        gbc.weightx = 0.14;
+        gbc.insets = new Insets(SPACE_3, SPACE_3, SPACE_3, SPACE_6);
+
+        JLabel lblActions = new JLabel("...", SwingConstants.RIGHT);
+        lblActions.setFont(fontBold(FONT_SIZE_LG));
+        lblActions.setForeground(TEXT_MUTED);
+        lblActions.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        row.add(lblActions, gbc);
+
+        return row;
     }
 
-    private JPanel createProTipBanner() {
-        JPanel banner = new JPanel(new BorderLayout(15, 0));
-        banner.setBackground(new Color(240, 245, 255));
-        banner.setBorder(new EmptyBorder(15, 25, 15, 25));
-        banner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+    private JPanel createPaginationFooter(int total) {
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBackground(BG_SURFACE);
+        footer.setBorder(new EmptyBorder(SPACE_4, SPACE_6, SPACE_4, SPACE_6));
+        footer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
 
-        JLabel icon = new JLabel("L"); // gia lap icon bong den
-        icon.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        icon.setForeground(new Color(0, 100, 250));
-        banner.add(icon, BorderLayout.WEST);
+        JLabel lblShowing = new JLabel("Showing " + total + " applications");
+        lblShowing.setFont(label());
+        lblShowing.setForeground(TEXT_MUTED);
+        footer.add(lblShowing, BorderLayout.WEST);
 
-        String text = "<html><b>Pro Tip: Keep your profile updated</b><br/>"
-                + "Companies are 3x more likely to view candidates who have updated their CV in the last 30 days.</html>";
-        JLabel lblText = new JLabel(text);
-        lblText.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        banner.add(lblText, BorderLayout.CENTER);
-
-        return banner;
+        return footer;
     }
 
-    private JButton createOutlineButton(String text, String icon) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        btn.setBackground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-        btn.setPreferredSize(new Dimension(100, 35));
-        return btn;
-    }
-
-    private JButton createPageBtn(String text, boolean active) {
-        JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(35, 35));
-        btn.setFocusPainted(false);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        if (active) {
-            btn.setBackground(new Color(13, 110, 253));
-            btn.setForeground(Color.WHITE);
-            btn.setBorderPainted(false);
-        } else {
-            btn.setBackground(Color.WHITE);
-            btn.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-        }
-        return btn;
-    }
-
-    // ham main de kiem tra giao dien
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Applied Jobs Dashboard");
+            JFrame frame = new JFrame("Candidate - Applied Jobs");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1300, 850);
+            frame.setSize(1200, 800);
             frame.setLayout(new BorderLayout());
 
-            // dung lai HeaderPanel
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
+            frame.add(new org.jobportal.view.common.HeaderPanel(), BorderLayout.NORTH);
+            frame.add(new org.jobportal.view.common.SidebarPanel(org.jobportal.view.common.SidebarPanel.Role.CANDIDATE), BorderLayout.WEST);
+            frame.add(new AppliedJobsPanel(), BorderLayout.CENTER);
 
-            // dung lai SidebarPanel (Role Candidate)
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.CANDIDATE);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            JPanel rightPanel = new JPanel(new BorderLayout());
-            // them panel AppliedJobs vua code
-            AppliedJobsPanel appliedPanel = new AppliedJobsPanel();
-            rightPanel.add(appliedPanel, BorderLayout.CENTER);
-
-            frame.add(rightPanel, BorderLayout.CENTER);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });

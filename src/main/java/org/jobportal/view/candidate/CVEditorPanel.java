@@ -1,361 +1,453 @@
 package org.jobportal.view.candidate;
 
-import org.jobportal.view.common.HeaderPanel;
-import org.jobportal.view.common.SidebarPanel;
+import org.jobportal.bll.impl.CVService;
+import org.jobportal.dto.CVDTO;
+import org.jobportal.model.Education;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.jobportal.view.util.DesignSystem.*;
 
 public class CVEditorPanel extends JPanel {
 
+    private final CVService cvService = new CVService();
+    private JTextField txtFullName;
+    private JTextField txtDesiredPosition;
+    private JTextField txtDesiredSalary;
+    private JTextField txtLocation;
+    private JTextField txtEmail;
+    private JTextField txtPhone;
+    private JLabel lblLastUpdated;
+    private JTextArea txtObjective;
+    private JTextField txtSkillInput;
+    private JPanel tagsPanel;
+    private List<String> skills = new ArrayList<>();
+    private List<Education> educations = new ArrayList<>();
+    private JPanel eduTable;
+
     public CVEditorPanel() {
-        // thiet lap mau nen cho toan trang
-        setBackground(new Color(248, 249, 250));
         setLayout(new BorderLayout());
+        setBackground(BG_PAGE);
 
-        // panel chinh chua noi dung, sap xep theo chieu doc
-        JPanel mainContent = new JPanel();
-        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setBackground(new Color(248, 249, 250));
-        mainContent.setBorder(new EmptyBorder(20, 30, 20, 30));
+        JPanel mainContent = createContentPanel();
 
-        // them cac tung phan cua CV
-        mainContent.add(createPersonalSection());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
+        mainContent.add(createPersonalInfoCard());
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        mainContent.add(createObjectiveSection());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
+        mainContent.add(createObjectiveCard());
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        mainContent.add(createSkillsSection());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
+        mainContent.add(createSkillsCard());
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        mainContent.add(createEducationSection());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
+        mainContent.add(createEducationCard());
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        mainContent.add(createActionAndFooterSection());
+        mainContent.add(createActionButtons());
+        mainContent.add(Box.createRigidArea(new Dimension(0, SPACE_8)));
 
-        // boc trong thanh cuon
-        JScrollPane scrollPane = new JScrollPane(mainContent);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        JLabel copyrightFooter = new JLabel("© 2024 JobPortal Professional Services. All rights reserved.");
+        copyrightFooter.setFont(bodySmall());
+        copyrightFooter.setForeground(TEXT_MUTED);
+        copyrightFooter.setAlignmentX(Component.CENTER_ALIGNMENT);
+        copyrightFooter.setHorizontalAlignment(SwingConstants.CENTER);
+        mainContent.add(copyrightFooter);
 
-        add(scrollPane, BorderLayout.CENTER);
+        add(createScrollPane(mainContent), BorderLayout.CENTER);
+
+        loadData();
     }
 
-    // 1. phan personal information
-    private JPanel createPersonalSection() {
-        JPanel card = createCardPanel();
+    private void loadData() {
+        String candidateId = org.jobportal.utils.SessionManager.getCurrentUser().getUserId();
+        CVDTO cv = cvService.getCV(candidateId);
+        if (cv == null) cv = new CVDTO();
 
-        // header cua the
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
+        org.jobportal.dto.UserDTO user = org.jobportal.utils.SessionManager.getCurrentUser();
+        txtFullName.setText(user.getFullName());
+        txtEmail.setText(user.getEmail());
+        txtPhone.setText(user.getPhoneNumber());
+        txtDesiredPosition.setText(cv.getDesiredPosition() != null ? cv.getDesiredPosition() : "");
+        txtDesiredSalary.setText(cv.getDesiredSalary() != null ? String.valueOf(cv.getDesiredSalary()) : "");
+        txtObjective.setText(cv.getObjective() != null ? cv.getObjective() : "");
+        lblLastUpdated.setText(cv.getLastUpdated() != null ? cv.getLastUpdated().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "N/A");
 
-        JPanel titleBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        titleBox.setBackground(Color.WHITE);
+        skills.clear();
+        if (cv.getSkills() != null && !cv.getSkills().isEmpty()) {
+            for (String s : cv.getSkills().split(",")) {
+                skills.add(s.trim());
+            }
+        }
+        refreshSkillTags();
+
+        educations = cv.getEducations() != null ? new ArrayList<>(cv.getEducations()) : new ArrayList<>();
+        refreshEducationTable();
+    }
+
+    private void refreshSkillTags() {
+        tagsPanel.removeAll();
+        for (String skill : skills) {
+            JLabel chip = new JLabel(skill + "  ×");
+            chip.setFont(body());
+            chip.setOpaque(true);
+            chip.setBackground(BG_PAGE);
+            chip.setForeground(TEXT_PRIMARY);
+            chip.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(BORDER, 1),
+                    new EmptyBorder(SPACE_1, SPACE_3, SPACE_1, SPACE_3)
+            ));
+            chip.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            chip.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    skills.remove(skill);
+                    refreshSkillTags();
+                }
+            });
+            tagsPanel.add(chip);
+        }
+        tagsPanel.revalidate();
+        tagsPanel.repaint();
+    }
+
+    private void refreshEducationTable() {
+        eduTable.removeAll();
+        eduTable.add(createEduRow("SCHOOL", "MAJOR", "YEAR", "ACTIONS", true));
+        for (Education edu : educations) {
+            eduTable.add(createEduRow(edu.getSchool(), edu.getMajor(), String.valueOf(edu.getEndYear()), "", false));
+        }
+        eduTable.revalidate();
+        eduTable.repaint();
+    }
+
+    private JPanel createPersonalInfoCard() {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(BG_SURFACE);
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
+        ));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(BG_SURFACE);
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
+        titlePanel.setBackground(BG_SURFACE);
+
+        JLabel lblIcon = new JLabel("👤");
+        lblIcon.setFont(fontRegular(18));
+        titlePanel.add(lblIcon);
+
         JLabel lblTitle = new JLabel("PERSONAL INFORMATION");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        JLabel lblBadge = new JLabel(" ACTIVE PROFILE ");
-        lblBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        lblBadge.setForeground(new Color(40, 167, 69)); // mau xanh la
-        lblBadge.setBackground(new Color(233, 245, 236));
-        lblBadge.setOpaque(true);
-        titleBox.add(lblTitle);
-        titleBox.add(lblBadge);
-        headerPanel.add(titleBox, BorderLayout.WEST);
+        lblTitle.setFont(fontBold(FONT_SIZE_BASE));
+        lblTitle.setForeground(TEXT_PRIMARY);
+        titlePanel.add(lblTitle);
 
-        JButton btnSave = createButton("SAVE CHANGES", new Color(13, 110, 253), Color.WHITE);
-        headerPanel.add(btnSave, BorderLayout.EAST);
+        header.add(titlePanel, BorderLayout.WEST);
+        header.add(lblLastUpdated = new JLabel("Last updated: N/A") {{ setFont(bodySmall()); setForeground(TEXT_MUTED); }}, BorderLayout.EAST);
+        card.add(header);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_5)));
 
-        card.add(headerPanel);
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
-        card.add(new JSeparator());
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
+        JPanel formGrid = new JPanel(new GridBagLayout());
+        formGrid.setBackground(BG_SURFACE);
+        formGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // form nhap lieu
-        JPanel formPanel = new JPanel(new GridLayout(3, 2, 20, 15));
-        formPanel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0.5;
 
-        formPanel.add(createFormGroup("Full Name", "Alex Thorne"));
-        formPanel.add(createFormGroup("Professional Title", "Senior Frontend Architect"));
-        formPanel.add(createFormGroup("Location", "San Francisco, CA"));
-        formPanel.add(createFormGroup("Email Address", "a.thorne@example.com"));
-        formPanel.add(createFormGroup("Phone Number", "+1 (555) 012-3456"));
+        gbc.gridx = 0; gbc.gridy = 0; gbc.insets = new Insets(0, 0, SPACE_1, SPACE_4);
+        formGrid.add(createSmallLabel("Full Name"), gbc);
+        gbc.gridx = 1; gbc.insets = new Insets(0, 0, SPACE_1, 0);
+        formGrid.add(createSmallLabel("Desired Position"), gbc);
 
-        card.add(formPanel);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.insets = new Insets(0, 0, SPACE_4, SPACE_4);
+        txtFullName = createInputField("");
+        txtFullName.setEditable(false);
+        formGrid.add(txtFullName, gbc);
+        gbc.gridx = 1; gbc.insets = new Insets(0, 0, SPACE_4, 0);
+        txtDesiredPosition = createInputField("");
+        formGrid.add(txtDesiredPosition, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 2; gbc.insets = new Insets(0, 0, SPACE_1, SPACE_4);
+        formGrid.add(createSmallLabel("Desired Salary"), gbc);
+        gbc.gridx = 1; gbc.insets = new Insets(0, 0, SPACE_1, 0);
+        formGrid.add(createSmallLabel("Email Address"), gbc);
+
+        gbc.gridx = 0; gbc.gridy = 3; gbc.insets = new Insets(0, 0, SPACE_4, SPACE_4);
+        txtDesiredSalary = createInputField("");
+        formGrid.add(txtDesiredSalary, gbc);
+        gbc.gridx = 1; gbc.insets = new Insets(0, 0, SPACE_4, 0);
+        txtEmail = createInputField("");
+        txtEmail.setEditable(false);
+        formGrid.add(txtEmail, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 1; gbc.insets = new Insets(0, 0, SPACE_1, SPACE_4);
+        formGrid.add(createSmallLabel("Phone Number"), gbc);
+
+        gbc.gridx = 0; gbc.gridy = 5; gbc.insets = new Insets(0, 0, 0, SPACE_4);
+        txtPhone = createInputField("");
+        txtPhone.setEditable(false);
+        formGrid.add(txtPhone, gbc);
+
+        card.add(formGrid);
         return card;
     }
 
-    // 2. phan objective
-    private JPanel createObjectiveSection() {
-        JPanel card = createCardPanel();
+    private JPanel createObjectiveCard() {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(BG_SURFACE);
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
+        ));
 
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("OBJECTIVE");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        headerPanel.add(lblTitle, BorderLayout.WEST);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(BG_SURFACE);
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblReset = new JLabel("RESET TO DEFAULT");
-        lblReset.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblReset.setForeground(new Color(13, 110, 253));
-        lblReset.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        headerPanel.add(lblReset, BorderLayout.EAST);
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
+        titlePanel.setBackground(BG_SURFACE);
+        titlePanel.add(new JLabel("◎") {{ setFont(fontRegular(16)); setForeground(PRIMARY); }});
+        titlePanel.add(new JLabel("OBJECTIVE") {{ setFont(fontBold(FONT_SIZE_BASE)); setForeground(TEXT_PRIMARY); }});
+        header.add(titlePanel, BorderLayout.WEST);
 
-        card.add(headerPanel);
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
-        card.add(new JSeparator());
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
+        card.add(header);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_4)));
 
-        JTextArea txtObjective = new JTextArea("Innovative and results-driven Frontend Developer with over 8 years of experience in building and maintaining responsive web applications. Expert in React, Tailwind CSS, and system architecture. Committed to delivering high-quality, scalable code and exceptional user experiences.");
+        txtObjective = new JTextArea("");
+        txtObjective.setFont(body());
+        txtObjective.setForeground(TEXT_PRIMARY);
         txtObjective.setLineWrap(true);
         txtObjective.setWrapStyleWord(true);
-        txtObjective.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        txtObjective.setBackground(BG_PAGE);
         txtObjective.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 1),
-                new EmptyBorder(10, 10, 10, 10)
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_4, SPACE_4, SPACE_4, SPACE_4)
         ));
+        txtObjective.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(txtObjective);
 
         return card;
     }
 
-    // 3. phan skills
-    private JPanel createSkillsSection() {
-        JPanel card = createCardPanel();
+    private JPanel createSkillsCard() {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(BG_SURFACE);
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
+        ));
 
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("SKILLS");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        headerPanel.add(lblTitle, BorderLayout.WEST);
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
+        titlePanel.setBackground(BG_SURFACE);
+        titlePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titlePanel.add(new JLabel("◉") {{ setFont(fontRegular(16)); setForeground(PRIMARY); }});
+        titlePanel.add(new JLabel("SKILLS") {{ setFont(fontBold(FONT_SIZE_BASE)); setForeground(TEXT_PRIMARY); }});
+        card.add(titlePanel);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_4)));
 
-        card.add(headerPanel);
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
-        card.add(new JSeparator());
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
+        JPanel inputRow = new JPanel(new BorderLayout(SPACE_3, 0));
+        inputRow.setBackground(BG_SURFACE);
+        inputRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        inputRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, INPUT_HEIGHT));
 
-        // thanh them skill
-        JPanel inputPanel = new JPanel(new BorderLayout(10, 0));
-        inputPanel.setBackground(Color.WHITE);
-        JTextField txtSkill = new JTextField("Add a skill (e.g. React, Project Management)");
-        txtSkill.setForeground(Color.GRAY);
-        txtSkill.setPreferredSize(new Dimension(0, 40));
-        inputPanel.add(txtSkill, BorderLayout.CENTER);
+        txtSkillInput = new JTextField("Add a skill (e.g. React, Project Management)");
+        txtSkillInput.setFont(body());
+        txtSkillInput.setForeground(TEXT_MUTED);
+        txtSkillInput.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER_INPUT, 1),
+                new EmptyBorder(SPACE_2, SPACE_3, SPACE_2, SPACE_3)
+        ));
+        inputRow.add(txtSkillInput, BorderLayout.CENTER);
 
-        JButton btnAddSkill = createButton("ADD SKILL", new Color(13, 110, 253), Color.WHITE);
-        btnAddSkill.setPreferredSize(new Dimension(120, 40));
-        inputPanel.add(btnAddSkill, BorderLayout.EAST);
+        JButton btnAddSkill = createPrimaryButton("ADD SKILL");
+        btnAddSkill.setPreferredSize(new Dimension(120, INPUT_HEIGHT));
+        btnAddSkill.setMaximumSize(new Dimension(120, INPUT_HEIGHT));
+        btnAddSkill.addActionListener(e -> {
+            String s = txtSkillInput.getText().trim();
+            if (!s.isEmpty() && !skills.contains(s)) {
+                skills.add(s);
+                refreshSkillTags();
+                txtSkillInput.setText("");
+            }
+        });
+        inputRow.add(btnAddSkill, BorderLayout.EAST);
 
-        card.add(inputPanel);
-        card.add(Box.createRigidArea(new Dimension(0, 15)));
+        card.add(inputRow);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_4)));
 
-        // danh sach the skill
-        JPanel tagsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        tagsPanel.setBackground(Color.WHITE);
-        String[] skills = {"React.js", "TypeScript", "Tailwind CSS", "UI/UX Design", "Node.js", "System Architecture"};
-        for (String skill : skills) {
-            tagsPanel.add(createSkillTag(skill));
-        }
+        tagsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, SPACE_2));
+        tagsPanel.setBackground(BG_SURFACE);
+        tagsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(tagsPanel);
 
         return card;
     }
 
-    // 4. phan education history
-    private JPanel createEducationSection() {
-        JPanel card = createCardPanel();
-
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("EDUCATION HISTORY");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        headerPanel.add(lblTitle, BorderLayout.WEST);
-
-        JButton btnAddEdu = createButton("ADD EDUCATION", new Color(33, 37, 41), Color.WHITE);
-        headerPanel.add(btnAddEdu, BorderLayout.EAST);
-
-        card.add(headerPanel);
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
-        card.add(new JSeparator());
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        // tao bang gia bang cach dung grid layout
-        JPanel tablePanel = new JPanel(new GridLayout(3, 1));
-        tablePanel.setBackground(Color.WHITE);
-
-        // header cua bang
-        tablePanel.add(createTableRow("SCHOOL", "MAJOR", "YEAR", "ACTIONS", true));
-        // cac dong du lieu
-        tablePanel.add(createTableRow("Stanford University", "M.S. in Computer Science", "2016", "edit_delete", false));
-        tablePanel.add(createTableRow("UC Berkeley", "B.S. in Software Engineering", "2014", "edit_delete", false));
-
-        card.add(tablePanel);
-
-        return card;
-    }
-
-    // phan nut chuc nang cuoi trang va footer
-    private JPanel createActionAndFooterSection() {
-        JPanel wrapper = new JPanel();
-        wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.Y_AXIS));
-        wrapper.setBackground(new Color(248, 249, 250));
-
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        actionPanel.setBackground(new Color(248, 249, 250));
-
-        JButton btnDiscard = createButton("DISCARD CHANGES", Color.WHITE, Color.DARK_GRAY);
-        btnDiscard.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
-        btnDiscard.setPreferredSize(new Dimension(160, 45));
-
-        JButton btnSave = createButton("SAVE PROFILE", new Color(33, 37, 41), Color.WHITE);
-        btnSave.setPreferredSize(new Dimension(160, 45));
-
-        actionPanel.add(btnDiscard);
-        actionPanel.add(btnSave);
-
-        wrapper.add(actionPanel);
-        wrapper.add(Box.createRigidArea(new Dimension(0, 30)));
-
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        footerPanel.setBackground(new Color(248, 249, 250));
-        JLabel lblFooter = new JLabel("© 2024 JobPortal Professional Services. All rights reserved.");
-        lblFooter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblFooter.setForeground(Color.GRAY);
-        footerPanel.add(lblFooter);
-
-        wrapper.add(footerPanel);
-
-        return wrapper;
-    }
-
-    // --- cac ham tien ich (helpers) ---
-
-    // tao the (card) co nen trang va vien
-    private JPanel createCardPanel() {
+    private JPanel createEducationCard() {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
+        card.setBackground(BG_SURFACE);
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(230, 230, 230), 1),
-                new EmptyBorder(20, 25, 20, 25)
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(SPACE_6, SPACE_6, SPACE_6, SPACE_6)
         ));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(BG_SURFACE);
+        header.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SPACE_2, 0));
+        titlePanel.setBackground(BG_SURFACE);
+        titlePanel.add(new JLabel("🎓") {{ setFont(fontRegular(16)); }});
+        titlePanel.add(new JLabel("EDUCATION HISTORY") {{ setFont(fontBold(FONT_SIZE_BASE)); setForeground(TEXT_PRIMARY); }});
+        header.add(titlePanel, BorderLayout.WEST);
+
+        JButton btnAddEdu = new JButton("ADD EDUCATION");
+        btnAddEdu.setFont(fontBold(FONT_SIZE_SM));
+        btnAddEdu.setBackground(TEXT_PRIMARY);
+        btnAddEdu.setForeground(BG_SURFACE);
+        btnAddEdu.setFocusPainted(false);
+        btnAddEdu.setBorderPainted(false);
+        btnAddEdu.setPreferredSize(new Dimension(150, 32));
+        btnAddEdu.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        header.add(btnAddEdu, BorderLayout.EAST);
+
+        card.add(header);
+        card.add(Box.createRigidArea(new Dimension(0, SPACE_4)));
+
+        eduTable = new JPanel();
+        eduTable.setLayout(new BoxLayout(eduTable, BoxLayout.Y_AXIS));
+        eduTable.setBackground(BG_SURFACE);
+        eduTable.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(eduTable);
+
         return card;
     }
 
-    // tao o nhap lieu co label ben tren
-    private JPanel createFormGroup(String labelText, String value) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
+    private JPanel createEduRow(String school, String major, String year, String action, boolean isHeader) {
+        JPanel row = new JPanel(new GridBagLayout());
+        row.setBackground(isHeader ? BG_PAGE : BG_SURFACE);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_LIGHT));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        row.setPreferredSize(new Dimension(0, 50));
 
-        JLabel lbl = new JLabel(labelText);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lbl.setForeground(Color.DARK_GRAY);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
 
-        JTextField txt = new JTextField(value);
-        txt.setPreferredSize(new Dimension(0, 35));
-        txt.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        Font font = isHeader ? tableHeader() : body();
+        Color fg = isHeader ? TEXT_MUTED : TEXT_PRIMARY;
 
-        panel.add(lbl);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-        panel.add(txt);
+        gbc.gridx = 0; gbc.weightx = 0.3; gbc.insets = new Insets(0, SPACE_4, 0, SPACE_3);
+        JLabel l1 = new JLabel(school); l1.setFont(font); l1.setForeground(fg);
+        row.add(l1, gbc);
 
-        return panel;
-    }
+        gbc.gridx = 1; gbc.weightx = 0.4;
+        JLabel l2 = new JLabel(major); l2.setFont(font); l2.setForeground(fg);
+        row.add(l2, gbc);
 
-    // tao nut bam voi mau sac tuy chinh
-    private JButton createButton(String text, Color bg, Color fg) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setBackground(bg);
-        btn.setForeground(fg);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
+        gbc.gridx = 2; gbc.weightx = 0.15;
+        JLabel l3 = new JLabel(year); l3.setFont(font); l3.setForeground(fg);
+        l3.setHorizontalAlignment(SwingConstants.CENTER);
+        row.add(l3, gbc);
 
-    // tao the tag cho skill
-    private JPanel createSkillTag(String skill) {
-        JPanel tag = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
-        tag.setBackground(Color.WHITE);
-        tag.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-
-        JLabel lblSkill = new JLabel(skill);
-        lblSkill.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-
-        JLabel lblClose = new JLabel(" x");
-        lblClose.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblClose.setForeground(Color.GRAY);
-        lblClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        tag.add(lblSkill);
-        tag.add(lblClose);
-        return tag;
-    }
-
-    // tao dong cho bang education
-    private JPanel createTableRow(String col1, String col2, String col3, String action, boolean isHeader) {
-        JPanel row = new JPanel(new GridLayout(1, 4, 10, 0));
-        row.setBackground(Color.WHITE);
-        row.setBorder(new EmptyBorder(15, 0, 15, 0));
-
-        Font font = isHeader ? new Font("Segoe UI", Font.BOLD, 12) : new Font("Segoe UI", Font.PLAIN, 13);
-        Color color = isHeader ? Color.DARK_GRAY : Color.BLACK;
-
-        JLabel l1 = new JLabel(col1); l1.setFont(font); l1.setForeground(color);
-        JLabel l2 = new JLabel(col2); l2.setFont(font); l2.setForeground(color);
-        JLabel l3 = new JLabel(col3); l3.setFont(font); l3.setForeground(color);
-
-        row.add(l1);
-        row.add(l2);
-        row.add(l3);
-
+        gbc.gridx = 3; gbc.weightx = 0.15; gbc.insets = new Insets(0, SPACE_3, 0, SPACE_4);
         if (isHeader) {
-            JLabel l4 = new JLabel(action);
-            l4.setFont(font);
-            l4.setForeground(color);
-            row.add(l4);
+            JLabel l4 = new JLabel("ACTIONS"); l4.setFont(font); l4.setForeground(fg);
+            l4.setHorizontalAlignment(SwingConstants.RIGHT);
+            row.add(l4, gbc);
         } else {
-            // tao nut edit/delete gia
-            JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
-            actionPanel.setBackground(Color.WHITE);
-            JLabel btnEdit = new JLabel("✎"); // icon but chi
-            btnEdit.setForeground(Color.GRAY);
-            btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            JLabel btnDel = new JLabel("🗑"); // icon thung rac
-            btnDel.setForeground(Color.GRAY);
-            btnDel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            actionPanel.add(btnEdit);
-            actionPanel.add(btnDel);
-            row.add(actionPanel);
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_2, 0));
+            actions.setOpaque(false);
+            JLabel edit = new JLabel("✎"); edit.setFont(fontRegular(16)); edit.setForeground(TEXT_MUTED);
+            edit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            JLabel del = new JLabel("🗑"); del.setFont(fontRegular(16)); del.setForeground(TEXT_MUTED);
+            del.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            actions.add(edit);
+            actions.add(del);
+            row.add(actions, gbc);
         }
 
         return row;
     }
 
-    // ham main de kiem tra giao dien
+    private JPanel createActionButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, SPACE_4, 0));
+        panel.setBackground(BG_PAGE);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton btnSaveProfile = new JButton("SAVE PROFILE");
+        btnSaveProfile.setFont(fontBold(FONT_SIZE_BASE));
+        btnSaveProfile.setBackground(TEXT_PRIMARY);
+        btnSaveProfile.setForeground(BG_SURFACE);
+        btnSaveProfile.setPreferredSize(new Dimension(160, BUTTON_HEIGHT));
+        btnSaveProfile.setFocusPainted(false);
+        btnSaveProfile.setBorderPainted(false);
+        btnSaveProfile.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnSaveProfile.addActionListener(e -> saveCV());
+        panel.add(btnSaveProfile);
+
+        return panel;
+    }
+
+    private void saveCV() {
+        CVDTO cv = new CVDTO();
+        cv.setCandidateId(org.jobportal.utils.SessionManager.getCurrentUser().getUserId());
+        cv.setObjective(txtObjective.getText());
+        cv.setDesiredPosition(txtDesiredPosition.getText());
+        try { cv.setDesiredSalary(Double.parseDouble(txtDesiredSalary.getText())); } catch (Exception ignored) {}
+        cv.setSkills(String.join(",", skills));
+        cv.setEducations(educations);
+        cvService.saveCV(cv);
+        loadData();
+    }
+
+    private JLabel createSmallLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(bodySmall());
+        lbl.setForeground(TEXT_SECONDARY);
+        return lbl;
+    }
+
+    private JTextField createInputField(String text) {
+        JTextField field = new JTextField(text);
+        field.setFont(body());
+        field.setForeground(TEXT_PRIMARY);
+        field.setPreferredSize(new Dimension(0, INPUT_HEIGHT));
+        field.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER_INPUT, 1),
+                new EmptyBorder(SPACE_2, SPACE_3, SPACE_2, SPACE_3)
+        ));
+        return field;
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("CV Management");
+            JFrame frame = new JFrame("Candidate - CV Management");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1100, 800);
+            frame.setSize(1200, 900);
             frame.setLayout(new BorderLayout());
 
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
+            frame.add(new org.jobportal.view.common.HeaderPanel(), BorderLayout.NORTH);
+            frame.add(new org.jobportal.view.common.SidebarPanel(org.jobportal.view.common.SidebarPanel.Role.CANDIDATE), BorderLayout.WEST);
+            frame.add(new CVEditorPanel(), BorderLayout.CENTER);
 
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.CANDIDATE);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            JPanel rightPanel = new JPanel(new BorderLayout());
-
-            CVEditorPanel cvPanel = new CVEditorPanel();
-            rightPanel.add(cvPanel, BorderLayout.CENTER);
-
-            frame.add(rightPanel, BorderLayout.CENTER);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });
