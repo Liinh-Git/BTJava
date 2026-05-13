@@ -161,7 +161,7 @@ public class LoginPanel extends JPanel {
                     mainFrame.onLoginSuccess();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Sai tài khoản, mật khẩu hoặc vai trò!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Sai tài khoản, mật khẩu hoặc vai trò!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

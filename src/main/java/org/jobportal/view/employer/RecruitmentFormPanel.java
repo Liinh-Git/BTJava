@@ -399,6 +399,11 @@ public class RecruitmentFormPanel extends JPanel {
             boolean success = recruitmentService.postRecruitment(titleVal, catId, jobType, salary, dueDate, desc, null); // location will be resolved from company info in BLL
             if (success) {
                 JOptionPane.showMessageDialog(this, "Đăng tin tuyển dụng thành công, chờ kiểm duyệt!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                Window window = SwingUtilities.getWindowAncestor(this);
+                if (window != null) {
+                    window.dispose();
+                    return;
+                }
                 // Reset form: thay placeholder
                 txtTitle.setText("VD: Senior Frontend Developer (Tailwind CSS)");
                 txtTitle.setForeground(new Color(156, 163, 175));

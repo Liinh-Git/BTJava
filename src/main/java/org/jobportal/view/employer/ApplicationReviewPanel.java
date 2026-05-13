@@ -4,13 +4,17 @@ import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
 import org.jobportal.bll.impl.ApplicationService;
+import org.jobportal.bll.impl.CVService;
 import org.jobportal.bll.impl.RecruitmentService;
 import org.jobportal.bll.interfaces.IApplicationService;
+import org.jobportal.bll.interfaces.ICVService;
 import org.jobportal.bll.interfaces.IRecruitmentService;
 import org.jobportal.dto.ApplicationDTO;
+import org.jobportal.dto.CVDTO;
 import org.jobportal.dto.RecruitmentDTO;
 import org.jobportal.dto.UserDTO;
 import org.jobportal.enums.ApplicationStatus;
+import org.jobportal.model.Education;
 import org.jobportal.utils.SessionManager;
 
 import javax.swing.*;
@@ -25,6 +29,7 @@ public class ApplicationReviewPanel extends JPanel {
 
     private final IApplicationService applicationService = new ApplicationService();
     private final IRecruitmentService recruitmentService = new RecruitmentService();
+    private final ICVService cvService = new CVService();
     private JPanel tableContainer;
     private JLabel lblCount;
     private JPanel paginationPanel;
@@ -89,13 +94,6 @@ public class ApplicationReviewPanel extends JPanel {
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
         rightPanel.setBackground(new Color(248, 249, 250));
 
-        JButton btnFilter = new JButton("= Bộ lọc");
-        btnFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        btnFilter.setBackground(Color.WHITE);
-        btnFilter.setPreferredSize(new Dimension(100, 38));
-        btnFilter.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
-        btnFilter.setFocusPainted(false);
-
         JButton btnExport = new JButton("v Xuất báo cáo");
         btnExport.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnExport.setBackground(new Color(13, 110, 253));
@@ -104,7 +102,6 @@ public class ApplicationReviewPanel extends JPanel {
         btnExport.setBorderPainted(false);
         btnExport.setFocusPainted(false);
 
-        rightPanel.add(btnFilter);
         rightPanel.add(btnExport);
 
         headerPanel.add(leftPanel, BorderLayout.WEST);
@@ -192,7 +189,7 @@ public class ApplicationReviewPanel extends JPanel {
             String initials = name != null && name.length() > 0 ? name.substring(0, 1).toUpperCase() : "?";
             String dateStr = app.getAppliedDate() != null ? app.getAppliedDate().format(formatter) : "N/A";
             String pos = app.getJobTitle();
-            String status = app.getStatus().name();
+            String status = toStatusLabel(app.getStatus());
             
             tableContainer.add(createTableRow(name, dateStr, pos, status, "", false, email, initials, app));
         }
@@ -443,7 +440,7 @@ public class ApplicationReviewPanel extends JPanel {
                 if (app != null) {
                     UserDTO candidateInfo = applicationService.getCandidateInfo(app.getCandidateId());
                     if (candidateInfo != null) {
-                        JOptionPane.showMessageDialog(this, "Thông tin ứng viên:\nHọ tên: " + candidateInfo.getFullName() + "\nEmail: " + candidateInfo.getEmail() + "\nĐiện thoại: " + candidateInfo.getPhoneNumber());
+                        showCandidateInfoDialog(app, candidateInfo);
                     } else {
                         JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin ứng viên!");
                     }
@@ -460,6 +457,141 @@ public class ApplicationReviewPanel extends JPanel {
         row.add(p5, gbc);
 
         return row;
+    }
+
+    private void showCandidateInfoDialog(ApplicationDTO app, UserDTO candidateInfo) {
+        String message = "Thông tin ứng viên:\n"
+                + "Họ tên: " + valueOrEmpty(candidateInfo.getFullName()) + "\n"
+                + "Email: " + valueOrEmpty(candidateInfo.getEmail()) + "\n"
+                + "Điện thoại: " + valueOrEmpty(candidateInfo.getPhoneNumber());
+
+        Object[] options = {"OK", "Xem chi tiết CV"};
+        int choice = JOptionPane.showOptionDialog(
+                this,
+                message,
+                "Thông tin ứng viên",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+
+        if (choice == 1) {
+            showCVDetailDialog(app, candidateInfo);
+        }
+    }
+
+    private void showCVDetailDialog(ApplicationDTO app, UserDTO candidateInfo) {
+        CVDTO cv = cvService.getCV(app.getCandidateId());
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBorder(new EmptyBorder(20, 24, 20, 24));
+        content.setBackground(Color.WHITE);
+
+        addSectionTitle(content, "Thông tin cá nhân");
+        content.add(createInfoLine("Họ tên", candidateInfo.getFullName()));
+        content.add(createInfoLine("Email", candidateInfo.getEmail()));
+        content.add(createInfoLine("Điện thoại", candidateInfo.getPhoneNumber()));
+        content.add(createInfoLine("Địa điểm", cv != null ? cv.getLocation() : null));
+        content.add(createInfoLine("Vị trí mong muốn", cv != null ? cv.getDesiredPosition() : null));
+
+        addSectionTitle(content, "Mục tiêu nghề nghiệp");
+        content.add(createTextBlock(cv != null ? cv.getObjective() : null));
+
+        addSectionTitle(content, "Kỹ năng");
+        content.add(createTextBlock(cv != null ? cv.getSkills() : null));
+
+        addSectionTitle(content, "Học vấn");
+        if (cv != null && cv.getEducations() != null && !cv.getEducations().isEmpty()) {
+            for (Education education : cv.getEducations()) {
+                content.add(createEducationBlock(education));
+            }
+        } else {
+            content.add(createTextBlock("Chưa có thông tin học vấn."));
+        }
+
+        JScrollPane scrollPane = new JScrollPane(content);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setPreferredSize(new Dimension(620, 620));
+
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Chi tiết CV", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        JButton btnClose = new JButton("Đóng");
+        btnClose.addActionListener(e -> dialog.dispose());
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        footer.add(btnClose);
+        dialog.add(footer, BorderLayout.SOUTH);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    private void addSectionTitle(JPanel parent, String title) {
+        parent.add(Box.createRigidArea(new Dimension(0, 14)));
+        JLabel label = new JLabel(title);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        parent.add(label);
+        parent.add(Box.createRigidArea(new Dimension(0, 8)));
+    }
+
+    private JPanel createInfoLine(String label, String value) {
+        JPanel row = new JPanel(new BorderLayout(12, 0));
+        row.setBackground(Color.WHITE);
+        row.setBorder(new EmptyBorder(3, 0, 3, 0));
+        JLabel lbl = new JLabel(label + ":");
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        JLabel val = new JLabel(valueOrEmpty(value));
+        val.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        row.add(lbl, BorderLayout.WEST);
+        row.add(val, BorderLayout.CENTER);
+        return row;
+    }
+
+    private JTextArea createTextBlock(String value) {
+        JTextArea text = new JTextArea(valueOrDefault(value, "Chưa cập nhật."));
+        text.setEditable(false);
+        text.setLineWrap(true);
+        text.setWrapStyleWord(true);
+        text.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        text.setOpaque(false);
+        text.setBorder(new EmptyBorder(0, 0, 8, 0));
+        return text;
+    }
+
+    private JPanel createEducationBlock(Education education) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(230, 230, 230), 1),
+                new EmptyBorder(10, 12, 10, 12)
+        ));
+        panel.add(createInfoLine("Trường", education.getSchool()));
+        panel.add(createInfoLine("Bằng cấp", education.getDegree()));
+        panel.add(createInfoLine("Chuyên ngành", education.getMajor()));
+        String years = "";
+        if (education.getStartYear() != null) years += education.getStartYear();
+        if (education.getEndYear() != null) years += (years.isEmpty() ? "" : " - ") + education.getEndYear();
+        panel.add(createInfoLine("Thời gian", years));
+        if (education.getDescription() != null && !education.getDescription().isBlank()) {
+            panel.add(createTextBlock(education.getDescription()));
+        }
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
+        return panel;
+    }
+
+    private String valueOrEmpty(String value) {
+        return value != null && !value.isBlank() ? value : "";
+    }
+
+    private String valueOrDefault(String value, String fallback) {
+        return value != null && !value.isBlank() ? value : fallback;
     }
 
     private JPanel createAvatar(String initials) {
@@ -489,20 +621,26 @@ public class ApplicationReviewPanel extends JPanel {
         badge.setOpaque(true);
 
         switch (status) {
-            case "PENDING":
+            case "Đang duyệt":
                 badge.setBackground(new Color(230, 230, 230));
                 badge.setForeground(Color.DARK_GRAY);
                 break;
-            case "REVIEWING":
-                badge.setBackground(new Color(230, 240, 255));
-                badge.setForeground(new Color(13, 110, 253));
-                break;
-            case "HIRED":
+            case "Đã duyệt":
                 badge.setBackground(new Color(230, 250, 240));
                 badge.setForeground(new Color(40, 167, 69));
                 break;
+            case "Bị từ chối":
+                badge.setBackground(new Color(255, 243, 230));
+                badge.setForeground(new Color(253, 126, 20));
+                break;
         }
         return badge;
+    }
+
+    private String toStatusLabel(ApplicationStatus status) {
+        if (status == ApplicationStatus.APPROVED) return "Đã duyệt";
+        if (status == ApplicationStatus.REJECTED) return "Bị từ chối";
+        return "Đang duyệt";
     }
 
     private JButton createActionBtn(String text, Color color) {

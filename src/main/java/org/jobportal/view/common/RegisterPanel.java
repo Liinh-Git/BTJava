@@ -165,11 +165,11 @@ public class RegisterPanel extends JPanel {
             String confirm = new String(txtConfirm.getPassword());
 
             if (fullname.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Error", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (!pass.equals(confirm)) {
-                JOptionPane.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Error", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -185,7 +185,7 @@ public class RegisterPanel extends JPanel {
                     mainFrame.showLogin();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

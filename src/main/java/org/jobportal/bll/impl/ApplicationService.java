@@ -298,20 +298,6 @@ public class ApplicationService implements IApplicationService {
     }
 
     // ------------------------------------------------------------------
-    // filterApplicationByStatus
-    // ------------------------------------------------------------------
-
-    @Override
-    public List<ApplicationDTO> filterApplicationByStatus(String recruitmentId, ApplicationStatus status) {
-        if (recruitmentId == null || status == null) return Collections.emptyList();
-        List<Application> apps = applicationDAO.findByRecruitmentIdAndStatus(recruitmentId, status);
-        if (apps == null || apps.isEmpty()) return Collections.emptyList();
-        List<ApplicationDTO> result = new ArrayList<>();
-        for (Application a : apps) result.add(enrichApplication(a));
-        return result;
-    }
-
-    // ------------------------------------------------------------------
     // getTotalApplicationCount / getNewApplicantsToday
     // ------------------------------------------------------------------
 
@@ -326,28 +312,6 @@ public class ApplicationService implements IApplicationService {
         if (employerId == null || employerId.isBlank()) return 0;
         return applicationDAO.countNewApplicantsToday(employerId);
     }
-
-    // ------------------------------------------------------------------
-    // filterApplicationsByStatusForCandidate
-    // ------------------------------------------------------------------
-
-    @Override
-    public List<ApplicationDTO> filterApplicationsByStatusForCandidate(String candidateId, ApplicationStatus status) {
-        if (candidateId == null || candidateId.isBlank()) return Collections.emptyList();
-        List<Application> apps = applicationDAO.findByCandidateId(candidateId);
-        if (apps == null || apps.isEmpty()) return Collections.emptyList();
-
-        List<ApplicationDTO> result = new ArrayList<>();
-        for (Application a : apps) {
-            // Neu status la null thi lay tat ca, nguoc lai loc theo trang thai
-            if (status == null || a.getStatus() == status) {
-                result.add(enrichApplication(a));
-            }
-        }
-        return result;
-    }
-
-    // ------------------------------------------------------------------
 
     // Private helpers
     // ------------------------------------------------------------------

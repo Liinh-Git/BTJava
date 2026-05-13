@@ -105,6 +105,7 @@ public class RecruitmentListPanel extends JPanel {
                 // dua cai JPanel form cua ban vao trong JDialog nay
                 dialog.add(new RecruitmentFormPanel());
                 dialog.setVisible(true);
+                loadData();
             }
         });
 
@@ -138,7 +139,7 @@ public class RecruitmentListPanel extends JPanel {
             }
         });
 
-        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Tất cả trạng thái", "Đang hoạt động", "Hết hạn", "Bản nháp"});
+        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Tất cả trạng thái", "Đang hoạt động", "Chờ duyệt", "Bị từ chối", "Đã đóng", "Hết hạn"});
         cbStatus.setPreferredSize(new Dimension(150, 38));
         cbStatus.setBackground(Color.WHITE);
 
@@ -182,7 +183,7 @@ public class RecruitmentListPanel extends JPanel {
                 }
                 String statusStr = "Bản nháp";
                 if (job.getAdminStatus() == AdminStatus.PENDING) {
-                    statusStr = "Đang chờ duyệt";
+                    statusStr = "Chờ duyệt";
                 } else if (job.getAdminStatus() == AdminStatus.REJECTED) {
                     statusStr = "Bị từ chối";
                 } else if (job.getAdminStatus() == AdminStatus.APPROVED) {
@@ -214,7 +215,7 @@ public class RecruitmentListPanel extends JPanel {
                 
                 String statusStr = "Bản nháp";
                 if (job.getAdminStatus() == AdminStatus.PENDING) {
-                    statusStr = "Đang chờ duyệt";
+                    statusStr = "Chờ duyệt";
                 } else if (job.getAdminStatus() == AdminStatus.REJECTED) {
                     statusStr = "Bị từ chối";
                 } else if (job.getAdminStatus() == AdminStatus.APPROVED) {
@@ -440,7 +441,7 @@ public class RecruitmentListPanel extends JPanel {
                 badge.setBackground(new Color(230, 250, 240));
                 badge.setForeground(new Color(40, 167, 69));
                 break;
-            case "Đang chờ duyệt":
+            case "Chờ duyệt":
                 badge.setBackground(new Color(255, 243, 205));
                 badge.setForeground(new Color(133, 100, 4));
                 break;

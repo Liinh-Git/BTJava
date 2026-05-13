@@ -32,7 +32,7 @@ public class MainFrame extends JFrame {
     private SidebarPanel sidebarPanel;
 
     public MainFrame() {
-        setTitle("Job Portal Application");
+        setTitle("Ứng dụng JobPortal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 850);
         

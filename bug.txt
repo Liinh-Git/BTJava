@@ -1,0 +1,10 @@
+candidate
+- Chức năng add education không hoạt động
+- Khi click vào nút add education, không có phản hồi nào xảy ra
+- Nhập thông tin vào CV nhưng không hiển thị thông tin đã nhập
+hidden / sequence / logic notes
+- ApplicationReviewPanel: action xem ứng viên còn sót một dòng JOptionPane.showMessageDialog sau lệnh return; hiện không chạy nhưng là code chết, dễ gây nhầm khi bảo trì.
+- CVDAO.ensureLocationColumn(): đang tự ALTER TABLE cvs khi chạy app. Logic này phụ thuộc quyền ALTER của user DB; nếu tài khoản DB chỉ có quyền SELECT/INSERT/UPDATE thì chức năng mở/lưu CV sẽ lỗi. Nên chuyển migration này sang schema.sql hoặc script migration riêng.
+- CVDAO.replaceEducations(): logic lưu học vấn đang delete toàn bộ educations rồi insert lại trong transaction. Nếu DB/driver xử lý transaction không như mong đợi hoặc connection autocommit bị thay đổi ngoài ý muốn thì có rủi ro mất học vấn cũ.
+- CVDAO.generateEducationId(): sinh EDU theo currentTimeMillis % 1_000_000, vẫn có khả năng trùng khóa khi lưu nhiều học vấn trong thời gian rất gần hoặc chạy song song. Nên dùng UUID/sequence hoặc kiểm tra trùng trước khi insert.
+- CVEditorPanel.openEducationDialog(): đang đổi UIManager OptionPane ok/cancel text ở global scope. Nếu có exception trước khi restore, text nút toàn app có thể bị ảnh hưởng. Nên dùng custom JDialog riêng hoặc restore trong finally.

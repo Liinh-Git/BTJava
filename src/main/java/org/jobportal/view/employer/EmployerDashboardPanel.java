@@ -171,7 +171,7 @@ public class EmployerDashboardPanel extends JPanel {
         lblApprovedCount = new JLabel("0");
         lblRejectedCount = new JLabel("0");
 
-        row.add(createStatusItem("Chờ duyệt", lblPendingCount, new Color(255, 193, 7)));
+        row.add(createStatusItem("Đang duyệt", lblPendingCount, new Color(255, 193, 7)));
         row.add(createStatusItem("Đã duyệt", lblApprovedCount, new Color(40, 167, 69)));
         row.add(createStatusItem("Bị từ chối", lblRejectedCount, new Color(220, 53, 69)));
 
@@ -332,7 +332,7 @@ public class EmployerDashboardPanel extends JPanel {
 
     private String buildStatusText(RecruitmentDTO job) {
         if (job == null) return "N/A";
-        if (job.getAdminStatus() == AdminStatus.PENDING) return "Chờ duyệt";
+        if (job.getAdminStatus() == AdminStatus.PENDING) return "Đang duyệt";
         if (job.getAdminStatus() == AdminStatus.REJECTED) return "Bị từ chối";
         if (job.getAdminStatus() == AdminStatus.APPROVED) {
             RecruitmentStatus status = job.getStatus();

@@ -130,7 +130,7 @@ public class CategoryManagementPanel extends JPanel {
                 txtNewCategory.setText("Tên danh mục mới...");
                 loadData();
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể thêm danh mục!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Không thể thêm danh mục!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -233,7 +233,7 @@ public class CategoryManagementPanel extends JPanel {
                             JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã cập nhật thành công!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi cập nhật!", "Error", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -255,7 +255,7 @@ public class CategoryManagementPanel extends JPanel {
                             JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã xóa danh mục!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi xóa danh mục!", "Error", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi xóa danh mục!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }

@@ -5,9 +5,12 @@ import org.jobportal.dal.impl.CVDAO;
 import org.jobportal.dal.interfaces.ICVDAO;
 import org.jobportal.dto.CVDTO;
 import org.jobportal.model.CV;
+import org.jobportal.model.Education;
 import org.jobportal.utils.SessionManager;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * CVService - Xu ly nghiep vu quan ly CV cua ung vien.
@@ -45,6 +48,7 @@ public class CVService implements ICVService {
             // Tra ve DTO rong, View co the dung de hien thi form tao CV moi
             CVDTO empty = new CVDTO();
             empty.setCandidateId(candidateId);
+            empty.setEducations(new ArrayList<>());
             return empty;
         }
         return mapToDTO(cv);
@@ -86,9 +90,11 @@ public class CVService implements ICVService {
                     cvDTO.getDesiredSalary(),
                     LocalDateTime.now()
             );
+            cv.setLocation(cvDTO.getLocation());
             boolean inserted = cvDAO.insert(cv);
             if (inserted) {
                 cvDTO.setCvId(cvId);
+                return cvDAO.replaceEducations(cvId, cvDTO.getEducations());
             }
             return inserted;
         } else {
@@ -96,10 +102,15 @@ public class CVService implements ICVService {
             existingCV.setObjective(cvDTO.getObjective());
             existingCV.setSkills(cvDTO.getSkills());
             existingCV.setDesiredPosition(cvDTO.getDesiredPosition());
+            existingCV.setLocation(cvDTO.getLocation());
             existingCV.setDesiredSalary(cvDTO.getDesiredSalary());
             existingCV.setLastUpdated(LocalDateTime.now());
             cvDTO.setCvId(existingCV.getCvId());
-            return cvDAO.update(existingCV);
+            boolean updated = cvDAO.update(existingCV);
+            if (updated) {
+                return cvDAO.replaceEducations(existingCV.getCvId(), cvDTO.getEducations());
+            }
+            return false;
         }
     }
 
@@ -114,9 +125,11 @@ public class CVService implements ICVService {
         dto.setObjective(cv.getObjective());
         dto.setSkills(cv.getSkills());
         dto.setDesiredPosition(cv.getDesiredPosition());
+        dto.setLocation(cv.getLocation());
         dto.setDesiredSalary(cv.getDesiredSalary());
         dto.setLastUpdated(cv.getLastUpdated());
-        dto.setEducations(null); // TODO: Lay educations tu EducationDAO neu can
+        List<Education> educations = cvDAO.findEducationsByCvId(cv.getCvId());
+        dto.setEducations(educations != null ? educations : new ArrayList<>());
         return dto;
     }
 }

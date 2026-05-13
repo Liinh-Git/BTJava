@@ -91,7 +91,7 @@ public class UserManagementPanel extends JPanel {
         filterPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // thanh tim kiem
-        JTextField txtSearch = new JTextField("Filter by name or email...");
+        JTextField txtSearch = new JTextField("Lọc theo tên hoặc email...");
         txtSearch.setPreferredSize(new Dimension(350, 42));
         txtSearch.setForeground(Color.GRAY);
         txtSearch.setBorder(BorderFactory.createCompoundBorder(

@@ -25,7 +25,6 @@ public class AppliedJobsPanel extends JPanel {
     private JPanel statsPanel;
     private JPanel tableContainer;
     private JLabel lblCount;
-    private ApplicationStatus currentFilter = null; // null = tat ca
     private List<ApplicationDTO> currentApps = null; // cache danh sach hien tai
 
     public AppliedJobsPanel() {
@@ -39,7 +38,7 @@ public class AppliedJobsPanel extends JPanel {
         mainContent.setBackground(new Color(248, 249, 250));
         mainContent.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        // 1. tieu de trang va cac nut thao tac (Filter, Export)
+        // 1. tieu de trang va cac nut thao tac
         mainContent.add(createPageHeader());
         mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
 
@@ -60,9 +59,6 @@ public class AppliedJobsPanel extends JPanel {
         loadData();
         mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
 
-        // 4. banner Pro Tip
-        mainContent.add(createProTipBanner());
-
         // boc vao scroll pane
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
@@ -81,55 +77,29 @@ public class AppliedJobsPanel extends JPanel {
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBackground(new Color(248, 249, 250));
 
-        JLabel lblTitle = new JLabel("Applied Jobs");
+        JLabel lblTitle = new JLabel("Việc làm đã ứng tuyển");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
 
-        JLabel lblSub = new JLabel("Track the status of your current job applications in real-time.");
+        JLabel lblSub = new JLabel("Theo dõi trạng thái các đơn ứng tuyển của bạn.");
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblSub.setForeground(Color.GRAY);
 
         leftPanel.add(lblTitle);
         leftPanel.add(lblSub);
 
-        // ben phai: Filter va Export
+        // ben phai: Export
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightPanel.setBackground(new Color(248, 249, 250));
 
-        JButton btnFilter = createOutlineButton("🔍 Lọc", "");
         JButton btnExport = createOutlineButton("↓ Xuất CSV", "");
 
-        btnFilter.addActionListener(e -> openFilterDialog());
         btnExport.addActionListener(e -> exportToCSV());
 
-        rightPanel.add(btnFilter);
         rightPanel.add(btnExport);
 
         panel.add(leftPanel, BorderLayout.WEST);
         panel.add(rightPanel, BorderLayout.EAST);
         return panel;
-    }
-
-    // Mo hop thoai chon trang thai de loc
-    private void openFilterDialog() {
-        String[] options = {"Tất cả", "PENDING", "APPROVED", "REJECTED"};
-        String choice = (String) JOptionPane.showInputDialog(
-            this,
-            "Chọn trạng thái đơn ứng tuyển:",
-            "Lọc đơn ứng tuyển",
-            JOptionPane.PLAIN_MESSAGE,
-            null,
-            options,
-            options[0]
-        );
-        if (choice == null) return;
-
-        switch (choice) {
-            case "PENDING":  currentFilter = ApplicationStatus.PENDING;  break;
-            case "APPROVED": currentFilter = ApplicationStatus.APPROVED; break;
-            case "REJECTED": currentFilter = ApplicationStatus.REJECTED; break;
-            default:         currentFilter = null; break;
-        }
-        loadData();
     }
 
     // Xuat danh sach ra file CSV
@@ -162,7 +132,7 @@ public class AppliedJobsPanel extends JPanel {
                 String title = csvEscape(app.getJobTitle());
                 String company = csvEscape(app.getCompanyName());
                 String date = app.getAppliedDate() != null ? app.getAppliedDate().format(fmt) : "N/A";
-                String status = app.getStatus() != null ? app.getStatus().name() : "PENDING";
+                String status = toStatusLabel(app.getStatus());
                 fw.write(idx++ + "," + title + "," + company + "," + date + "," + status + "\n");
             }
 
@@ -192,15 +162,22 @@ public class AppliedJobsPanel extends JPanel {
         if (candidateId != null) {
             int total = applicationService.getTotalApplyCountByUser(candidateId);
             int approved = applicationService.getApprovedApplicationByUser(candidateId);
+            List<ApplicationDTO> apps = applicationService.getListOfApplicationByUser(candidateId);
+            int pending = 0;
+            for (ApplicationDTO app : apps) {
+                if (app.getStatus() == ApplicationStatus.PENDING) {
+                    pending++;
+                }
+            }
             double rate = total > 0 ? (approved * 100.0 / total) : 0;
             
-            statsPanel.add(createStatCard("TOTAL APPLICATIONS", String.valueOf(total), null));
-            statsPanel.add(createStatCard("ACTIVE APPLICATIONS", String.valueOf(total - approved), "Coming up"));
-            statsPanel.add(createStatCard("SUCCESS RATE", String.format("%.1f%%", rate), null));
+            statsPanel.add(createStatCard("TỔNG ĐƠN", String.valueOf(total), null));
+            statsPanel.add(createStatCard("ĐƠN CHỜ DUYỆT", String.valueOf(pending), null));
+            statsPanel.add(createStatCard("TỈ LỆ ĐƯỢC DUYỆT", String.format("%.1f%%", rate), null));
         } else {
-            statsPanel.add(createStatCard("TOTAL APPLICATIONS", "0", null));
-            statsPanel.add(createStatCard("ACTIVE APPLICATIONS", "0", "Coming up"));
-            statsPanel.add(createStatCard("SUCCESS RATE", "0%", null));
+            statsPanel.add(createStatCard("TỔNG ĐƠN", "0", null));
+            statsPanel.add(createStatCard("ĐƠN CHỜ DUYỆT", "0", null));
+            statsPanel.add(createStatCard("TỈ LỆ ĐƯỢC DUYỆT", "0%", null));
         }
         statsPanel.revalidate();
         statsPanel.repaint();
@@ -245,11 +222,10 @@ public class AppliedJobsPanel extends JPanel {
         updateStats(candidateId);
         
         tableContainer.removeAll();
-        tableContainer.add(createRow("JOB TITLE", "COMPANY", "DATE APPLIED", "STATUS", "ACTIONS", true, null));
+        tableContainer.add(createRow("TIN TUYỂN DỤNG", "CÔNG TY", "NGÀY ỨNG TUYỂN", "TRẠNG THÁI", "THAO TÁC", true, null));
 
-        // Loc theo trang thai neu co filter
         if (candidateId != null) {
-            currentApps = applicationService.filterApplicationsByStatusForCandidate(candidateId, currentFilter);
+            currentApps = applicationService.getListOfApplicationByUser(candidateId);
         } else {
             currentApps = null;
         }
@@ -260,7 +236,7 @@ public class AppliedJobsPanel extends JPanel {
                 String title = app.getJobTitle();
                 String company = app.getCompanyName(); 
                 String dateStr = app.getAppliedDate() != null ? app.getAppliedDate().format(formatter) : "N/A";
-                String statusStr = app.getStatus() != null ? app.getStatus().name() : "PENDING";
+                String statusStr = toStatusLabel(app.getStatus());
                 
                 tableContainer.add(createRow(title, company, dateStr, statusStr, "...", false, app));
             }
@@ -275,8 +251,7 @@ public class AppliedJobsPanel extends JPanel {
             lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             lblCount.setForeground(Color.GRAY);
         }
-        String filterLabel = currentFilter != null ? " (Lọc: " + currentFilter.name() + ")" : "";
-        lblCount.setText("Hiển thị " + (currentApps != null ? currentApps.size() : 0) + " đơn ứng tuyển" + filterLabel);
+        lblCount.setText("Hiển thị " + (currentApps != null ? currentApps.size() : 0) + " đơn ứng tuyển");
         footer.add(lblCount, BorderLayout.WEST);
 
         JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
@@ -344,7 +319,7 @@ public class AppliedJobsPanel extends JPanel {
             l5.setForeground(Color.GRAY);
             p5.add(l5);
         } else {
-            JButton btnCancel = new JButton("Cancel");
+            JButton btnCancel = new JButton("Hủy");
             btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             btnCancel.setBackground(Color.WHITE);
             btnCancel.setForeground(Color.RED);
@@ -375,19 +350,16 @@ public class AppliedJobsPanel extends JPanel {
         badge.setOpaque(true);
 
         switch (status) {
-            case "REVIEWING":
+            case "Đang duyệt":
+            case "Chờ duyệt":
                 badge.setBackground(new Color(230, 240, 255));
                 badge.setForeground(new Color(13, 110, 253));
                 break;
-            case "REJECTED":
+            case "Bị từ chối":
                 badge.setBackground(new Color(255, 243, 230));
                 badge.setForeground(new Color(253, 126, 20));
                 break;
-            case "PENDING":
-                badge.setBackground(new Color(240, 240, 240));
-                badge.setForeground(Color.GRAY);
-                break;
-            case "HIRED":
+            case "Đã duyệt":
                 badge.setBackground(new Color(230, 250, 240));
                 badge.setForeground(new Color(40, 167, 69));
                 break;
@@ -397,24 +369,10 @@ public class AppliedJobsPanel extends JPanel {
         return badge;
     }
 
-    private JPanel createProTipBanner() {
-        JPanel banner = new JPanel(new BorderLayout(15, 0));
-        banner.setBackground(new Color(240, 245, 255));
-        banner.setBorder(new EmptyBorder(15, 25, 15, 25));
-        banner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-
-        JLabel icon = new JLabel("L"); // gia lap icon bong den
-        icon.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        icon.setForeground(new Color(0, 100, 250));
-        banner.add(icon, BorderLayout.WEST);
-
-        String text = "<html><b>Pro Tip: Keep your profile updated</b><br/>"
-                + "Companies are 3x more likely to view candidates who have updated their CV in the last 30 days.</html>";
-        JLabel lblText = new JLabel(text);
-        lblText.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        banner.add(lblText, BorderLayout.CENTER);
-
-        return banner;
+    private String toStatusLabel(ApplicationStatus status) {
+        if (status == ApplicationStatus.APPROVED) return "Đã duyệt";
+        if (status == ApplicationStatus.REJECTED) return "Bị từ chối";
+        return "Đang duyệt";
     }
 
     private JButton createOutlineButton(String text, String icon) {
@@ -446,7 +404,7 @@ public class AppliedJobsPanel extends JPanel {
     // ham main de kiem tra giao dien
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Applied Jobs Dashboard");
+            JFrame frame = new JFrame("Ứng viên - Việc làm đã ứng tuyển");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1300, 850);
             frame.setLayout(new BorderLayout());

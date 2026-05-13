@@ -1,14 +1,15 @@
 package org.jobportal.view.candidate;
 
+import org.jobportal.bll.impl.CategoryService;
+import org.jobportal.bll.impl.RecruitmentService;
+import org.jobportal.bll.interfaces.IRecruitmentService;
+import org.jobportal.dto.RecruitmentDTO;
+import org.jobportal.enums.JobType;
+import org.jobportal.enums.Role;
+import org.jobportal.model.Category;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.JobCardPanel;
 import org.jobportal.view.common.SidebarPanel;
-
-import org.jobportal.bll.impl.CategoryService;
-import org.jobportal.bll.impl.RecruitmentService;
-import org.jobportal.model.Category;
-import org.jobportal.dto.RecruitmentDTO;
-import org.jobportal.bll.interfaces.IRecruitmentService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -19,17 +20,18 @@ import java.util.List;
 
 public class JobSearchPanel extends JPanel {
 
+    private static final String SEARCH_PLACEHOLDER = "Tìm kiếm việc làm, công ty...";
+
     private final IRecruitmentService recruitmentService = new RecruitmentService();
     private final CategoryService categoryService = new CategoryService();
     private List<Category> categoryList = new ArrayList<>();
-    private java.util.Map<String, String> categoryMap = new java.util.HashMap<>();
-    
+
     private JTextField txtSearch;
     private JComboBox<String> cbCategory;
     private JPanel jobsGrid;
     private JPanel paginationPanel;
     private int currentPage = 1;
-    private int pageSize = 10;
+    private final int pageSize = 10;
 
     public JobSearchPanel() {
         setBackground(new Color(248, 249, 250));
@@ -40,49 +42,37 @@ public class JobSearchPanel extends JPanel {
         mainContent.setBackground(new Color(248, 249, 250));
         mainContent.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        // 1. phan tim kiem
         mainContent.add(createSearchSection());
         mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
-
-        // 2. tieu de
-        JPanel titlePanel = new JPanel(new BorderLayout());
-        titlePanel.setBackground(new Color(248, 249, 250));
-        JLabel lblTitle = new JLabel("Recommended Jobs");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titlePanel.add(lblTitle, BorderLayout.WEST);
-
-        JPanel viewTogglePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        viewTogglePanel.setBackground(new Color(248, 249, 250));
-        viewTogglePanel.add(new JButton("::"));
-        viewTogglePanel.add(new JButton("="));
-        titlePanel.add(viewTogglePanel, BorderLayout.EAST);
-
-        mainContent.add(titlePanel);
+        mainContent.add(createTitlePanel());
         mainContent.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // 3. danh sach cong viec
         jobsGrid = new JPanel(new GridLayout(0, 2, 20, 20));
         jobsGrid.setBackground(new Color(248, 249, 250));
-
         mainContent.add(jobsGrid);
-        
+
         loadCategories();
         performSearch();
-        mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
 
-        // 4. phan trang
-        // 4. phan trang
+        mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
         paginationPanel = createPaginationSection();
         mainContent.add(paginationPanel);
 
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    // ham tao khu vuc tim kiem
+    private JPanel createTitlePanel() {
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setBackground(new Color(248, 249, 250));
+        JLabel lblTitle = new JLabel("Tin tuyển dụng phù hợp");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titlePanel.add(lblTitle, BorderLayout.WEST);
+        return titlePanel;
+    }
+
     private JPanel createSearchSection() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
@@ -96,24 +86,25 @@ public class JobSearchPanel extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.7;
-        panel.add(createLabel("What job are you looking for?"), gbc);
+        panel.add(createLabel("Bạn đang tìm công việc gì?"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 0.2;
-        panel.add(createLabel("Category"), gbc);
+        panel.add(createLabel("Danh mục"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.7;
-        txtSearch = new JTextField("Tìm kiếm việc làm, công ty...");
+        txtSearch = new JTextField(SEARCH_PLACEHOLDER);
         txtSearch.setForeground(Color.GRAY);
         txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtSearch.getText().equals("Tìm kiếm việc làm, công ty...")) {
+                if (txtSearch.getText().equals(SEARCH_PLACEHOLDER)) {
                     txtSearch.setText("");
                     txtSearch.setForeground(Color.BLACK);
                 }
             }
+
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (txtSearch.getText().isEmpty()) {
-                    txtSearch.setText("Tìm kiếm việc làm, công ty...");
+                    txtSearch.setText(SEARCH_PLACEHOLDER);
                     txtSearch.setForeground(Color.GRAY);
                 }
             }
@@ -122,13 +113,13 @@ public class JobSearchPanel extends JPanel {
         panel.add(txtSearch, gbc);
 
         gbc.gridx = 1; gbc.weightx = 0.2;
-        cbCategory = new JComboBox<>(new String[]{"All Categories"});
+        cbCategory = new JComboBox<>(new String[]{"Tất cả danh mục"});
         cbCategory.setPreferredSize(new Dimension(0, 35));
         cbCategory.setBackground(Color.WHITE);
         panel.add(cbCategory, gbc);
 
         gbc.gridx = 2; gbc.weightx = 0.1;
-        JButton btnSearch = new JButton("Search");
+        JButton btnSearch = new JButton("Tìm kiếm");
         btnSearch.setBackground(new Color(13, 110, 253));
         btnSearch.setForeground(Color.WHITE);
         btnSearch.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -138,70 +129,83 @@ public class JobSearchPanel extends JPanel {
 
         return panel;
     }
-    
+
     private void loadCategories() {
         List<Category> categories = categoryService.getAllCategories();
+        categoryList = categories != null ? categories : new ArrayList<>();
         cbCategory.removeAllItems();
-        cbCategory.addItem("All Categories");
-        if (categories != null) {
-            for (Category cat : categories) {
-                categoryMap.put(cat.getCategoryName(), cat.getCategoryId());
-                cbCategory.addItem(cat.getCategoryName());
-            }
+        cbCategory.addItem("Tất cả danh mục");
+        for (Category cat : categoryList) {
+            cbCategory.addItem(cat.getCategoryName());
         }
     }
-    
+
     private void performSearch() {
         performSearch(1);
     }
-    
+
     private void performSearch(int page) {
-        this.currentPage = page;
+        currentPage = page;
         String keyword = txtSearch != null ? txtSearch.getText().trim() : "";
-        if (keyword.equals("Tìm kiếm việc làm, công ty...")) keyword = "";
+        if (keyword.equals(SEARCH_PLACEHOLDER)) keyword = "";
+
         int catIdx = cbCategory != null ? cbCategory.getSelectedIndex() : 0;
         String catId = null;
-        if (catIdx > 0 && categoryList != null && catIdx - 1 < categoryList.size()) {
+        if (catIdx > 0 && catIdx - 1 < categoryList.size()) {
             catId = categoryList.get(catIdx - 1).getCategoryId();
         }
-        
+
         List<RecruitmentDTO> jobs = recruitmentService.searchRecruitments(keyword, catId, currentPage, pageSize);
         jobsGrid.removeAll();
-        if (jobs != null) {
+        if (jobs != null && !jobs.isEmpty()) {
             for (RecruitmentDTO job : jobs) {
-                String title = job.getTitle();
-                String company = job.getCompanyName() != null ? job.getCompanyName() : "Unknown Company";
-                String salary = job.getSalary() != null ? "$" + job.getSalary().intValue() : "Negotiable";
-                String location = job.getLocation() != null ? job.getLocation() : "Unknown Location";
-                String desc = job.getDescription() != null ? job.getDescription() : "";
-                if (desc.length() > 100) desc = desc.substring(0, 100) + "...";
-                String[] tags = {job.getJobType() != null ? job.getJobType().name() : "FULL_TIME"};
-                
-                JobCardPanel card = new JobCardPanel(title, company, salary, location, desc, tags);
-                
-                JButton btnApply = new JButton("Details & Apply");
-                btnApply.setBackground(new Color(13, 110, 253));
-                btnApply.setForeground(Color.WHITE);
-                btnApply.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                btnApply.setFocusPainted(false);
-                btnApply.addActionListener(e -> {
-                    Window ancestor = SwingUtilities.getWindowAncestor(this);
-                    if (ancestor instanceof Frame) {
-                        JDialog dialog = new JDialog((Frame) ancestor, "Chi tiết việc làm", true);
-                        dialog.setSize(1000, 800);
-                        dialog.setLocationRelativeTo(ancestor);
-                        dialog.add(new JobDetailPanel(job.getRecruitmentId(), dialog));
-                        dialog.setVisible(true);
-                    }
-                });
-                card.setActionComponent(btnApply);
-                
-                jobsGrid.add(card);
+                jobsGrid.add(createJobCard(job));
             }
+        } else {
+            jobsGrid.add(createEmptyPanel());
         }
         jobsGrid.revalidate();
         jobsGrid.repaint();
         updatePaginationUI();
+    }
+
+    private JPanel createJobCard(RecruitmentDTO job) {
+        String company = job.getCompanyName() != null ? job.getCompanyName() : "Chưa rõ công ty";
+        String salary = job.getSalary() != null ? String.format("%,.0f VND", job.getSalary()) : "Thỏa thuận";
+        String location = job.getLocation() != null ? job.getLocation() : "Chưa cập nhật địa điểm";
+        String desc = job.getDescription() != null ? job.getDescription() : "";
+        if (desc.length() > 100) desc = desc.substring(0, 100) + "...";
+
+        JobCardPanel card = new JobCardPanel(
+                job.getTitle(), company, salary, location, desc, new String[]{toJobTypeLabel(job.getJobType())});
+
+        JButton btnDetail = new JButton("Chi tiết");
+        btnDetail.setBackground(new Color(13, 110, 253));
+        btnDetail.setForeground(Color.WHITE);
+        btnDetail.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnDetail.setFocusPainted(false);
+        btnDetail.addActionListener(e -> openJobDetail(job));
+        card.setActionComponent(btnDetail);
+        return card;
+    }
+
+    private void openJobDetail(RecruitmentDTO job) {
+        Window ancestor = SwingUtilities.getWindowAncestor(this);
+        if (ancestor instanceof Frame) {
+            JDialog dialog = new JDialog((Frame) ancestor, "Chi tiết việc làm", true);
+            dialog.setSize(1000, 800);
+            dialog.setLocationRelativeTo(ancestor);
+            dialog.add(new JobDetailPanel(job.getRecruitmentId(), dialog));
+            dialog.setVisible(true);
+        }
+    }
+
+    private JPanel createEmptyPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+        panel.add(new JLabel("Không có tin tuyển dụng phù hợp."));
+        return panel;
     }
 
     private JPanel createPaginationSection() {
@@ -209,41 +213,36 @@ public class JobSearchPanel extends JPanel {
         panel.setBackground(new Color(248, 249, 250));
         return panel;
     }
-    
+
     private void updatePaginationUI() {
         if (paginationPanel == null) return;
         paginationPanel.removeAll();
-        
-        JButton btnPrev = new JButton("<");
-        btnPrev.setBackground(Color.WHITE);
-        btnPrev.setFocusPainted(false);
-        btnPrev.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-        btnPrev.addActionListener(e -> {
-            if (currentPage > 1) performSearch(currentPage - 1);
-        });
+
+        JButton btnPrev = createPageButton("<");
+        btnPrev.setEnabled(currentPage > 1);
+        btnPrev.addActionListener(e -> performSearch(currentPage - 1));
         paginationPanel.add(btnPrev);
 
-        JButton btnPage = new JButton(String.valueOf(currentPage));
-        btnPage.setBackground(Color.WHITE);
-        btnPage.setFocusPainted(false);
+        JButton btnPage = createPageButton(String.valueOf(currentPage));
         btnPage.setBorder(new LineBorder(new Color(13, 110, 253), 2));
         btnPage.setForeground(new Color(13, 110, 253));
         paginationPanel.add(btnPage);
 
-        JButton btnNext = new JButton(">");
-        btnNext.setBackground(Color.WHITE);
-        btnNext.setFocusPainted(false);
-        btnNext.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-        btnNext.addActionListener(e -> {
-            // Neu jobsGrid dang co bang pageSize thi co the con trang tiep theo
-            if (jobsGrid.getComponentCount() == pageSize) {
-                performSearch(currentPage + 1);
-            }
-        });
+        JButton btnNext = createPageButton(">");
+        btnNext.setEnabled(jobsGrid.getComponentCount() == pageSize);
+        btnNext.addActionListener(e -> performSearch(currentPage + 1));
         paginationPanel.add(btnNext);
-        
+
         paginationPanel.revalidate();
         paginationPanel.repaint();
+    }
+
+    private JButton createPageButton(String text) {
+        JButton button = new JButton(text);
+        button.setBackground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+        return button;
     }
 
     private JLabel createLabel(String text) {
@@ -252,34 +251,23 @@ public class JobSearchPanel extends JPanel {
         return lbl;
     }
 
-    private JLabel createTag(String text) {
-        JLabel lbl = new JLabel(" " + text + " ");
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lbl.setOpaque(true);
-        lbl.setBackground(new Color(235, 238, 242));
-        lbl.setForeground(Color.DARK_GRAY);
-        return lbl;
+    private String toJobTypeLabel(JobType jobType) {
+        if (jobType == JobType.PARTTIME) return "Part-time";
+        if (jobType == JobType.INTERNSHIP) return "Internship";
+        return "Full-time";
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Job Dashboard");
+            JFrame frame = new JFrame("Ứng viên - Tìm việc");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1200, 800);
             frame.setLayout(new BorderLayout());
 
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
+            frame.add(new HeaderPanel(), BorderLayout.NORTH);
+            frame.add(new SidebarPanel(Role.CANDIDATE), BorderLayout.WEST);
+            frame.add(new JobSearchPanel(), BorderLayout.CENTER);
 
-            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.CANDIDATE);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            JPanel rightPanel = new JPanel(new BorderLayout());
-
-            JobSearchPanel mainDashboard = new JobSearchPanel();
-            rightPanel.add(mainDashboard, BorderLayout.CENTER);
-
-            frame.add(rightPanel, BorderLayout.CENTER);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });

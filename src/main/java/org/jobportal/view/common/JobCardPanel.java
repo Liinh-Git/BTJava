@@ -9,6 +9,8 @@ public class JobCardPanel extends JPanel {
 
     private static final int ACTION_BUTTON_WIDTH = 130;
     private static final int ACTION_BUTTON_HEIGHT = 38;
+    private static final int CARD_HEIGHT = 230;
+    private static final int DESCRIPTION_HEIGHT = 54;
 
     private JPanel bottomPanel;
     private Component actionComponent;
@@ -17,6 +19,9 @@ public class JobCardPanel extends JPanel {
         // thiet lap layout chinh cho the
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(Color.WHITE);
+        setPreferredSize(new Dimension(0, CARD_HEIGHT));
+        setMinimumSize(new Dimension(0, CARD_HEIGHT));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, CARD_HEIGHT));
         setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(220, 220, 220), 1),
                 new EmptyBorder(20, 20, 20, 20)
@@ -69,6 +74,10 @@ public class JobCardPanel extends JPanel {
         txtDesc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtDesc.setForeground(new Color(80, 80, 80));
         txtDesc.setBackground(Color.WHITE);
+        txtDesc.setRows(3);
+        txtDesc.setPreferredSize(new Dimension(0, DESCRIPTION_HEIGHT));
+        txtDesc.setMinimumSize(new Dimension(0, DESCRIPTION_HEIGHT));
+        txtDesc.setMaximumSize(new Dimension(Integer.MAX_VALUE, DESCRIPTION_HEIGHT));
 
         add(txtDesc);
         add(Box.createRigidArea(new Dimension(0, 20)));
@@ -84,7 +93,7 @@ public class JobCardPanel extends JPanel {
         }
         bottomPanel.add(tagPanel, BorderLayout.CENTER);
 
-        JButton btnApply = new JButton("Details & Apply");
+        JButton btnApply = new JButton("Chi tiết");
         btnApply.setBackground(new Color(13, 110, 253));
         btnApply.setForeground(Color.WHITE);
         btnApply.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -93,6 +102,7 @@ public class JobCardPanel extends JPanel {
         
         actionComponent = btnApply;
         bottomPanel.add(actionComponent, BorderLayout.EAST);
+        bottomPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, ACTION_BUTTON_HEIGHT));
 
         add(bottomPanel);
     }
@@ -105,6 +115,9 @@ public class JobCardPanel extends JPanel {
         if (actionComponent instanceof AbstractButton) {
             applyActionButtonSizing((AbstractButton) actionComponent);
         }
+        Dimension actionSize = actionComponent.getPreferredSize();
+        int bottomHeight = Math.max(ACTION_BUTTON_HEIGHT, actionSize.height);
+        bottomPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, bottomHeight));
         bottomPanel.add(actionComponent, BorderLayout.EAST);
         bottomPanel.revalidate();
         bottomPanel.repaint();
