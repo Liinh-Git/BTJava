@@ -84,6 +84,16 @@ public class RecruitmentService implements IRecruitmentService {
             recruitmentId = generateRecruitmentId();
         }
 
+        String resolvedLocation = null;
+        if (location != null && !location.isBlank() && !"Địa chỉ mặc định công ty".equalsIgnoreCase(location.trim())) {
+            resolvedLocation = location.trim();
+        } else {
+            Employer employer = employerDAO.findById(employerId);
+            if (employer != null && employer.getCompanyAddress() != null && !employer.getCompanyAddress().isBlank()) {
+                resolvedLocation = employer.getCompanyAddress().trim();
+            }
+        }
+
         Recruitment r = new Recruitment(
                 recruitmentId, employerId, categoryId,
                 title.trim(), description,
@@ -91,7 +101,7 @@ public class RecruitmentService implements IRecruitmentService {
                 RecruitmentStatus.OPEN,
                 AdminStatus.PENDING,
                 salary,
-                location != null ? location.trim() : null,
+                resolvedLocation,
                 null,
                 LocalDateTime.now(),
                 dueDate.atTime(23, 59, 59)
@@ -320,6 +330,12 @@ public class RecruitmentService implements IRecruitmentService {
         Category category = categoryDAO.findById(r.getCategoryId());
         if (category != null) categoryName = category.getCategoryName();
 
+        int applicationCount = 0;
+        List<Application> apps = applicationDAO.findByRecruitmentId(r.getRecruitmentId());
+        if (apps != null) {
+            applicationCount = apps.size();
+        }
+
         return new RecruitmentDTO(
                 r.getRecruitmentId(), r.getEmployerId(), companyName,
                 r.getCategoryId(), categoryName,
@@ -327,7 +343,7 @@ public class RecruitmentService implements IRecruitmentService {
                 r.getJobType(), r.getStatus(), r.getAdminStatus(),
                 r.getSalary(), r.getLocation(), r.getExperienceRequired(),
                 r.getCreatedDate(), r.getDueDate(),
-                0
+                applicationCount
         );
     }
 

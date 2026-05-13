@@ -210,61 +210,58 @@ public class CategoryManagementPanel extends JPanel {
 
         // Cot 3: Thao tac
         gbc.gridx = 2; gbc.weightx = 0.2;
-        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 20));
+        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 20)); // Giam khoang cach
         p3.setOpaque(false);
         if (isHeader) {
             JLabel l3 = new JLabel("THAO TÁC");
             l3.setFont(font); l3.setForeground(textColor);
             p3.add(l3);
         } else {
-            JLabel btnEdit = new JLabel("✎");
-            btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-            btnEdit.setForeground(Color.GRAY);
+            JButton btnEdit = new JButton("Đổi tên");
+            btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            btnEdit.setBackground(new Color(13, 110, 253)); // Xanh nuoc bien
+            btnEdit.setForeground(Color.WHITE);
+            btnEdit.setFocusPainted(false);
+            btnEdit.setBorderPainted(false);
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            btnEdit.setToolTipText("Sửa tên");
-            btnEdit.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (category != null) {
-                        String newName = JOptionPane.showInputDialog(CategoryManagementPanel.this, "Nhập tên mới:", category.getCategoryName());
-                        if (newName != null && !newName.trim().isEmpty()) {
-                            boolean success = categoryService.updateCategory(category.getCategoryId(), newName.trim());
-                            if (success) {
-                                JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã cập nhật thành công!");
-                                loadData();
-                            } else {
-                                JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi cập nhật!", "Error", JOptionPane.ERROR_MESSAGE);
-                            }
+            btnEdit.addActionListener(e -> {
+                if (category != null) {
+                    String newName = JOptionPane.showInputDialog(CategoryManagementPanel.this, "Nhập tên mới:", category.getCategoryName());
+                    if (newName != null && !newName.trim().isEmpty()) {
+                        boolean success = categoryService.updateCategory(category.getCategoryId(), newName.trim());
+                        if (success) {
+                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã cập nhật thành công!");
+                            loadData();
+                        } else {
+                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi cập nhật!", "Error", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
             });
 
-            JLabel btnDelete = new JLabel("🗑");
-            btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-            btnDelete.setForeground(Color.GRAY);
+            JButton btnDelete = new JButton("Xóa");
+            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            btnDelete.setBackground(new Color(220, 53, 69)); // Do
+            btnDelete.setForeground(Color.WHITE);
+            btnDelete.setFocusPainted(false);
+            btnDelete.setBorderPainted(false);
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            btnDelete.setToolTipText("Xóa");
-            btnDelete.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (category != null) {
-                        int choice = JOptionPane.showConfirmDialog(CategoryManagementPanel.this, "Bạn có chắc muốn xóa danh mục này?", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                        if (choice == JOptionPane.YES_OPTION) {
-                            boolean success = categoryService.deleteCategory(category.getCategoryId());
-                            if (success) {
-                                JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã xóa danh mục!");
-                                loadData();
-                            } else {
-                                JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi xóa danh mục!", "Error", JOptionPane.ERROR_MESSAGE);
-                            }
+            btnDelete.addActionListener(e -> {
+                if (category != null) {
+                    int choice = JOptionPane.showConfirmDialog(CategoryManagementPanel.this, "Bạn có chắc muốn xóa danh mục này?", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (choice == JOptionPane.YES_OPTION) {
+                        boolean success = categoryService.deleteCategory(category.getCategoryId());
+                        if (success) {
+                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã xóa danh mục!");
+                            loadData();
+                        } else {
+                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi xóa danh mục!", "Error", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
             });
 
             p3.add(btnEdit);
-            p3.add(Box.createRigidArea(new Dimension(5, 0)));
             p3.add(btnDelete);
         }
         row.add(p3, gbc);

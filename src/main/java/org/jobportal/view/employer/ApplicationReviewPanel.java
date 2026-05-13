@@ -171,7 +171,11 @@ public class ApplicationReviewPanel extends JPanel {
                 for (RecruitmentDTO r : recruitments) {
                     List<ApplicationDTO> apps = applicationService.getApplicationsByRecruitmentId(r.getRecruitmentId());
                     if (apps != null) {
-                        allApps.addAll(apps);
+                        for (ApplicationDTO a : apps) {
+                            if (a.getStatus() == ApplicationStatus.PENDING) {
+                                allApps.add(a);
+                            }
+                        }
                     }
                 }
             }
@@ -220,27 +224,64 @@ public class ApplicationReviewPanel extends JPanel {
         
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / pageSize));
 
-        JButton btnPrev = createPageBtn("<", true);
-        btnPrev.addActionListener(e -> {
-            if (currentPage > 1) {
+        JButton btnPrev = createPageBtn("<", false);
+        if (currentPage > 1) {
+            btnPrev.addActionListener(e -> {
                 currentPage--;
                 loadData();
-            }
-        });
+            });
+        } else {
+            btnPrev.setEnabled(false);
+        }
         paginationPanel.add(btnPrev);
 
-        JButton btnPage = createPageBtn(String.valueOf(currentPage), true);
-        btnPage.setBorder(new LineBorder(new Color(13, 110, 253), 2));
-        btnPage.setForeground(new Color(13, 110, 253));
-        paginationPanel.add(btnPage);
+        int startPage = Math.max(1, currentPage - 2);
+        int endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (startPage > 1) {
+            JButton btnFirst = createPageBtn("1", false);
+            btnFirst.addActionListener(e -> { currentPage = 1; loadData(); });
+            paginationPanel.add(btnFirst);
+            if (startPage > 2) {
+                JLabel dots = new JLabel("...");
+                dots.setBorder(new EmptyBorder(0, 5, 0, 5));
+                paginationPanel.add(dots);
+            }
+        }
+        
+        for (int i = startPage; i <= endPage; i++) {
+            final int pageToLoad = i;
+            boolean isCurrent = (i == currentPage);
+            JButton btnPage = createPageBtn(String.valueOf(i), isCurrent);
+            if (!isCurrent) {
+                btnPage.addActionListener(e -> {
+                    currentPage = pageToLoad;
+                    loadData();
+                });
+            }
+            paginationPanel.add(btnPage);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                JLabel dots = new JLabel("...");
+                dots.setBorder(new EmptyBorder(0, 5, 0, 5));
+                paginationPanel.add(dots);
+            }
+            JButton btnLast = createPageBtn(String.valueOf(totalPages), false);
+            btnLast.addActionListener(e -> { currentPage = totalPages; loadData(); });
+            paginationPanel.add(btnLast);
+        }
 
-        JButton btnNext = createPageBtn(">", true);
-        btnNext.addActionListener(e -> {
-            if (currentPage < totalPages) {
+        JButton btnNext = createPageBtn(">", false);
+        if (currentPage < totalPages) {
+            btnNext.addActionListener(e -> {
                 currentPage++;
                 loadData();
-            }
-        });
+            });
+        } else {
+            btnNext.setEnabled(false);
+        }
         paginationPanel.add(btnNext);
         
         paginationPanel.revalidate();
@@ -251,17 +292,20 @@ public class ApplicationReviewPanel extends JPanel {
         JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        row.setPreferredSize(new Dimension(0, isHeader ? 55 : 90));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, isHeader ? 55 : 90));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weighty = 1.0;
+        gbc.insets = new Insets(10, 10, 10, 10);
 
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.DARK_GRAY;
 
         // cot 1: Ung vien (Avatar + Name + Email)
-        gbc.gridx = 0; gbc.weightx = 0.35; gbc.insets = new Insets(10, 20, 10, 10);
+        gbc.gridx = 0; gbc.weightx = 0.34; gbc.insets = new Insets(10, 20, 10, 10);
         JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         p1.setOpaque(false);
         if (isHeader) {
@@ -286,77 +330,132 @@ public class ApplicationReviewPanel extends JPanel {
         row.add(p1, gbc);
 
         // cot 2: Ngay nop
-        gbc.gridx = 1; gbc.weightx = 0.15; gbc.insets = new Insets(10, 10, 10, 10);
-        JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, isHeader ? 0 : 15));
+        gbc.gridx = 1; gbc.weightx = 0.14; gbc.insets = new Insets(10, 10, 10, 10);
+        JPanel p2 = new JPanel(new GridBagLayout());
         p2.setOpaque(false);
         JLabel l2 = new JLabel(col2);
         l2.setFont(isHeader ? new Font("Segoe UI", Font.PLAIN, 11) : font);
         l2.setForeground(textColor);
-        p2.add(l2);
+        GridBagConstraints c2 = new GridBagConstraints();
+        c2.anchor = GridBagConstraints.CENTER;
+        c2.fill = GridBagConstraints.NONE;
+        p2.add(l2, c2);
         row.add(p2, gbc);
 
         // cot 3: Vi tri
-        gbc.gridx = 2; gbc.weightx = 0.2;
-        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, isHeader ? 0 : 15));
+        gbc.gridx = 2; gbc.weightx = 0.28;
+        JPanel p3 = new JPanel(new GridBagLayout());
         p3.setOpaque(false);
-        JLabel l3 = new JLabel(col3);
-        l3.setFont(isHeader ? new Font("Segoe UI", Font.PLAIN, 11) : font);
-        l3.setForeground(textColor);
-        p3.add(l3);
+        if (isHeader) {
+            JLabel l3 = new JLabel(col3);
+            l3.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            l3.setForeground(textColor);
+            GridBagConstraints c3 = new GridBagConstraints();
+            c3.anchor = GridBagConstraints.CENTER;
+            c3.fill = GridBagConstraints.NONE;
+            p3.add(l3, c3);
+        } else {
+            JTextArea txtPos = new JTextArea(col3 != null ? col3 : "");
+            txtPos.setEditable(false);
+            txtPos.setOpaque(false);
+            txtPos.setFont(font);
+            txtPos.setForeground(textColor);
+            txtPos.setLineWrap(true);
+            txtPos.setWrapStyleWord(true);
+            txtPos.setBorder(null);
+            GridBagConstraints c3 = new GridBagConstraints();
+            c3.anchor = GridBagConstraints.CENTER;
+            c3.fill = GridBagConstraints.BOTH;
+            c3.weightx = 1.0;
+            c3.weighty = 1.0;
+            p3.add(txtPos, c3);
+        }
         row.add(p3, gbc);
 
         // cot 4: Trang thai
-        gbc.gridx = 3; gbc.weightx = 0.15;
-        JPanel p4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, isHeader ? 0 : 15));
+        gbc.gridx = 3; gbc.weightx = 0.12;
+        JPanel p4 = new JPanel(new GridBagLayout());
         p4.setOpaque(false);
         if (isHeader) {
             JLabel l4 = new JLabel(status);
             l4.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             l4.setForeground(textColor);
-            p4.add(l4);
+            GridBagConstraints c4 = new GridBagConstraints();
+            c4.anchor = GridBagConstraints.CENTER;
+            c4.fill = GridBagConstraints.NONE;
+            p4.add(l4, c4);
         } else {
-            p4.add(createStatusBadge(status));
+            GridBagConstraints c4 = new GridBagConstraints();
+            c4.anchor = GridBagConstraints.CENTER;
+            c4.fill = GridBagConstraints.NONE;
+            p4.add(createStatusBadge(status), c4);
         }
         row.add(p4, gbc);
 
         // cot 5: Thao tac
-        gbc.gridx = 4; gbc.weightx = 0.15;
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, isHeader ? 0 : 10));
+        gbc.gridx = 4; gbc.weightx = 0.12;
+        JPanel p5 = new JPanel(new GridBagLayout());
         p5.setOpaque(false);
         if (isHeader) {
             JLabel l5 = new JLabel(action);
             l5.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             l5.setForeground(textColor);
-            p5.add(l5);
+            GridBagConstraints c5 = new GridBagConstraints();
+            c5.anchor = GridBagConstraints.CENTER;
+            c5.fill = GridBagConstraints.NONE;
+            p5.add(l5, c5);
         } else {
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+            actions.setOpaque(false);
             JButton btnCheck = createActionBtn("V", new Color(160, 50, 50));
             btnCheck.addActionListener(e -> {
-                if (app != null && SessionManager.getInstance().getCurrentUser() != null) {
-                    boolean success = applicationService.approveApplication(SessionManager.getInstance().getCurrentUser().getUserId(), app.getApplicationId());
+                UserDTO current = SessionManager.getInstance().getCurrentUser();
+                if (app != null && current != null) {
+                    boolean success = applicationService.approveApplication(current.getUserId(), app.getApplicationId());
                     if (success) {
                         JOptionPane.showMessageDialog(this, "Đã chấp nhận hồ sơ!");
                         loadData();
                     } else {
                         JOptionPane.showMessageDialog(this, "Không thể thao tác!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
+                } else if (current == null) {
+                    JOptionPane.showMessageDialog(this, "Bạn cần đăng nhập để thực hiện thao tác này.", "Chưa đăng nhập", JOptionPane.WARNING_MESSAGE);
                 }
             });
             JButton btnCross = createActionBtn("X", new Color(220, 53, 69));
             btnCross.addActionListener(e -> {
-                if (app != null && SessionManager.getInstance().getCurrentUser() != null) {
-                    boolean success = applicationService.rejectApplication(SessionManager.getInstance().getCurrentUser().getUserId(), app.getApplicationId());
+                UserDTO current = SessionManager.getInstance().getCurrentUser();
+                if (app != null && current != null) {
+                    boolean success = applicationService.rejectApplication(current.getUserId(), app.getApplicationId());
                     if (success) {
                         JOptionPane.showMessageDialog(this, "Đã từ chối hồ sơ!");
                         loadData();
                     } else {
                         JOptionPane.showMessageDialog(this, "Không thể thao tác!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
+                } else if (current == null) {
+                    JOptionPane.showMessageDialog(this, "Bạn cần đăng nhập để thực hiện thao tác này.", "Chưa đăng nhập", JOptionPane.WARNING_MESSAGE);
                 }
             });
 
-            p5.add(createActionBtn("O", new Color(13, 110, 253))); // eye
-            p5.add(btnCheck);  // check
-            p5.add(btnCross);  // cross
+            JButton btnView = createActionBtn("O", new Color(13, 110, 253));
+            btnView.addActionListener(e -> {
+                if (app != null) {
+                    UserDTO candidateInfo = applicationService.getCandidateInfo(app.getCandidateId());
+                    if (candidateInfo != null) {
+                        JOptionPane.showMessageDialog(this, "Thông tin ứng viên:\nHọ tên: " + candidateInfo.getFullName() + "\nEmail: " + candidateInfo.getEmail() + "\nĐiện thoại: " + candidateInfo.getPhoneNumber());
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin ứng viên!");
+                    }
+                }
+            });
+            actions.add(btnView); // eye
+            actions.add(btnCheck);  // check
+            actions.add(btnCross);  // cross
+            GridBagConstraints c5 = new GridBagConstraints();
+            c5.anchor = GridBagConstraints.CENTER;
+            c5.fill = GridBagConstraints.NONE;
+            p5.add(actions, c5);
         }
         row.add(p5, gbc);
 

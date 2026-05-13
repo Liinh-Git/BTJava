@@ -76,7 +76,7 @@ public class UserProfilePanel extends JPanel {
         headerPanel.setBackground(new Color(248, 249, 250));
         headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitle = new JLabel("Thong tin nguoi dung");
+        JLabel lblTitle = new JLabel("Thông tin người dùng");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(new Color(33, 37, 41));
 
@@ -103,14 +103,14 @@ public class UserProfilePanel extends JPanel {
                 new EmptyBorder(30, 30, 30, 30)
         ));
 
-        JLabel sectionTitle = new JLabel("Thong tin ca nhan");
+        JLabel sectionTitle = new JLabel("Thông tin cá nhân");
         sectionTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
         sectionTitle.setForeground(new Color(33, 37, 41));
         sectionTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(sectionTitle);
         card.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        JPanel usernamePanel = createInputGroup("USERNAME", false);
+        JPanel usernamePanel = createInputGroup("TÀI KHOẢN", false);
         txtUsername = (JTextField) usernamePanel.getComponent(2);
         txtUsername.setEditable(false);
         txtUsername.setBackground(new Color(245, 247, 250));
@@ -124,12 +124,12 @@ public class UserProfilePanel extends JPanel {
         card.add(emailPanel);
         card.add(Box.createRigidArea(new Dimension(0, 16)));
 
-        JPanel namePanel = createInputGroup("TEN HIEN THI", false);
+        JPanel namePanel = createInputGroup("TÊN HIỂN THỊ", false);
         txtFullName = (JTextField) namePanel.getComponent(2);
         card.add(namePanel);
         card.add(Box.createRigidArea(new Dimension(0, 16)));
 
-        JPanel phonePanel = createInputGroup("SO DIEN THOAI", false);
+        JPanel phonePanel = createInputGroup("SỐ ĐIỆN THOẠI", false);
         txtPhone = (JTextField) phonePanel.getComponent(2);
         card.add(phonePanel);
 
@@ -141,7 +141,7 @@ public class UserProfilePanel extends JPanel {
         actionPanel.setBackground(new Color(248, 249, 250));
         actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton btnCancel = new JButton("Huy");
+        JButton btnCancel = new JButton("Hủy");
         btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnCancel.setBackground(Color.WHITE);
         btnCancel.setForeground(new Color(33, 37, 41));
@@ -151,7 +151,7 @@ public class UserProfilePanel extends JPanel {
         btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCancel.addActionListener(e -> loadData());
 
-        JButton btnSave = new JButton("Luu thong tin");
+        JButton btnSave = new JButton("Lưu thông tin");
         btnSave.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnSave.setBackground(new Color(13, 110, 253));
         btnSave.setForeground(Color.WHITE);
@@ -165,9 +165,9 @@ public class UserProfilePanel extends JPanel {
                     txtPhone.getText().trim()
             );
             if (success) {
-                JOptionPane.showMessageDialog(this, "Cap nhat thong tin thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Khong the cap nhat thong tin!", "Loi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -186,24 +186,24 @@ public class UserProfilePanel extends JPanel {
                 new EmptyBorder(30, 30, 30, 30)
         ));
 
-        JLabel sectionTitle = new JLabel("Doi mat khau");
+        JLabel sectionTitle = new JLabel("Đổi mật khẩu");
         sectionTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
         sectionTitle.setForeground(new Color(33, 37, 41));
         sectionTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(sectionTitle);
         card.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        JPanel oldPassPanel = createInputGroup("MAT KHAU CU", true);
+        JPanel oldPassPanel = createInputGroup("MẬT KHẨU CŨ", true);
         txtOldPassword = (JPasswordField) oldPassPanel.getComponent(2);
         card.add(oldPassPanel);
         card.add(Box.createRigidArea(new Dimension(0, 16)));
 
-        JPanel newPassPanel = createInputGroup("MAT KHAU MOI", true);
+        JPanel newPassPanel = createInputGroup("MẬT KHẨU MỚI", true);
         txtNewPassword = (JPasswordField) newPassPanel.getComponent(2);
         card.add(newPassPanel);
         card.add(Box.createRigidArea(new Dimension(0, 16)));
 
-        JPanel confirmPanel = createInputGroup("XAC NHAN MAT KHAU", true);
+        JPanel confirmPanel = createInputGroup("XÁC NHẬN MẬT KHẨU", true);
         txtConfirmPassword = (JPasswordField) confirmPanel.getComponent(2);
         card.add(confirmPanel);
 
@@ -215,7 +215,7 @@ public class UserProfilePanel extends JPanel {
         actionPanel.setBackground(new Color(248, 249, 250));
         actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton btnChangePassword = new JButton("Doi mat khau");
+        JButton btnChangePassword = new JButton("Đổi mật khẩu");
         btnChangePassword.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnChangePassword.setBackground(new Color(13, 110, 253));
         btnChangePassword.setForeground(Color.WHITE);
@@ -235,18 +235,18 @@ public class UserProfilePanel extends JPanel {
         String confirmPass = new String(txtConfirmPassword.getPassword());
 
         if (oldPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui long nhap day du thong tin mat khau!", "Canh bao", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin mật khẩu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         boolean success = authService.changePassword(oldPass, newPass, confirmPass);
         if (success) {
-            JOptionPane.showMessageDialog(this, "Doi mat khau thanh cong!", "Thanh cong", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             txtOldPassword.setText("");
             txtNewPassword.setText("");
             txtConfirmPassword.setText("");
         } else {
-            JOptionPane.showMessageDialog(this, "Khong the doi mat khau!", "Loi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không thể đổi mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

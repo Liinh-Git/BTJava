@@ -152,8 +152,10 @@ public class JobDetailPanel extends JPanel {
         card.add(new JSeparator());
         card.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // doan van mo ta chung
-        String desc = recruitment != null ? recruitment.getDescription() : "No description available.";
+        String desc = (recruitment != null && recruitment.getDescription() != null && !recruitment.getDescription().isBlank())
+                ? recruitment.getDescription().trim()
+                : "Chưa có mô tả cho công việc này.";
+
         JTextArea txtDesc = new JTextArea(desc);
         txtDesc.setWrapStyleWord(true);
         txtDesc.setLineWrap(true);
@@ -161,44 +163,8 @@ public class JobDetailPanel extends JPanel {
         txtDesc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtDesc.setForeground(new Color(60, 60, 60));
         txtDesc.setBackground(Color.WHITE);
+        txtDesc.setBorder(null);
         card.add(txtDesc);
-        card.add(Box.createRigidArea(new Dimension(0, 25)));
-
-        // chia 2 cot cho responsibilities va requirements
-        JPanel twoColPanel = new JPanel(new GridLayout(1, 2, 30, 0));
-        twoColPanel.setBackground(Color.WHITE);
-
-        String respHtml = "<html><h3 style='font-family: Segoe UI;'>Responsibilities</h3>"
-                + "<ul style='font-family: Segoe UI; font-size: 10px; color: #444;'>"
-                + "<li>Design and maintain high-availability APIs and microservices.</li>"
-                + "<li>Collaborate with product managers to define technical roadmaps.</li>"
-                + "<li>Mentor junior engineers and conduct thorough code reviews.</li>"
-                + "<li>Optimize system performance and solve complex scalability bottlenecks.</li>"
-                + "<li>Participate in on-call rotations to ensure 99.9% service uptime.</li>"
-                + "</ul></html>";
-        twoColPanel.add(new JLabel(respHtml));
-
-        String reqHtml = "<html><h3 style='font-family: Segoe UI;'>Requirements</h3>"
-                + "<ul style='font-family: Segoe UI; font-size: 10px; color: #444;'>"
-                + "<li>BS/MS in Computer Science or equivalent practical experience.</li>"
-                + "<li>5+ years of professional experience with Node.js, Go, or Python.</li>"
-                + "<li>Strong experience with SQL (PostgreSQL) and NoSQL databases.</li>"
-                + "<li>Proficiency in cloud infrastructure (AWS/GCP) and Docker/Kubernetes.</li>"
-                + "<li>Experience with message brokers like RabbitMQ or Kafka.</li>"
-                + "</ul></html>";
-        twoColPanel.add(new JLabel(reqHtml));
-
-        card.add(twoColPanel);
-        card.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        // phuc loi
-        String benHtml = "<html><h3 style='font-family: Segoe UI;'>Benefits</h3>"
-                + "<ul style='font-family: Segoe UI; font-size: 10px; color: #444;'>"
-                + "<li>Unlimited PTO and flexible working hours.</li>"
-                + "<li>$2,000 annual professional development budget.</li>"
-                + "<li>Remote-first culture with optional co-working spaces.</li>"
-                + "</ul></html>";
-        card.add(new JLabel(benHtml));
 
         return card;
     }

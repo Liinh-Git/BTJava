@@ -26,6 +26,8 @@ public class RecruitmentListPanel extends JPanel {
     private JPanel paginationPanel;
     private int currentPage = 1;
     private int pageSize = 10;
+    private String currentKeyword = "";
+    private String currentStatusFilter = "Tất cả trạng thái";
 
     public RecruitmentListPanel() {
         // thiet lap layout chinh
@@ -145,6 +147,14 @@ public class RecruitmentListPanel extends JPanel {
         btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         btnSearch.setPreferredSize(new Dimension(100, 38));
         btnSearch.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
+        btnSearch.addActionListener(e -> {
+            String keyword = txtSearch.getText().trim();
+            if (keyword.equals("Tìm kiếm theo tiêu đề...")) keyword = "";
+            currentKeyword = keyword.toLowerCase();
+            currentStatusFilter = (String) cbStatus.getSelectedItem();
+            currentPage = 1;
+            loadData();
+        });
 
         filterPanel.add(txtSearch);
         filterPanel.add(cbStatus);
@@ -159,12 +169,39 @@ public class RecruitmentListPanel extends JPanel {
         tableContainer.add(createRow("TIÊU ĐỀ CÔNG VIỆC", "NGÀY ĐĂNG - HẾT HẠN", "TRẠNG THÁI", "ỨNG VIÊN", "THAO TÁC", true, null));
 
         String employerId = SessionManager.getInstance().getEmployerId();
-        List<RecruitmentDTO> jobs = null;
+        List<RecruitmentDTO> allJobs = null;
         if (employerId != null && !employerId.isEmpty()) {
-            jobs = recruitmentService.getRecruitmentsByEmployer(employerId);
+            allJobs = recruitmentService.getRecruitmentsByEmployer(employerId);
+        }
+
+        List<RecruitmentDTO> jobs = new java.util.ArrayList<>();
+        if (allJobs != null) {
+            for (RecruitmentDTO job : allJobs) {
+                if (!currentKeyword.isEmpty() && !job.getTitle().toLowerCase().contains(currentKeyword)) {
+                    continue;
+                }
+                String statusStr = "Bản nháp";
+                if (job.getAdminStatus() == AdminStatus.PENDING) {
+                    statusStr = "Đang chờ duyệt";
+                } else if (job.getAdminStatus() == AdminStatus.REJECTED) {
+                    statusStr = "Bị từ chối";
+                } else if (job.getAdminStatus() == AdminStatus.APPROVED) {
+                    if (job.getStatus() == RecruitmentStatus.OPEN) statusStr = "Đang hoạt động";
+                    else if (job.getStatus() == RecruitmentStatus.CLOSED) statusStr = "Đã đóng";
+                    else if (job.getStatus() == RecruitmentStatus.EXPIRED) statusStr = "Hết hạn";
+                }
+                
+                if (!currentStatusFilter.equals("Tất cả trạng thái") && !statusStr.equals(currentStatusFilter)) {
+                    continue;
+                }
+                jobs.add(job);
+            }
         }
 
         if (jobs != null) {
+            int maxPage = Math.max(1, (int) Math.ceil((double) jobs.size() / pageSize));
+            if (currentPage > maxPage) currentPage = maxPage;
+
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             int start = (currentPage - 1) * pageSize;
             int end = Math.min(start + pageSize, jobs.size());
@@ -213,6 +250,8 @@ public class RecruitmentListPanel extends JPanel {
         tableContainer.add(footer);
         tableContainer.revalidate();
         tableContainer.repaint();
+        this.revalidate();
+        this.repaint();
     }
     
     private void updatePaginationUI(int totalItems) {
@@ -221,27 +260,64 @@ public class RecruitmentListPanel extends JPanel {
         
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / pageSize));
 
-        JButton btnPrev = createPageBtn("<", true);
-        btnPrev.addActionListener(e -> {
-            if (currentPage > 1) {
+        JButton btnPrev = createPageBtn("<", false);
+        if (currentPage > 1) {
+            btnPrev.addActionListener(e -> {
                 currentPage--;
                 loadData();
-            }
-        });
+            });
+        } else {
+            btnPrev.setEnabled(false);
+        }
         paginationPanel.add(btnPrev);
 
-        JButton btnPage = createPageBtn(String.valueOf(currentPage), true);
-        btnPage.setBorder(new LineBorder(new Color(13, 110, 253), 2));
-        btnPage.setForeground(new Color(13, 110, 253));
-        paginationPanel.add(btnPage);
+        int startPage = Math.max(1, currentPage - 2);
+        int endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (startPage > 1) {
+            JButton btnFirst = createPageBtn("1", false);
+            btnFirst.addActionListener(e -> { currentPage = 1; loadData(); });
+            paginationPanel.add(btnFirst);
+            if (startPage > 2) {
+                JLabel dots = new JLabel("...");
+                dots.setBorder(new EmptyBorder(0, 5, 0, 5));
+                paginationPanel.add(dots);
+            }
+        }
+        
+        for (int i = startPage; i <= endPage; i++) {
+            final int pageToLoad = i;
+            boolean isCurrent = (i == currentPage);
+            JButton btnPage = createPageBtn(String.valueOf(i), isCurrent);
+            if (!isCurrent) {
+                btnPage.addActionListener(e -> {
+                    currentPage = pageToLoad;
+                    loadData();
+                });
+            }
+            paginationPanel.add(btnPage);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                JLabel dots = new JLabel("...");
+                dots.setBorder(new EmptyBorder(0, 5, 0, 5));
+                paginationPanel.add(dots);
+            }
+            JButton btnLast = createPageBtn(String.valueOf(totalPages), false);
+            btnLast.addActionListener(e -> { currentPage = totalPages; loadData(); });
+            paginationPanel.add(btnLast);
+        }
 
-        JButton btnNext = createPageBtn(">", true);
-        btnNext.addActionListener(e -> {
-            if (currentPage < totalPages) {
+        JButton btnNext = createPageBtn(">", false);
+        if (currentPage < totalPages) {
+            btnNext.addActionListener(e -> {
                 currentPage++;
                 loadData();
-            }
-        });
+            });
+        } else {
+            btnNext.setEnabled(false);
+        }
         paginationPanel.add(btnNext);
         
         paginationPanel.revalidate();

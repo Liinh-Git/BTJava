@@ -12,8 +12,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class RecruitmentFormPanel extends JPanel {
@@ -26,7 +29,7 @@ public class RecruitmentFormPanel extends JPanel {
     private JComboBox<String> cbCategory;
     private JComboBox<String> cbJobType;
     private JTextField txtSalary;
-    private JTextField txtDueDate;
+    private JSpinner txtDueDate; // Doi thanh JSpinner de chon ngay thang
     private JTextArea txtDescription;
 
     public RecruitmentFormPanel() {
@@ -135,8 +138,9 @@ public class RecruitmentFormPanel extends JPanel {
         txtSalary = createTextField("VD: 20000000"); // Numeric only for BLL double parsing
         formGrid.add(txtSalary, gbc);
 
+        // Thay the TextField bang JSpinner chon ngay thang nam
         gbc.gridx = 1; gbc.insets = new Insets(0, 0, 20, 0);
-        txtDueDate = createTextField("dd/MM/yyyy");
+        txtDueDate = createDateSpinner();
         formGrid.add(txtDueDate, gbc);
 
         // dong 4: Mo ta cong viec (chiem 2 cot)
@@ -170,16 +174,61 @@ public class RecruitmentFormPanel extends JPanel {
         return lbl;
     }
 
+    // Tao text field voi FocusListener de xoa/hien thi lai placeholder khi click
     private JTextField createTextField(String placeholder) {
         JTextField txt = new JTextField(placeholder);
         txt.setPreferredSize(new Dimension(0, 42));
-        txt.setForeground(new Color(108, 117, 125));
+        txt.setForeground(new Color(156, 163, 175)); // Mau xam cho placeholder
         txt.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txt.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(206, 212, 218), 1),
                 new EmptyBorder(5, 10, 5, 10)
         ));
+        // Focus listener: xoa placeholder khi click vao, hien lai khi de trong
+        txt.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (txt.getText().equals(placeholder)) {
+                    txt.setText("");
+                    txt.setForeground(new Color(33, 37, 41)); // Mau chu binh thuong
+                }
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (txt.getText().trim().isEmpty()) {
+                    txt.setText(placeholder);
+                    txt.setForeground(new Color(156, 163, 175)); // Mau xam placeholder
+                }
+            }
+        });
         return txt;
+    }
+
+    // Tao JSpinner chon ngay thang nam cho han nop ho so
+    private JSpinner createDateSpinner() {
+        // Mac dinh hien thi ngay mai
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        Date tomorrow = cal.getTime();
+
+        // Gioi han: tu hom nay tro di
+        SpinnerDateModel model = new SpinnerDateModel(
+            tomorrow,       // Gia tri ban dau
+            new Date(),     // Min: hom nay
+            null,           // Max: khong gioi han
+            Calendar.DAY_OF_MONTH
+        );
+        JSpinner spinner = new JSpinner(model);
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(spinner, "dd/MM/yyyy");
+        spinner.setEditor(editor);
+        spinner.setPreferredSize(new Dimension(0, 42));
+        spinner.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        spinner.setBorder(new LineBorder(new Color(206, 212, 218), 1));
+        // Style cho text ben trong
+        editor.getTextField().setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        editor.getTextField().setHorizontalAlignment(JTextField.LEFT);
+        editor.getTextField().setBorder(new EmptyBorder(5, 10, 5, 5));
+        return spinner;
     }
 
     private JComboBox<String> createComboBox(String[] items) {
@@ -217,10 +266,27 @@ public class RecruitmentFormPanel extends JPanel {
         // phan text
         JTextArea textArea = new JTextArea(placeholder);
         textArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        textArea.setForeground(new Color(108, 117, 125));
+        textArea.setForeground(new Color(156, 163, 175));
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setBorder(new EmptyBorder(15, 15, 15, 15));
+        // Focus listener cho textarea
+        textArea.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (textArea.getText().equals(placeholder)) {
+                    textArea.setText("");
+                    textArea.setForeground(new Color(33, 37, 41));
+                }
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (textArea.getText().trim().isEmpty()) {
+                    textArea.setText(placeholder);
+                    textArea.setForeground(new Color(156, 163, 175));
+                }
+            }
+        });
 
         JScrollPane scroll = new JScrollPane(textArea);
         scroll.setBorder(null);
@@ -298,10 +364,28 @@ public class RecruitmentFormPanel extends JPanel {
         if (SessionManager.getInstance().getCurrentUser() == null) return;
         
         try {
-            String title = txtTitle.getText().trim();
-            double salary = Double.parseDouble(txtSalary.getText().trim());
-            LocalDate dueDate = LocalDate.parse(txtDueDate.getText().trim(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            String titleVal = txtTitle.getText().trim();
+            // Kiem tra neu van la placeholder thi bao loi
+            if (titleVal.isEmpty() || titleVal.equals("VD: Senior Frontend Developer (Tailwind CSS)")) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tiêu đề công việc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String salaryText = txtSalary.getText().trim();
+            if (salaryText.isEmpty() || salaryText.equals("VD: 20000000")) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập mức lương!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            double salary = Double.parseDouble(salaryText);
+
+            // Doc ngay tu JSpinner
+            Date selectedDate = (Date) txtDueDate.getValue();
+            LocalDate dueDate = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
             String desc = txtDescription.getText().trim();
+            if (desc.isEmpty() || desc.equals("Nhập chi tiết công việc, yêu cầu và quyền lợi...")) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập mô tả công việc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             
             int catIdx = cbCategory.getSelectedIndex();
             String catId = (catIdx >= 0 && catIdx < categoryList.size()) ? categoryList.get(catIdx).getCategoryId() : null;
@@ -312,15 +396,25 @@ public class RecruitmentFormPanel extends JPanel {
             // No FREELANCE in enum, fallback to PARTTIME
             else if (cbJobType.getSelectedIndex() == 3) jobType = JobType.PARTTIME;
             
-            boolean success = recruitmentService.postRecruitment(title, catId, jobType, salary, dueDate, desc, "Địa chỉ mặc định công ty"); // The BLL requires location
+            boolean success = recruitmentService.postRecruitment(titleVal, catId, jobType, salary, dueDate, desc, null); // location will be resolved from company info in BLL
             if (success) {
                 JOptionPane.showMessageDialog(this, "Đăng tin tuyển dụng thành công, chờ kiểm duyệt!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                txtTitle.setText(""); txtSalary.setText(""); txtDueDate.setText("dd/MM/yyyy"); txtDescription.setText("");
+                // Reset form: thay placeholder
+                txtTitle.setText("VD: Senior Frontend Developer (Tailwind CSS)");
+                txtTitle.setForeground(new Color(156, 163, 175));
+                txtSalary.setText("VD: 20000000");
+                txtSalary.setForeground(new Color(156, 163, 175));
+                txtDescription.setText("Nhập chi tiết công việc, yêu cầu và quyền lợi...");
+                txtDescription.setForeground(new Color(156, 163, 175));
+                // Reset spinner ve ngay mai
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_MONTH, 1);
+                txtDueDate.setValue(cal.getTime());
             } else {
                 JOptionPane.showMessageDialog(this, "Không thể đăng tin. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đúng định dạng lương (số) và ngày (dd/MM/yyyy)!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập đúng định dạng lương (chỉ nhập số)!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

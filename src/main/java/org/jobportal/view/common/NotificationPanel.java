@@ -25,14 +25,15 @@ public class NotificationPanel extends JPanel {
         header.setBackground(Color.WHITE);
         header.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel title = new JLabel("Thong bao");
+        JLabel title = new JLabel("Thông báo");
         title.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-        JButton btnRefresh = new JButton("Tai lai");
+        JButton btnRefresh = new JButton("Tải lại");
         btnRefresh.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         btnRefresh.setFocusPainted(false);
-        btnRefresh.setBackground(Color.WHITE);
-        btnRefresh.setBorder(new LineBorder(new Color(226, 230, 234), 1));
+        btnRefresh.setBackground(new Color(13, 110, 253));
+        btnRefresh.setForeground(Color.WHITE);
+        btnRefresh.setBorderPainted(false);
         btnRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnRefresh.addActionListener(e -> loadData());
 
@@ -58,7 +59,9 @@ public class NotificationPanel extends JPanel {
         listContainer.removeAll();
 
         String userId = SessionManager.getInstance().getCurrentUserId();
-        List<NotificationDTO> notifications = notificationService.getNotifications(userId);
+        List<NotificationDTO> notifications = (userId == null || userId.isBlank())
+                ? java.util.Collections.emptyList()
+                : notificationService.getNotifications(userId);
 
         if (notifications == null || notifications.isEmpty()) {
             listContainer.add(createEmptyRow());
@@ -73,13 +76,18 @@ public class NotificationPanel extends JPanel {
     }
 
     private JPanel createNotificationRow(NotificationDTO notification) {
-        JPanel row = new JPanel(new BorderLayout(10, 0));
-        row.setBackground(Color.WHITE);
-        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(true);
+
+        // Hien thi dau cham trang thai doc (mau khac nhau neu chua doc)
+        Color rowBg = notification.isRead() ? Color.WHITE : new Color(240, 247, 255);
+        row.setBackground(rowBg);
+        row.setBorder(BorderFactory.createMatteBorder(0, notification.isRead() ? 0 : 3, 1, 0,
+            notification.isRead() ? new Color(230, 230, 230) : new Color(13, 110, 253)));
 
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-        left.setBackground(Color.WHITE);
+        left.setBackground(rowBg);
         left.setBorder(new EmptyBorder(12, 15, 12, 10));
 
         String senderName = notification.getSenderName() != null ? notification.getSenderName() : "System";
@@ -104,13 +112,15 @@ public class NotificationPanel extends JPanel {
         left.add(lblTime);
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 20));
-        right.setBackground(Color.WHITE);
+        right.setBackground(rowBg);
 
-        JButton btnRead = new JButton(notification.isRead() ? "Da doc" : "Danh dau doc");
+        JButton btnRead = new JButton(notification.isRead() ? "✓ Đã đọc" : "Đánh dấu đã đọc");
         btnRead.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         btnRead.setFocusPainted(false);
-        btnRead.setBackground(notification.isRead() ? new Color(240, 240, 240) : Color.WHITE);
-        btnRead.setBorder(new LineBorder(new Color(226, 230, 234), 1));
+        btnRead.setBackground(notification.isRead() ? new Color(240, 240, 240) : new Color(230, 245, 255));
+        btnRead.setForeground(notification.isRead() ? Color.GRAY : new Color(13, 110, 253));
+        btnRead.setBorder(new LineBorder(
+            notification.isRead() ? new Color(220, 220, 220) : new Color(13, 110, 253), 1));
         btnRead.setEnabled(!notification.isRead());
         btnRead.addActionListener(e -> {
             boolean updated = notificationService.markAsRead(notification.getNotificationId());
@@ -128,9 +138,12 @@ public class NotificationPanel extends JPanel {
     }
 
     private JPanel createEmptyRow() {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 20));
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 30));
         row.setBackground(Color.WHITE);
-        row.add(new JLabel("Chua co thong bao nao."));
+        JLabel lbl = new JLabel("Chưa có thông báo nào.");
+        lbl.setForeground(Color.GRAY);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        row.add(lbl);
         return row;
     }
 

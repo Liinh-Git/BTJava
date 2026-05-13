@@ -63,8 +63,10 @@ public class CompanyInfoPanel extends JPanel {
             UserDTO empInfo = userService.getEmployerInfo(user.getUserId());
             if (empInfo != null) {
                 if (empInfo.getCompanyName() != null) txtCompanyName.setText(empInfo.getCompanyName());
-                txtAddress.setText("");
-                txtDescription.setText("");
+                if (empInfo.getCompanyAddress() != null) txtAddress.setText(empInfo.getCompanyAddress());
+                else txtAddress.setText("");
+                if (empInfo.getCompanyDescription() != null) txtDescription.setText(empInfo.getCompanyDescription());
+                else txtDescription.setText("");
             }
         }
     }

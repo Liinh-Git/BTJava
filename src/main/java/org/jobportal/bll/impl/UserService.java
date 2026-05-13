@@ -110,6 +110,8 @@ public class UserService implements IUserService {
         Employer employer = employerDAO.findByUserId(userId);
         if (employer != null) {
             dto.setCompanyName(employer.getCompanyName());
+            dto.setCompanyAddress(employer.getCompanyAddress());
+            dto.setCompanyDescription(employer.getCompanyDescription());
         }
 
         return dto;

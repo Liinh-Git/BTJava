@@ -67,7 +67,7 @@ public class UserManagementPanel extends JPanel {
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBackground(new Color(248, 249, 250));
 
-        JLabel lblTitle = new JLabel("User Management");
+        JLabel lblTitle = new JLabel("Quản lý người dùng");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTitle.setForeground(new Color(33, 37, 41));
 
@@ -119,7 +119,7 @@ public class UserManagementPanel extends JPanel {
     private void loadData() {
         tableContainer.removeAll();
         // header
-        tableContainer.add(createTableRow("NAME", "EMAIL", "ROLE", "STATUS", "ACTIONS", true, "", null, null));
+        tableContainer.add(createTableRow("TÊN", "EMAIL", "VAI TRÒ", "TRẠNG THÁI", "THAO TÁC", true, "", null, null));
 
         List<UserDTO> users = userService.getAllUsers(null, null);
         
@@ -176,9 +176,10 @@ public class UserManagementPanel extends JPanel {
         Color textColor = isHeader ? new Color(108, 117, 125) : new Color(33, 37, 41);
 
         // Name
-        gbc.gridx = 0; gbc.weightx = 0.25;
+        gbc.gridx = 0; gbc.weightx = 0.20; // 20%
         JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 20));
         p1.setOpaque(false);
+        p1.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l1 = new JLabel(col1);
             l1.setFont(font); l1.setForeground(textColor);
@@ -192,9 +193,10 @@ public class UserManagementPanel extends JPanel {
         row.add(p1, gbc);
 
         // Email
-        gbc.gridx = 1; gbc.weightx = 0.35;
+        gbc.gridx = 1; gbc.weightx = 0.30; // 30%
         JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 25));
         p2.setOpaque(false);
+        p2.setMinimumSize(new Dimension(10, 10)); // Force alignment
         JLabel l2 = new JLabel(col2);
         l2.setFont(isHeader ? font : new Font("Segoe UI", Font.PLAIN, 14));
         l2.setForeground(isHeader ? textColor : Color.DARK_GRAY);
@@ -205,6 +207,7 @@ public class UserManagementPanel extends JPanel {
         gbc.gridx = 2; gbc.weightx = 0.15;
         JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 25));
         p3.setOpaque(false);
+        p3.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l3 = new JLabel(role);
             l3.setFont(font); l3.setForeground(textColor);
@@ -215,9 +218,10 @@ public class UserManagementPanel extends JPanel {
         row.add(p3, gbc);
 
         // Status
-        gbc.gridx = 3; gbc.weightx = 0.15;
+        gbc.gridx = 3; gbc.weightx = 0.10; // 10%
         JPanel p4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 25));
         p4.setOpaque(false);
+        p4.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l4 = new JLabel(status);
             l4.setFont(font); l4.setForeground(textColor);
@@ -228,62 +232,63 @@ public class UserManagementPanel extends JPanel {
         row.add(p4, gbc);
 
         // Actions
-        gbc.gridx = 4; gbc.weightx = 0.10;
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 20));
+        gbc.gridx = 4; gbc.weightx = 0.25; // 25% (Kéo dài cột này)
+        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 20)); // Adjusted spacing
         p5.setOpaque(false);
+        p5.setMinimumSize(new Dimension(10, 10)); // Force alignment
         if (isHeader) {
             JLabel l5 = new JLabel(action);
             l5.setFont(font); l5.setForeground(textColor);
             p5.add(l5);
-            JLabel btnEdit = new JLabel(status.equals("Active") ? "🔒" : "🔓");
-            btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-            btnEdit.setForeground(Color.GRAY);
+        } else {
+            JButton btnEdit = new JButton(status.equals("Active") ? "Khóa" : "Mở khóa");
+            btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 11)); // Nho font chu xuong 1 ti
+            btnEdit.setMargin(new Insets(4, 10, 4, 10)); // Thu nho padding cua nut
+            btnEdit.setBackground(status.equals("Active") ? new Color(255, 193, 7) : new Color(40, 167, 69)); // Warning or Success
+            btnEdit.setForeground(Color.WHITE);
+            btnEdit.setFocusPainted(false);
+            btnEdit.setBorderPainted(false);
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            btnEdit.setToolTipText(status.equals("Active") ? "Khóa tài khoản" : "Mở khóa tài khoản");
-            btnEdit.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (user != null) {
-                        int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, 
-                            (user.isActive() ? "Khóa" : "Mở khóa") + " tài khoản này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-                        if (choice == JOptionPane.YES_OPTION) {
-                            boolean success = userService.updateUserStatus(user.getUserId(), !user.isActive());
-                            if (success) {
-                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
-                                loadData();
-                            } else {
-                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                            }
+            btnEdit.addActionListener(e -> {
+                if (user != null) {
+                    int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, 
+                        (user.isActive() ? "Khóa" : "Mở khóa") + " tài khoản này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                    if (choice == JOptionPane.YES_OPTION) {
+                        boolean success = userService.updateUserStatus(user.getUserId(), !user.isActive());
+                        if (success) {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
+                            loadData();
+                        } else {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
             });
 
-            JLabel btnDelete = new JLabel("🗑");
-            btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-            btnDelete.setForeground(Color.GRAY);
+            JButton btnDelete = new JButton("Xóa");
+            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); // Nho font chu xuong 1 ti
+            btnDelete.setMargin(new Insets(4, 10, 4, 10)); // Thu nho padding cua nut
+            btnDelete.setBackground(new Color(220, 53, 69)); // Danger red
+            btnDelete.setForeground(Color.WHITE);
+            btnDelete.setFocusPainted(false);
+            btnDelete.setBorderPainted(false);
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            btnDelete.setToolTipText("Xóa tài khoản");
-            btnDelete.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (user != null) {
-                        int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, "Xóa tài khoản này vĩnh viễn?", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                        if (choice == JOptionPane.YES_OPTION) {
-                            boolean success = userService.deleteUser(user.getUserId());
-                            if (success) {
-                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
-                                loadData();
-                            } else {
-                                JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                            }
+            btnDelete.addActionListener(e -> {
+                if (user != null) {
+                    int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, "Xóa tài khoản này vĩnh viễn?", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    if (choice == JOptionPane.YES_OPTION) {
+                        boolean success = userService.deleteUser(user.getUserId());
+                        if (success) {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
+                            loadData();
+                        } else {
+                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
             });
 
             p5.add(btnEdit);
-            p5.add(Box.createRigidArea(new Dimension(5, 0)));
             p5.add(btnDelete);
         }
         row.add(p5, gbc);

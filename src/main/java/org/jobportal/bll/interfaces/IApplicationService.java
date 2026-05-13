@@ -70,4 +70,9 @@ public interface IApplicationService {
     // Dau vao: employerId (String)
     // Dau ra: int
     int getNewApplicantsToday(String employerId);
+
+    // Chuc nang: Loc don ung tuyen cua candidate theo trang thai
+    // Dau vao: candidateId (String), status (ApplicationStatus hoac null = tat ca)
+    // Dau ra: List<ApplicationDTO>
+    List<ApplicationDTO> filterApplicationsByStatusForCandidate(String candidateId, ApplicationStatus status);
 }

@@ -75,20 +75,27 @@ public class CVEditorPanel extends JPanel {
     private void loadData() {
         UserDTO user = SessionManager.getInstance().getCurrentUser();
         if (user != null) {
-            txtFullName.setText(user.getUsername());
-            txtEmail.setText(user.getEmail());
-            txtPhone.setText("");
+            txtFullName.setText(user.getFullName() != null && !user.getFullName().isEmpty() ? user.getFullName() : user.getUsername());
+            txtEmail.setText(user.getEmail() != null ? user.getEmail() : "");
+            txtPhone.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
             txtLocation.setText("");
 
-            currentCV = cvService.getCV(user.getUserId());
+            String candidateId = SessionManager.getInstance().getCandidateId();
+            currentCV = cvService.getCV(candidateId);
             if (currentCV == null) {
                 currentCV = new CVDTO();
-                currentCV.setCandidateId(user.getUserId());
+                currentCV.setCandidateId(candidateId);
                 currentCV.setEducations(new ArrayList<>());
             }
 
             if (currentCV.getDesiredPosition() != null) txtTitle.setText(currentCV.getDesiredPosition());
-            if (currentCV.getObjective() != null) txtObjective.setText(currentCV.getObjective());
+            if (currentCV.getObjective() != null && !currentCV.getObjective().isEmpty()) {
+                txtObjective.setText(currentCV.getObjective());
+                txtObjective.setForeground(Color.BLACK);
+            } else {
+                txtObjective.setText("Innovative and results-driven...");
+                txtObjective.setForeground(Color.GRAY);
+            }
             
             skillList.clear();
             tagsPanel.removeAll();
@@ -108,7 +115,9 @@ public class CVEditorPanel extends JPanel {
     private void saveCVData() {
         if (currentCV != null) {
             currentCV.setDesiredPosition(txtTitle.getText().trim());
-            currentCV.setObjective(txtObjective.getText().trim());
+            String objText = txtObjective.getText().trim();
+            if (objText.equals("Innovative and results-driven...")) objText = "";
+            currentCV.setObjective(objText);
             currentCV.setSkills(String.join(", ", skillList));
             
             boolean success = cvService.saveCV(currentCV);
@@ -200,6 +209,7 @@ public class CVEditorPanel extends JPanel {
         card.add(Box.createRigidArea(new Dimension(0, 20)));
 
         txtObjective = new JTextArea("Innovative and results-driven...");
+        txtObjective.setForeground(Color.GRAY);
         txtObjective.setLineWrap(true);
         txtObjective.setWrapStyleWord(true);
         txtObjective.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -207,6 +217,20 @@ public class CVEditorPanel extends JPanel {
                 new LineBorder(new Color(220, 220, 220), 1),
                 new EmptyBorder(10, 10, 10, 10)
         ));
+        txtObjective.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtObjective.getText().equals("Innovative and results-driven...")) {
+                    txtObjective.setText("");
+                    txtObjective.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtObjective.getText().isEmpty()) {
+                    txtObjective.setText("Innovative and results-driven...");
+                    txtObjective.setForeground(Color.GRAY);
+                }
+            }
+        });
         card.add(txtObjective);
 
         return card;
@@ -233,6 +257,20 @@ public class CVEditorPanel extends JPanel {
         txtSkill = new JTextField("Add a skill (e.g. React, Project Management)");
         txtSkill.setForeground(Color.GRAY);
         txtSkill.setPreferredSize(new Dimension(0, 40));
+        txtSkill.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtSkill.getText().equals("Add a skill (e.g. React, Project Management)")) {
+                    txtSkill.setText("");
+                    txtSkill.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtSkill.getText().isEmpty()) {
+                    txtSkill.setText("Add a skill (e.g. React, Project Management)");
+                    txtSkill.setForeground(Color.GRAY);
+                }
+            }
+        });
         inputPanel.add(txtSkill, BorderLayout.CENTER);
 
         JButton btnAddSkill = createButton("ADD SKILL", new Color(13, 110, 253), Color.WHITE);

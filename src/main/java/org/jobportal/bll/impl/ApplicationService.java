@@ -102,10 +102,25 @@ public class ApplicationService implements IApplicationService {
         );
         boolean inserted = applicationDAO.insert(app);
         if (inserted) {
+            // Lay userId cua candidate de lam sender
             String senderUserId = getCandidateUserId(candidateId);
+            // Lay userId cua employer de nhan thong bao
             String receiverUserId = getEmployerUserId(r.getEmployerId());
+
+            // Lay ten ung vien de hien thi trong thong bao
+            String candidateName = "Ung vien";
+            if (senderUserId != null) {
+                User cu = userDAO.findById(senderUserId);
+                if (cu != null && cu.getFullName() != null && !cu.getFullName().isBlank()) {
+                    candidateName = cu.getFullName();
+                } else if (cu != null) {
+                    candidateName = cu.getUsername();
+                }
+            }
+
             if (receiverUserId != null) {
-                String content = "Ung vien da ung tuyen vao tin: " + r.getTitle();
+                String content = "📋 Ung vien " + candidateName
+                        + " da nop ho so ung tuyen vao vi tri: " + r.getTitle();
                 notificationService.sendNotification(senderUserId, receiverUserId, content);
             }
         }
@@ -313,6 +328,27 @@ public class ApplicationService implements IApplicationService {
     }
 
     // ------------------------------------------------------------------
+    // filterApplicationsByStatusForCandidate
+    // ------------------------------------------------------------------
+
+    @Override
+    public List<ApplicationDTO> filterApplicationsByStatusForCandidate(String candidateId, ApplicationStatus status) {
+        if (candidateId == null || candidateId.isBlank()) return Collections.emptyList();
+        List<Application> apps = applicationDAO.findByCandidateId(candidateId);
+        if (apps == null || apps.isEmpty()) return Collections.emptyList();
+
+        List<ApplicationDTO> result = new ArrayList<>();
+        for (Application a : apps) {
+            // Neu status la null thi lay tat ca, nguoc lai loc theo trang thai
+            if (status == null || a.getStatus() == status) {
+                result.add(enrichApplication(a));
+            }
+        }
+        return result;
+    }
+
+    // ------------------------------------------------------------------
+
     // Private helpers
     // ------------------------------------------------------------------
 
@@ -344,10 +380,27 @@ public class ApplicationService implements IApplicationService {
             if (target != null) {
                 String candidateUserId = getCandidateUserId(target.getCandidateId());
                 Recruitment r = recruitmentDAO.findById(target.getRecruitmentId());
-                String title = (r != null && r.getTitle() != null) ? r.getTitle() : "(khong ro)";
-                String content = (newStatus == ApplicationStatus.APPROVED)
-                        ? "Don ung tuyen cua ban da duoc duyet: " + title
-                        : "Don ung tuyen cua ban da bi tu choi: " + title;
+                String jobTitle = (r != null && r.getTitle() != null) ? r.getTitle() : "(khong ro vi tri)";
+
+                // Lay ten cong ty de thong bao ro hon
+                String companyName = "Nha tuyen dung";
+                if (r != null) {
+                    org.jobportal.model.Employer emp =
+                            new org.jobportal.dal.impl.EmployerDAO().findById(r.getEmployerId());
+                    if (emp != null && emp.getCompanyName() != null) {
+                        companyName = emp.getCompanyName();
+                    }
+                }
+
+                String content;
+                if (newStatus == ApplicationStatus.APPROVED) {
+                    content = "✅ Chuc mung! Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
+                            + "\" tai " + companyName + " da duoc CHAP NHAN.";
+                } else {
+                    content = "❌ Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
+                            + "\" tai " + companyName + " da bi TU CHOI. Cam on ban da quan tam!";
+                }
+
                 if (candidateUserId != null) {
                     notificationService.sendNotification(session.getCurrentUserId(), candidateUserId, content);
                 }

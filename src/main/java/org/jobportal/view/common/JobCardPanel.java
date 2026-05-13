@@ -7,6 +7,9 @@ import java.awt.*;
 
 public class JobCardPanel extends JPanel {
 
+    private static final int ACTION_BUTTON_WIDTH = 130;
+    private static final int ACTION_BUTTON_HEIGHT = 38;
+
     private JPanel bottomPanel;
     private Component actionComponent;
 
@@ -86,6 +89,7 @@ public class JobCardPanel extends JPanel {
         btnApply.setForeground(Color.WHITE);
         btnApply.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnApply.setFocusPainted(false);
+        applyActionButtonSizing(btnApply);
         
         actionComponent = btnApply;
         bottomPanel.add(actionComponent, BorderLayout.EAST);
@@ -98,9 +102,19 @@ public class JobCardPanel extends JPanel {
             bottomPanel.remove(actionComponent);
         }
         actionComponent = comp;
+        if (actionComponent instanceof AbstractButton) {
+            applyActionButtonSizing((AbstractButton) actionComponent);
+        }
         bottomPanel.add(actionComponent, BorderLayout.EAST);
         bottomPanel.revalidate();
         bottomPanel.repaint();
+    }
+
+    private void applyActionButtonSizing(AbstractButton button) {
+        Dimension size = new Dimension(ACTION_BUTTON_WIDTH, ACTION_BUTTON_HEIGHT);
+        button.setPreferredSize(size);
+        button.setMinimumSize(size);
+        button.setMaximumSize(size);
     }
 
     // ham tao label the tag

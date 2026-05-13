@@ -14,6 +14,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -23,6 +25,8 @@ public class AppliedJobsPanel extends JPanel {
     private JPanel statsPanel;
     private JPanel tableContainer;
     private JLabel lblCount;
+    private ApplicationStatus currentFilter = null; // null = tat ca
+    private List<ApplicationDTO> currentApps = null; // cache danh sach hien tai
 
     public AppliedJobsPanel() {
         // thiet lap mau nen va layout chinh
@@ -91,8 +95,12 @@ public class AppliedJobsPanel extends JPanel {
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightPanel.setBackground(new Color(248, 249, 250));
 
-        JButton btnFilter = createOutlineButton("Filter", "Y"); // gia lap icon
-        JButton btnExport = createOutlineButton("Export", "v");
+        JButton btnFilter = createOutlineButton("🔍 Lọc", "");
+        JButton btnExport = createOutlineButton("↓ Xuất CSV", "");
+
+        btnFilter.addActionListener(e -> openFilterDialog());
+        btnExport.addActionListener(e -> exportToCSV());
+
         rightPanel.add(btnFilter);
         rightPanel.add(btnExport);
 
@@ -101,12 +109,89 @@ public class AppliedJobsPanel extends JPanel {
         return panel;
     }
 
+    // Mo hop thoai chon trang thai de loc
+    private void openFilterDialog() {
+        String[] options = {"Tất cả", "PENDING", "APPROVED", "REJECTED"};
+        String choice = (String) JOptionPane.showInputDialog(
+            this,
+            "Chọn trạng thái đơn ứng tuyển:",
+            "Lọc đơn ứng tuyển",
+            JOptionPane.PLAIN_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+        if (choice == null) return;
+
+        switch (choice) {
+            case "PENDING":  currentFilter = ApplicationStatus.PENDING;  break;
+            case "APPROVED": currentFilter = ApplicationStatus.APPROVED; break;
+            case "REJECTED": currentFilter = ApplicationStatus.REJECTED; break;
+            default:         currentFilter = null; break;
+        }
+        loadData();
+    }
+
+    // Xuat danh sach ra file CSV
+    private void exportToCSV() {
+        if (currentApps == null || currentApps.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu file báo cáo");
+        fileChooser.setSelectedFile(new java.io.File("applied_jobs_report.csv"));
+        int result = fileChooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) return;
+
+        java.io.File file = fileChooser.getSelectedFile();
+        // Dam bao co duoi .csv
+        if (!file.getName().toLowerCase().endsWith(".csv")) {
+            file = new java.io.File(file.getAbsolutePath() + ".csv");
+        }
+
+        try (FileWriter fw = new FileWriter(file)) {
+            // Ghi header
+            fw.write("\uFEFF"); // BOM de Excel doc dung UTF-8
+            fw.write("STT,Tên công việc,Công ty,Ngày ứng tuyển,Trạng thái\n");
+
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            int idx = 1;
+            for (ApplicationDTO app : currentApps) {
+                String title = csvEscape(app.getJobTitle());
+                String company = csvEscape(app.getCompanyName());
+                String date = app.getAppliedDate() != null ? app.getAppliedDate().format(fmt) : "N/A";
+                String status = app.getStatus() != null ? app.getStatus().name() : "PENDING";
+                fw.write(idx++ + "," + title + "," + company + "," + date + "," + status + "\n");
+            }
+
+            JOptionPane.showMessageDialog(this,
+                "Xuất báo cáo thành công!\nFile: " + file.getAbsolutePath(),
+                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                "Lỗi khi xuất file: " + ex.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Thoat ky tu dac biet trong CSV (bao ca dau phay va xuat tuyến trong gia tri)
+    private String csvEscape(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
     // ham tao 3 the thong ke
-    private void updateStats(UserDTO user) {
+    private void updateStats(String candidateId) {
         statsPanel.removeAll();
-        if (user != null) {
-            int total = applicationService.getTotalApplyCountByUser(user.getUserId());
-            int approved = applicationService.getApprovedApplicationByUser(user.getUserId());
+        if (candidateId != null) {
+            int total = applicationService.getTotalApplyCountByUser(candidateId);
+            int approved = applicationService.getApprovedApplicationByUser(candidateId);
             double rate = total > 0 ? (approved * 100.0 / total) : 0;
             
             statsPanel.add(createStatCard("TOTAL APPLICATIONS", String.valueOf(total), null));
@@ -156,20 +241,22 @@ public class AppliedJobsPanel extends JPanel {
     }
 
     private void loadData() {
-        UserDTO user = SessionManager.getInstance().getCurrentUser();
-        updateStats(user);
+        String candidateId = SessionManager.getInstance().getCandidateId();
+        updateStats(candidateId);
         
         tableContainer.removeAll();
         tableContainer.add(createRow("JOB TITLE", "COMPANY", "DATE APPLIED", "STATUS", "ACTIONS", true, null));
 
-        List<ApplicationDTO> apps = null;
-        if (user != null) {
-            apps = applicationService.getListOfApplicationByUser(user.getUserId());
+        // Loc theo trang thai neu co filter
+        if (candidateId != null) {
+            currentApps = applicationService.filterApplicationsByStatusForCandidate(candidateId, currentFilter);
+        } else {
+            currentApps = null;
         }
 
-        if (apps != null) {
+        if (currentApps != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
-            for (ApplicationDTO app : apps) {
+            for (ApplicationDTO app : currentApps) {
                 String title = app.getJobTitle();
                 String company = app.getCompanyName(); 
                 String dateStr = app.getAppliedDate() != null ? app.getAppliedDate().format(formatter) : "N/A";
@@ -188,7 +275,8 @@ public class AppliedJobsPanel extends JPanel {
             lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             lblCount.setForeground(Color.GRAY);
         }
-        lblCount.setText("Showing " + (apps != null ? apps.size() : 0) + " applications");
+        String filterLabel = currentFilter != null ? " (Lọc: " + currentFilter.name() + ")" : "";
+        lblCount.setText("Hiển thị " + (currentApps != null ? currentApps.size() : 0) + " đơn ứng tuyển" + filterLabel);
         footer.add(lblCount, BorderLayout.WEST);
 
         JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
