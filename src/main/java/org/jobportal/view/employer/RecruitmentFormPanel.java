@@ -13,7 +13,6 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -124,7 +123,7 @@ public class RecruitmentFormPanel extends JPanel {
         formGrid.add(cbCategory, gbc);
 
         gbc.gridx = 1; gbc.insets = new Insets(0, 0, 20, 0);
-        cbJobType = createComboBox(new String[]{"Toàn thời gian", "Bán thời gian", "Thực tập", "Freelance"});
+        cbJobType = createComboBox(new String[]{"Full-time", "Part-time", "Internship"});
         formGrid.add(cbJobType, gbc);
 
         // dong 3: Muc luong & Han nop ho so
@@ -149,7 +148,7 @@ public class RecruitmentFormPanel extends JPanel {
 
         gbc.gridy = 7; gbc.insets = new Insets(0, 0, 20, 0);
         JPanel editorPanel = createEditorField("Nhập chi tiết công việc, yêu cầu và quyền lợi...");
-        txtDescription = (JTextArea) ((JScrollPane) editorPanel.getComponent(1)).getViewport().getView();
+        txtDescription = (JTextArea) ((JScrollPane) editorPanel.getComponent(0)).getViewport().getView();
         formGrid.add(editorPanel, gbc);
 
         card.add(formGrid);
@@ -247,22 +246,6 @@ public class RecruitmentFormPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(new LineBorder(new Color(206, 212, 218), 1));
 
-        // thanh toolbar
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 8));
-        toolbar.setBackground(new Color(248, 249, 250));
-        toolbar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(206, 212, 218)));
-
-        JLabel btnB = new JLabel("B"); btnB.setFont(new Font("Serif", Font.BOLD, 14));
-        JLabel btnI = new JLabel("I"); btnI.setFont(new Font("Serif", Font.ITALIC, 14));
-        JLabel btnList = new JLabel("≡");
-        JLabel btnLink = new JLabel("🔗");
-
-        toolbar.add(btnB);
-        toolbar.add(btnI);
-        toolbar.add(btnList);
-        toolbar.add(btnLink);
-        panel.add(toolbar, BorderLayout.NORTH);
-
         // phan text
         JTextArea textArea = new JTextArea(placeholder);
         textArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -301,15 +284,6 @@ public class RecruitmentFormPanel extends JPanel {
         actionPanel.setBackground(Color.WHITE);
         actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton btnDraft = new JButton("Lưu nháp");
-        btnDraft.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btnDraft.setBackground(Color.WHITE);
-        btnDraft.setForeground(new Color(33, 37, 41));
-        btnDraft.setBorder(new LineBorder(new Color(206, 212, 218), 1));
-        btnDraft.setPreferredSize(new Dimension(120, 45));
-        btnDraft.setFocusPainted(false);
-        btnDraft.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         JButton btnPublish = new JButton("Lưu & Đăng tin");
         btnPublish.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnPublish.setBackground(new Color(13, 110, 253));
@@ -320,7 +294,6 @@ public class RecruitmentFormPanel extends JPanel {
         btnPublish.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnPublish.addActionListener(e -> submitRecruitment());
 
-        actionPanel.add(btnDraft);
         actionPanel.add(btnPublish);
         return actionPanel;
     }

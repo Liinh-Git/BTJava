@@ -177,15 +177,6 @@ public class CompanyInfoPanel extends JPanel {
         actionPanel.setBackground(new Color(248, 249, 250));
         actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton btnCancel = new JButton("Hủy");
-        btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btnCancel.setBackground(Color.WHITE);
-        btnCancel.setForeground(new Color(33, 37, 41));
-        btnCancel.setBorder(new LineBorder(new Color(226, 230, 234), 1));
-        btnCancel.setPreferredSize(new Dimension(100, 45));
-        btnCancel.setFocusPainted(false);
-        btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         JButton btnSave = new JButton("Lưu thay đổi");
         btnSave.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnSave.setBackground(new Color(13, 110, 253));
@@ -209,7 +200,6 @@ public class CompanyInfoPanel extends JPanel {
             }
         });
 
-        actionPanel.add(btnCancel);
         actionPanel.add(btnSave);
         return actionPanel;
     }

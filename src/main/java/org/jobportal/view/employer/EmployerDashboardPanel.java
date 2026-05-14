@@ -42,7 +42,6 @@ public class EmployerDashboardPanel extends JPanel {
         mainContent.setBackground(new Color(248, 249, 250));
         mainContent.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        mainContent.add(createPageHeader());
         mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
 
         mainContent.add(createStatsRow());
@@ -62,27 +61,6 @@ public class EmployerDashboardPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    private JPanel createPageHeader() {
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
-        headerPanel.setBackground(new Color(248, 249, 250));
-        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel lblTitle = new JLabel("Tổng quan nhà tuyển dụng");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        lblTitle.setForeground(new Color(33, 37, 41));
-
-        JLabel lblSub = new JLabel("Theo dõi hiệu suất tuyển dụng và lượng ứng viên theo thời gian thực.");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblSub.setForeground(new Color(108, 117, 125));
-
-        headerPanel.add(lblTitle);
-        headerPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        headerPanel.add(lblSub);
-
-        return headerPanel;
-    }
-
     private JPanel createStatsRow() {
         JPanel panel = new JPanel(new GridLayout(1, 4, 20, 0));
         panel.setBackground(new Color(248, 249, 250));
@@ -94,40 +72,25 @@ public class EmployerDashboardPanel extends JPanel {
         lblTotalApplicants = new JLabel("0");
         lblNewApplicants = new JLabel("0");
 
-        panel.add(createStatCard("T", "TỔNG TIN ĐĂNG", lblTotalRecruitments, "Tất cả", new Color(230, 240, 255), new Color(13, 110, 253)));
-        panel.add(createStatCard("O", "TIN ĐĂNG MỞ", lblOpenRecruitments, "Đang hoạt động", new Color(230, 250, 240), new Color(40, 167, 69)));
-        panel.add(createStatCard("U", "TỔNG ỨNG VIÊN", lblTotalApplicants, "Tất cả", new Color(255, 244, 230), new Color(255, 140, 0)));
-        panel.add(createStatCard("N", "ỨNG VIÊN HÔM NAY", lblNewApplicants, "Hôm nay", new Color(240, 240, 240), new Color(70, 70, 70)));
+        panel.add(createStatCard("TỔNG TIN ĐĂNG", lblTotalRecruitments));
+        panel.add(createStatCard("TIN ĐĂNG MỞ", lblOpenRecruitments));
+        panel.add(createStatCard("TỔNG ỨNG VIÊN", lblTotalApplicants));
+        panel.add(createStatCard("ỨNG VIÊN HÔM NAY", lblNewApplicants));
 
         return panel;
     }
 
-    private JPanel createStatCard(String iconTxt, String label, JLabel valueLabel,
-                                  String badgeTxt, Color badgeBg, Color badgeFg) {
+    private JPanel createStatCard(String label, JLabel valueLabel) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(226, 230, 234), 1),
-                new EmptyBorder(15, 20, 15, 20)
+                new EmptyBorder(10, 20, 15, 20)
         ));
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(Color.WHITE);
-
-        JLabel lblIcon = new JLabel(" " + iconTxt + " ");
-        lblIcon.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblIcon.setOpaque(true);
-        lblIcon.setBackground(new Color(240, 245, 255));
-        lblIcon.setForeground(new Color(13, 110, 253));
-        topPanel.add(lblIcon, BorderLayout.WEST);
-
-        JLabel lblBadge = new JLabel(" " + badgeTxt + " ");
-        lblBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        lblBadge.setOpaque(true);
-        lblBadge.setBackground(badgeBg);
-        lblBadge.setForeground(badgeFg);
-        topPanel.add(lblBadge, BorderLayout.EAST);
 
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
@@ -171,9 +134,9 @@ public class EmployerDashboardPanel extends JPanel {
         lblApprovedCount = new JLabel("0");
         lblRejectedCount = new JLabel("0");
 
-        row.add(createStatusItem("Đang duyệt", lblPendingCount, new Color(255, 193, 7)));
-        row.add(createStatusItem("Đã duyệt", lblApprovedCount, new Color(40, 167, 69)));
-        row.add(createStatusItem("Bị từ chối", lblRejectedCount, new Color(220, 53, 69)));
+        row.add(createStatusItem("Đang duyệt", lblPendingCount));
+        row.add(createStatusItem("Đã duyệt", lblApprovedCount));
+        row.add(createStatusItem("Bị từ chối", lblRejectedCount));
 
         container.add(title);
         container.add(Box.createRigidArea(new Dimension(0, 12)));
@@ -182,20 +145,13 @@ public class EmployerDashboardPanel extends JPanel {
         return container;
     }
 
-    private JPanel createStatusItem(String label, JLabel valueLabel, Color dotColor) {
+    private JPanel createStatusItem(String label, JLabel valueLabel) {
         JPanel item = new JPanel();
         item.setLayout(new BoxLayout(item, BoxLayout.Y_AXIS));
         item.setBackground(Color.WHITE);
 
-        JLabel dot = new JLabel(" ");
-        dot.setOpaque(true);
-        dot.setBackground(dotColor);
-        dot.setPreferredSize(new Dimension(10, 10));
-        dot.setMaximumSize(new Dimension(10, 10));
-
         JPanel dotWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         dotWrapper.setBackground(Color.WHITE);
-        dotWrapper.add(dot);
 
         JLabel lbl = new JLabel(label);
         lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -290,7 +246,7 @@ public class EmployerDashboardPanel extends JPanel {
     }
 
     private JPanel createRecentRow(String col1, String col2, String col3, boolean isHeader, RecruitmentDTO job) {
-        JPanel row = new JPanel(new GridLayout(1, 3));
+        JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
@@ -299,27 +255,48 @@ public class EmployerDashboardPanel extends JPanel {
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.DARK_GRAY;
 
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
+        gbc.insets = new Insets(0, 0, 0, 0);
+
+        // Cột 1: rộng hơn
+        gbc.gridx = 0;
+        gbc.weightx = 0.56; // tăng/giảm theo ý
         JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
         p1.setOpaque(false);
-        JLabel l1 = new JLabel(col1); l1.setFont(font); l1.setForeground(isHeader ? textColor : Color.BLACK);
+        JLabel l1 = new JLabel(col1);
+        l1.setFont(font);
+        l1.setForeground(isHeader ? textColor : Color.BLACK);
         p1.add(l1);
+        row.add(p1, gbc);
 
+        // Cột 2: hẹp hơn
+        gbc.gridx = 1;
+        gbc.weightx = 0.18;
         JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 15));
         p2.setOpaque(false);
-        JLabel l2 = new JLabel(col2); l2.setFont(font); l2.setForeground(textColor);
+        JLabel l2 = new JLabel(col2);
+        l2.setFont(font);
+        l2.setForeground(textColor);
         p2.add(l2);
+        row.add(p2, gbc);
 
+        // Cột 3: hẹp hơn
+        gbc.gridx = 2;
+        gbc.weightx = 0.26;
         JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 15));
         p3.setOpaque(false);
-        JLabel l3 = new JLabel(col3); l3.setFont(font); l3.setForeground(textColor);
+        JLabel l3 = new JLabel(col3);
+        l3.setFont(font);
+        l3.setForeground(textColor);
         p3.add(l3);
-
-        row.add(p1);
-        row.add(p2);
-        row.add(p3);
+        row.add(p3, gbc);
 
         return row;
     }
+
 
     private JPanel createEmptyRow() {
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));

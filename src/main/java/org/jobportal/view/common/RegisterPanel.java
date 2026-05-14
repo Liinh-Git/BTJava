@@ -159,35 +159,31 @@ public class RegisterPanel extends JPanel {
 
         // Event listeners
         btnRegister.addActionListener(e -> {
-            String username = txtUsername.getText().trim();
-            String email = txtEmail.getText().trim();
+            String username = txtUsername.getText();
+            String email = txtEmail.getText();
             String pass = new String(txtPass.getPassword());
             String confirm = new String(txtConfirm.getPassword());
 
             if (username.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
-                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (!pass.equals(confirm)) {
-                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             Role selectedRole = cbRole.getSelectedIndex() == 0 ? Role.CANDIDATE : Role.EMPLOYER;
 
-            boolean registered = authService.register(username, email, pass, confirm, selectedRole);
+            boolean registered = authService.register(username.trim(), email.trim(), pass, confirm, selectedRole);
 
             if (registered) {
-                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 if (mainFrame != null) {
                     mainFrame.showLogin();
                 }
             } else {
-                String message = authService.getLastErrorMessage();
-                if (message == null || message.isBlank()) {
-                    message = "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.";
-                }
-                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

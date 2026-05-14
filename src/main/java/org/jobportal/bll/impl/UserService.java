@@ -6,12 +6,14 @@ import org.jobportal.dal.impl.UserDAO;
 import org.jobportal.dal.interfaces.IEmployerDAO;
 import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.dto.UserDTO;
+import org.jobportal.enums.Gender;
 import org.jobportal.enums.Role;
 import org.jobportal.model.Employer;
 import org.jobportal.model.User;
 import org.jobportal.utils.SessionManager;
 import org.jobportal.utils.ValidationUtils;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -158,7 +160,7 @@ public class UserService implements IUserService {
      * Cap nhat thong tin ca nhan (ten hien thi, so dien thoai) cho user dang dang nhap.
      */
     @Override
-    public boolean updateUserProfile(String fullName, String phoneNumber) {
+    public boolean updateUserProfile(String fullName, String phoneNumber, String email, String address, LocalDate dateOfBirth, Gender gender) {
         if (!session.isLoggedIn()) {
             System.err.println("[UserService] updateUserProfile: chua dang nhap.");
             return false;
@@ -166,6 +168,10 @@ public class UserService implements IUserService {
 
         if (ValidationUtils.isNullOrEmpty(fullName)) {
             System.err.println("[UserService] updateUserProfile: fullName khong duoc de trong.");
+            return false;
+        }
+        if (!ValidationUtils.isValidEmail(email)) {
+            System.err.println("[UserService] updateUserProfile: email khong hop le.");
             return false;
         }
 
@@ -179,6 +185,11 @@ public class UserService implements IUserService {
         user.setFullName(fullName.trim());
         String phone = (phoneNumber != null) ? phoneNumber.trim() : null;
         user.setPhoneNumber((phone != null && !phone.isEmpty()) ? phone : null);
+        user.setEmail(email.trim());
+        String addr = (address != null) ? address.trim() : null;
+        user.setAddress((addr != null && !addr.isEmpty()) ? addr : null);
+        user.setDateOfBirth(dateOfBirth);
+        user.setGender(gender);
 
         boolean updated = userDAO.update(user);
         if (updated) {
@@ -186,6 +197,10 @@ public class UserService implements IUserService {
             if (current != null) {
                 current.setFullName(user.getFullName());
                 current.setPhoneNumber(user.getPhoneNumber());
+                current.setEmail(user.getEmail());
+                current.setAddress(user.getAddress());
+                current.setDateOfBirth(user.getDateOfBirth());
+                current.setGender(user.getGender());
             }
         }
         return updated;
@@ -196,15 +211,19 @@ public class UserService implements IUserService {
     // ------------------------------------------------------------------
 
     private UserDTO mapToDTO(User user) {
-        return new UserDTO(
+        UserDTO dto = new UserDTO(
                 user.getUserId(),
                 user.getUsername(),
                 user.getFullName(),
                 user.getEmail(),
+                user.getAddress(),
                 user.getPhoneNumber(),
                 user.getRole(),
                 user.isActive(),
                 null   // companyName: se set neu can thiet
         );
+        dto.setDateOfBirth(user.getDateOfBirth());
+        dto.setGender(user.getGender());
+        return dto;
     }
 }

@@ -21,8 +21,10 @@ import org.jobportal.model.Candidate;
 import org.jobportal.model.Employer;
 import org.jobportal.model.Recruitment;
 import org.jobportal.model.User;
+import org.jobportal.utils.IdGenerator;
 import org.jobportal.utils.SessionManager;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,8 +50,8 @@ public class ApplicationService implements IApplicationService {
 
     /** Sinh applicationId format "APP-" + 6 so => 10 ky tu */
     private String generateApplicationId() {
-        long ts = System.currentTimeMillis() % 1_000_000L;
-        return String.format("APP-%06d", ts);
+        String latestId = applicationDAO.getLatestApplicationId();
+        return IdGenerator.nextId(latestId, "APP", 6);
     }
 
     // ------------------------------------------------------------------
@@ -64,7 +66,14 @@ public class ApplicationService implements IApplicationService {
      */
     @Override
     public boolean applyRecruitment(String candidateId, String recruitmentId) {
-        if (candidateId == null || recruitmentId == null) return false;
+        if (candidateId == null || candidateId.isBlank() || recruitmentId == null || recruitmentId.isBlank()) {
+            return false;
+        }
+
+        if (candidateDAO.findById(candidateId) == null) {
+            System.err.println("[ApplicationService] applyRecruitment: candidateId khong ton tai = " + candidateId);
+            return false;
+        }
 
         // 1. Lay va kiem tra tin tuyen dung
         Recruitment r = recruitmentDAO.findById(recruitmentId);
@@ -76,7 +85,7 @@ public class ApplicationService implements IApplicationService {
             System.err.println("[ApplicationService] applyRecruitment: tin da dong hoac het han.");
             return false;
         }
-        if (r.getDueDate() != null && r.getDueDate().isBefore(LocalDateTime.now())) {
+        if (r.getDueDate() != null && r.getDueDate().toLocalDate().isBefore(LocalDate.now())) {
             System.err.println("[ApplicationService] applyRecruitment: tin het han nop.");
             return false;
         }
@@ -87,20 +96,21 @@ public class ApplicationService implements IApplicationService {
             return false;
         }
 
-        // 3. Sinh ID
+        // 3. Sinh ID theo ID lon nhat + 1
         String applicationId = generateApplicationId();
-        while (true) {
-            // Kiem tra co the lay application nay khong (don gian: thu insert, neu loi thi sinh lai)
-            // Thay bang check khac neu DAO ho tro
-            break;
-        }
 
         // 4. Tao don
         Application app = new Application(
                 applicationId, candidateId, recruitmentId,
                 ApplicationStatus.PENDING, LocalDateTime.now()
         );
-        boolean inserted = applicationDAO.insert(app);
+        boolean inserted;
+        try {
+            inserted = applicationDAO.insert(app);
+        } catch (RuntimeException ex) {
+            System.err.println("[ApplicationService] applyRecruitment: loi khi insert application: " + ex.getMessage());
+            return false;
+        }
         if (inserted) {
             // Lay userId cua candidate de lam sender
             String senderUserId = getCandidateUserId(candidateId);
@@ -119,7 +129,7 @@ public class ApplicationService implements IApplicationService {
             }
 
             if (receiverUserId != null) {
-                String content = "📋 Ung vien " + candidateName
+                String content = "Ung vien " + candidateName
                         + " da nop ho so ung tuyen vao vi tri: " + r.getTitle();
                 notificationService.sendNotification(senderUserId, receiverUserId, content);
             }
@@ -313,7 +323,7 @@ public class ApplicationService implements IApplicationService {
 
         return new UserDTO(
                 user.getUserId(), user.getUsername(), user.getFullName(),
-                user.getEmail(), user.getPhoneNumber(),
+                user.getEmail(), user.getAddress(), user.getPhoneNumber(),
                 user.getRole(), user.isActive(), null
         );
     }
@@ -345,50 +355,46 @@ public class ApplicationService implements IApplicationService {
                                              ApplicationStatus newStatus) {
         if (applicationId == null || applicationId.isBlank()) return false;
 
-        // Tim don trong tat ca danh sach (lay theo recruitmentId cua don nay)
-        // Vì DAO khong co findById(applicationId), ta phai lay theo candidateId (khong biet)
-        // hoac tim qua employer. Giai phap: lay het theo employerId thi complex.
-        // Thay vao do: kiem tra quyen qua session.getEmployerId() va recruitmentDAO.
         String employerId = session.getEmployerId();
         if (employerId == null) {
             System.err.println("[ApplicationService] changeStatus: chua dang nhap hoac khong phai EMPLOYER.");
             return false;
         }
 
-        // TODO: Nếu DAO chưa có findById(applicationId), bỏ qua kiểm tra sở hữu ở đây.
-        // Sau khi DAL bổ sung phương thức này, hãy thêm lại.
-        // TODO: Sau nay goi NotificationService de thong bao cho Candidate
+        Application target = applicationDAO.findById(applicationId);
+        if (target == null) {
+            System.err.println("[ApplicationService] changeStatus: khong tim thay applicationId=" + applicationId);
+            return false;
+        }
+
+        Recruitment recruitment = recruitmentDAO.findById(target.getRecruitmentId());
+        if (recruitment == null || !employerId.equals(recruitment.getEmployerId())) {
+            System.err.println("[ApplicationService] changeStatus: employer khong co quyen doi trang thai don nay.");
+            return false;
+        }
 
         boolean updated = applicationDAO.updateStatus(applicationId, newStatus);
         if (updated) {
-            Application target = findApplicationForEmployer(applicationId);
-            if (target != null) {
-                String candidateUserId = getCandidateUserId(target.getCandidateId());
-                Recruitment r = recruitmentDAO.findById(target.getRecruitmentId());
-                String jobTitle = (r != null && r.getTitle() != null) ? r.getTitle() : "(khong ro vi tri)";
+            String candidateUserId = getCandidateUserId(target.getCandidateId());
+            String jobTitle = (recruitment.getTitle() != null) ? recruitment.getTitle() : "(khong ro vi tri)";
 
-                // Lay ten cong ty de thong bao ro hon
-                String companyName = "Nha tuyen dung";
-                if (r != null) {
-                    org.jobportal.model.Employer emp =
-                            new org.jobportal.dal.impl.EmployerDAO().findById(r.getEmployerId());
-                    if (emp != null && emp.getCompanyName() != null) {
-                        companyName = emp.getCompanyName();
-                    }
-                }
+            String companyName = "Nha tuyen dung";
+            org.jobportal.model.Employer emp = new org.jobportal.dal.impl.EmployerDAO().findById(recruitment.getEmployerId());
+            if (emp != null && emp.getCompanyName() != null) {
+                companyName = emp.getCompanyName();
+            }
 
-                String content;
-                if (newStatus == ApplicationStatus.APPROVED) {
-                    content = "✅ Chuc mung! Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
-                            + "\" tai " + companyName + " da duoc CHAP NHAN.";
-                } else {
-                    content = "❌ Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
-                            + "\" tai " + companyName + " da bi TU CHOI. Cam on ban da quan tam!";
-                }
+            String content;
+            if (newStatus == ApplicationStatus.APPROVED) {
+                content = "Chuc mung! Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
+                        + "\" tai " + companyName + " da duoc CHAP NHAN.";
+            } else {
+                content = "Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
+                        + "\" tai " + companyName + " da bi TU CHOI. Cam on ban da quan tam!";
+            }
 
-                if (candidateUserId != null) {
-                    notificationService.sendNotification(session.getCurrentUserId(), candidateUserId, content);
-                }
+            if (candidateUserId != null) {
+                notificationService.sendNotification(session.getCurrentUserId(), candidateUserId, content);
             }
         }
         return updated;
@@ -448,25 +454,5 @@ public class ApplicationService implements IApplicationService {
         if (employerId == null || employerId.isBlank()) return null;
         Employer e = employerDAO.findById(employerId);
         return e != null ? e.getUserId() : null;
-    }
-
-    private Application findApplicationForEmployer(String applicationId) {
-        if (applicationId == null || applicationId.isBlank()) return null;
-        String employerId = session.getEmployerId();
-        if (employerId == null || employerId.isBlank()) return null;
-
-        List<Recruitment> recruitments = recruitmentDAO.findByEmployerId(employerId);
-        if (recruitments == null || recruitments.isEmpty()) return null;
-
-        for (Recruitment r : recruitments) {
-            List<Application> apps = applicationDAO.findByRecruitmentId(r.getRecruitmentId());
-            if (apps == null) continue;
-            for (Application a : apps) {
-                if (applicationId.equals(a.getApplicationId())) {
-                    return a;
-                }
-            }
-        }
-        return null;
     }
 }

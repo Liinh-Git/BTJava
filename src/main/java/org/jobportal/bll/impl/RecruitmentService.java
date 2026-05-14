@@ -20,6 +20,7 @@ import org.jobportal.model.Application;
 import org.jobportal.model.Category;
 import org.jobportal.model.Employer;
 import org.jobportal.model.Recruitment;
+import org.jobportal.utils.IdGenerator;
 import org.jobportal.utils.SessionManager;
 
 import java.time.LocalDate;
@@ -48,8 +49,8 @@ public class RecruitmentService implements IRecruitmentService {
 
     /** Sinh recruitmentId format "REC-" + 6 so => 10 ky tu */
     private String generateRecruitmentId() {
-        long ts = System.currentTimeMillis() % 1_000_000L;
-        return String.format("REC-%06d", ts);
+        String latestId = recruitmentDAO.getLatestRecruitmentId();
+        return IdGenerator.nextId(latestId, "REC", 6);
     }
 
     // ------------------------------------------------------------------
@@ -79,10 +80,6 @@ public class RecruitmentService implements IRecruitmentService {
         }
 
         String recruitmentId = generateRecruitmentId();
-        while (recruitmentDAO.findById(recruitmentId) != null) {
-            try { Thread.sleep(1); } catch (InterruptedException ignored) {}
-            recruitmentId = generateRecruitmentId();
-        }
 
         String resolvedLocation = null;
         if (location != null && !location.isBlank() && !"Địa chỉ mặc định công ty".equalsIgnoreCase(location.trim())) {
