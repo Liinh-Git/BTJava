@@ -14,8 +14,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -37,10 +35,6 @@ public class AppliedJobsPanel extends JPanel {
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
         mainContent.setBackground(new Color(248, 249, 250));
         mainContent.setBorder(new EmptyBorder(30, 40, 30, 40));
-
-        // 1. tieu de trang va cac nut thao tac
-        mainContent.add(createPageHeader());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
 
         // 2. phan thong ke (3 the: Total, Active, Success Rate)
         statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
@@ -64,95 +58,6 @@ public class AppliedJobsPanel extends JPanel {
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
-    }
-
-    // ham tao tieu de trang
-    private JPanel createPageHeader() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(248, 249, 250));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-
-        // ben trai: Tieu de va mo ta
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(new Color(248, 249, 250));
-
-        JLabel lblTitle = new JLabel("Việc làm đã ứng tuyển");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-
-        JLabel lblSub = new JLabel("Theo dõi trạng thái các đơn ứng tuyển của bạn.");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblSub.setForeground(Color.GRAY);
-
-        leftPanel.add(lblTitle);
-        leftPanel.add(lblSub);
-
-        // ben phai: Export
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rightPanel.setBackground(new Color(248, 249, 250));
-
-        JButton btnExport = createOutlineButton("↓ Xuất CSV", "");
-
-        btnExport.addActionListener(e -> exportToCSV());
-
-        rightPanel.add(btnExport);
-
-        panel.add(leftPanel, BorderLayout.WEST);
-        panel.add(rightPanel, BorderLayout.EAST);
-        return panel;
-    }
-
-    // Xuat danh sach ra file CSV
-    private void exportToCSV() {
-        if (currentApps == null || currentApps.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Lưu file báo cáo");
-        fileChooser.setSelectedFile(new java.io.File("applied_jobs_report.csv"));
-        int result = fileChooser.showSaveDialog(this);
-        if (result != JFileChooser.APPROVE_OPTION) return;
-
-        java.io.File file = fileChooser.getSelectedFile();
-        // Dam bao co duoi .csv
-        if (!file.getName().toLowerCase().endsWith(".csv")) {
-            file = new java.io.File(file.getAbsolutePath() + ".csv");
-        }
-
-        try (FileWriter fw = new FileWriter(file)) {
-            // Ghi header
-            fw.write("STT,Tên công việc,Công ty,Ngày ứng tuyển,Trạng thái\n");
-
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-            int idx = 1;
-            for (ApplicationDTO app : currentApps) {
-                String title = csvEscape(app.getJobTitle());
-                String company = csvEscape(app.getCompanyName());
-                String date = app.getAppliedDate() != null ? app.getAppliedDate().format(fmt) : "N/A";
-                String status = toStatusLabel(app.getStatus());
-                fw.write(idx++ + "," + title + "," + company + "," + date + "," + status + "\n");
-            }
-
-            JOptionPane.showMessageDialog(this,
-                "Xuất báo cáo thành công!\nFile: " + file.getAbsolutePath(),
-                "Thành công", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this,
-                "Lỗi khi xuất file: " + ex.getMessage(),
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // Thoat ky tu dac biet trong CSV (bao ca dau phay va xuat tuyến trong gia tri)
-    private String csvEscape(String value) {
-        if (value == null) return "";
-        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        }
-        return value;
     }
 
     // ham tao 3 the thong ke
@@ -194,9 +99,11 @@ public class AppliedJobsPanel extends JPanel {
         JLabel lblLabel = new JLabel(label);
         lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblLabel.setForeground(Color.GRAY);
+        lblLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         valuePanel.setBackground(Color.WHITE);
+        valuePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         JLabel lblValue = new JLabel(value);
         lblValue.setFont(new Font("Segoe UI", Font.BOLD, 28));
         valuePanel.add(lblValue);
@@ -221,6 +128,7 @@ public class AppliedJobsPanel extends JPanel {
         updateStats(candidateId);
         
         tableContainer.removeAll();
+        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
         tableContainer.add(createRow("TIN TUYỂN DỤNG", "CÔNG TY", "NGÀY ỨNG TUYỂN", "TRẠNG THÁI", "THAO TÁC", true, null));
 
         if (candidateId != null) {
@@ -229,7 +137,7 @@ public class AppliedJobsPanel extends JPanel {
             currentApps = null;
         }
 
-        if (currentApps != null) {
+        if (currentApps != null && !currentApps.isEmpty()) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
             for (ApplicationDTO app : currentApps) {
                 String title = app.getJobTitle();
@@ -239,6 +147,8 @@ public class AppliedJobsPanel extends JPanel {
                 
                 tableContainer.add(createRow(title, company, dateStr, statusStr, "...", false, app));
             }
+        } else {
+            tableContainer.add(createEmptyStateRow());
         }
 
         JPanel footer = new JPanel(new BorderLayout());
@@ -250,17 +160,32 @@ public class AppliedJobsPanel extends JPanel {
             lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             lblCount.setForeground(Color.GRAY);
         }
-        lblCount.setText("Hiển thị " + (currentApps != null ? currentApps.size() : 0) + " đơn ứng tuyển");
+        lblCount.setText("Hiá»ƒn thá»‹ " + (currentApps != null ? currentApps.size() : 0) + " Ä‘Æ¡n á»©ng tuyá»ƒn");
         footer.add(lblCount, BorderLayout.WEST);
 
-        JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        pagination.setBackground(Color.WHITE);
-        pagination.add(createPageBtn("1", true));
-        footer.add(pagination, BorderLayout.EAST);
+        if (currentApps != null && !currentApps.isEmpty()) {
+            JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+            pagination.setBackground(Color.WHITE);
+            pagination.add(createPageBtn("1", true));
+            footer.add(pagination, BorderLayout.EAST);
+        }
 
         tableContainer.add(footer);
         tableContainer.revalidate();
         tableContainer.repaint();
+    }
+
+    private JPanel createEmptyStateRow() {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setBackground(Color.WHITE);
+        row.setBorder(new EmptyBorder(28, 20, 28, 20));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+
+        JLabel lbl = new JLabel("Hiện chưa có đơn ứng tuyển nào.");
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lbl.setForeground(new Color(108, 117, 125));
+        row.add(lbl, BorderLayout.CENTER);
+        return row;
     }
 
     private JPanel createRow(String col1, String col2, String col3, String status, String action, boolean isHeader, ApplicationDTO app) {
@@ -274,7 +199,7 @@ public class AppliedJobsPanel extends JPanel {
         Color textColor = isHeader ? Color.GRAY : Color.BLACK;
 
         // cot 1: Job Title
-        JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel p1 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
         p1.setOpaque(false);
         JLabel l1 = new JLabel(col1);
         l1.setFont(font); l1.setForeground(textColor);
@@ -282,7 +207,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p1);
 
         // cot 2: Company
-        JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel p2 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
         p2.setOpaque(false);
         JLabel l2 = new JLabel(col2);
         l2.setFont(font); l2.setForeground(textColor);
@@ -290,7 +215,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p2);
 
         // cot 3: Date
-        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel p3 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
         p3.setOpaque(false);
         JLabel l3 = new JLabel(col3);
         l3.setFont(font); l3.setForeground(textColor);
@@ -298,7 +223,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p3);
 
         // cot 4: Status
-        JPanel p4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
+        JPanel p4 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 20));
         p4.setOpaque(false);
         if (isHeader) {
             JLabel l4 = new JLabel(status);
@@ -310,12 +235,12 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p4);
 
         // cot 5: Actions
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 15));
+        JPanel p5 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.RIGHT, 20, 15));
         p5.setOpaque(false);
         if (isHeader) {
             JLabel l5 = new JLabel(action);
-            l5.setFont(new Font("Arial", Font.BOLD, 18));
-            l5.setForeground(Color.GRAY);
+            l5.setFont(font);
+            l5.setForeground(textColor);
             p5.add(l5);
         } else {
             JButton btnCancel = new JButton("Hủy");
@@ -372,16 +297,6 @@ public class AppliedJobsPanel extends JPanel {
         if (status == ApplicationStatus.APPROVED) return "Đã duyệt";
         if (status == ApplicationStatus.REJECTED) return "Bị từ chối";
         return "Đang duyệt";
-    }
-
-    private JButton createOutlineButton(String text, String icon) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        btn.setBackground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-        btn.setPreferredSize(new Dimension(100, 35));
-        return btn;
     }
 
     private JButton createPageBtn(String text, boolean active) {

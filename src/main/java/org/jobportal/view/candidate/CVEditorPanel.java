@@ -132,9 +132,9 @@ public class CVEditorPanel extends JPanel {
             if (success) {
                 currentCV = cvService.getCV(SessionManager.getInstance().getCandidateId());
                 loadEducations();
-                JOptionPane.showMessageDialog(this, "LÆ°u CV thÃ nh cÃ´ng!");
+                JOptionPane.showMessageDialog(this, "Lưu CV thành công!");
             } else {
-                JOptionPane.showMessageDialog(this, "Lá»—i khi lÆ°u CV!", "Lá»—i", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lỗi khi lưu CV!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -147,11 +147,11 @@ public class CVEditorPanel extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
 
-        JPanel titleBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel titleBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         titleBox.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("THÃ”NG TIN CÃ NHÃ‚N");
+        JLabel lblTitle = new JLabel("THÔNG TIN CÁ NHÂN");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        JLabel lblBadge = new JLabel(" Há»’ SÆ  ÄANG HOáº T Äá»˜NG ");
+        JLabel lblBadge = new JLabel(" HỒ SƠ ĐANG HOẠT ĐỘNG ");
         lblBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblBadge.setForeground(new Color(40, 167, 69)); // mau xanh la
         lblBadge.setBackground(new Color(233, 245, 236));
@@ -163,15 +163,15 @@ public class CVEditorPanel extends JPanel {
         JPanel actionButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionButtons.setBackground(Color.WHITE);
 
-        JButton btnReloadProfile = createButton("Táº¢I Láº I", Color.WHITE, new Color(13, 110, 253));
+        JButton btnReloadProfile = createButton("TẢI LẠI", Color.WHITE, new Color(13, 110, 253));
         btnReloadProfile.setBorder(new LineBorder(new Color(13, 110, 253), 1));
         btnReloadProfile.addActionListener(e -> loadData());
 
-        JButton btnAccountSettings = createButton("TÃ€I KHOáº¢N", Color.WHITE, new Color(13, 110, 253));
+        JButton btnAccountSettings = createButton("TÀI KHOẢN", Color.WHITE, new Color(13, 110, 253));
         btnAccountSettings.setBorder(new LineBorder(new Color(13, 110, 253), 1));
         btnAccountSettings.addActionListener(e -> openAccountSettingsTab());
 
-        JButton btnSave = createButton("SAVE CHANGES", new Color(13, 110, 253), Color.WHITE);
+        JButton btnSave = createButton("LƯU THAY ĐỔI", new Color(13, 110, 253), Color.WHITE);
         btnSave.addActionListener(e -> saveCVData());
 
         actionButtons.add(btnReloadProfile);
@@ -194,13 +194,13 @@ public class CVEditorPanel extends JPanel {
         txtUsername.setBackground(new Color(245, 247, 250));
         formPanel.add(p0);
 
-        JPanel p1 = createFormGroup("Há» vÃ  tÃªn", "Nguyá»…n VÄƒn A");
+        JPanel p1 = createFormGroup("Họ và tên", "Nguyễn Văn A");
         txtFullName = (JTextField) p1.getComponent(2);
         txtFullName.setEditable(false);
         txtFullName.setBackground(new Color(245, 247, 250));
         formPanel.add(p1);
         
-        JPanel p2 = createFormGroup("Sá»‘ Ä‘iá»‡n thoáº¡i", "0900000000");
+        JPanel p2 = createFormGroup("Số điện thoại", "0900000000");
         txtPhone = (JTextField) p2.getComponent(2);
         txtPhone.setEditable(false);
         txtPhone.setBackground(new Color(245, 247, 250));
@@ -212,25 +212,25 @@ public class CVEditorPanel extends JPanel {
         txtEmail.setBackground(new Color(245, 247, 250));
         formPanel.add(p3);
 
-        JPanel p4 = createFormGroup("Äá»‹a chá»‰ hiá»‡n táº¡i", "123 ÄÆ°á»ng ABC, Quáº­n 1, TP.HCM");
+        JPanel p4 = createFormGroup("Địa chỉ hiện tại", "123 Đường ABC, Quận 1, TP.HCM");
         txtAddress = (JTextField) p4.getComponent(2);
         txtAddress.setEditable(false);
         txtAddress.setBackground(new Color(245, 247, 250));
         formPanel.add(p4);
 
-        JPanel p5 = createFormGroup("NgÃ y sinh", "01/01/1990");
+        JPanel p5 = createFormGroup("Ngày sinh", "01/01/1990");
         txtBirthday = (JTextField) p5.getComponent(2);
         txtBirthday.setEditable(false);
         txtBirthday.setBackground(new Color(245, 247, 250));
         formPanel.add(p5);
 
-        JPanel p6 = createFormGroup("Giá»›i tÃ­nh", "Nam");
+        JPanel p6 = createFormGroup("Giới tính", "Nam");
         txtGender = (JTextField) p6.getComponent(2);
         txtGender.setEditable(false);
         txtGender.setBackground(new Color(245, 247, 250));
         formPanel.add(p6);
 
-        JPanel p7 = createFormGroup("Vá»‹ trÃ­ mong muá»‘n", "Láº­p trÃ¬nh viÃªn Java");
+        JPanel p7 = createFormGroup("Vị trí mong muốn", "Lập trình viên Java");
         txtTitle = (JTextField) p7.getComponent(2);
         formPanel.add(p7);      
         
@@ -245,11 +245,11 @@ public class CVEditorPanel extends JPanel {
 
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("Má»¤C TIÃŠU");
+        JLabel lblTitle = new JLabel("MỤC TIÊU");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
-        JLabel lblReset = new JLabel("Äáº¶T Láº I");
+        JLabel lblReset = new JLabel("ĐẶT LẠI");
         lblReset.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblReset.setForeground(new Color(13, 110, 253));
         lblReset.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -260,7 +260,7 @@ public class CVEditorPanel extends JPanel {
         card.add(new JSeparator());
         card.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        txtObjective = new JTextArea("Innovative and results-driven...");
+        txtObjective = new JTextArea("Phát triển sự nghiệp trong lĩnh vực công nghệ thông tin...");
         txtObjective.setForeground(Color.GRAY);
         txtObjective.setLineWrap(true);
         txtObjective.setWrapStyleWord(true);
@@ -271,14 +271,14 @@ public class CVEditorPanel extends JPanel {
         ));
         txtObjective.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtObjective.getText().equals("Innovative and results-driven...")) {
+                if (txtObjective.getText().equals("Phát triển sự nghiệp trong lĩnh vực công nghệ thông tin...")) {
                     txtObjective.setText("");
                     txtObjective.setForeground(Color.BLACK);
                 }
             }
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (txtObjective.getText().isEmpty()) {
-                    txtObjective.setText("Innovative and results-driven...");
+                    txtObjective.setText("Phát triển sự nghiệp trong lĩnh vực công nghệ thông tin...");
                     txtObjective.setForeground(Color.GRAY);
                 }
             }
@@ -294,7 +294,7 @@ public class CVEditorPanel extends JPanel {
 
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("Ká»¸ NÄ‚NG");
+        JLabel lblTitle = new JLabel("KỸ NĂNG");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
@@ -306,30 +306,30 @@ public class CVEditorPanel extends JPanel {
         // thanh them skill
         JPanel inputPanel = new JPanel(new BorderLayout(10, 0));
         inputPanel.setBackground(Color.WHITE);
-        txtSkill = new JTextField("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)");
+        txtSkill = new JTextField("Thêm kỹ năng (ví dụ: React, Quản lý dự án)");
         txtSkill.setForeground(Color.GRAY);
         txtSkill.setPreferredSize(new Dimension(0, 40));
         txtSkill.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtSkill.getText().equals("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)")) {
+                if (txtSkill.getText().equals("Thêm kỹ năng (ví dụ: React, Quản lý dự án)")) {
                     txtSkill.setText("");
                     txtSkill.setForeground(Color.BLACK);
                 }
             }
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (txtSkill.getText().isEmpty()) {
-                    txtSkill.setText("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)");
+                    txtSkill.setText("Thêm kỹ năng (ví dụ: React, Quản lý dự án)");
                     txtSkill.setForeground(Color.GRAY);
                 }
             }
         });
         inputPanel.add(txtSkill, BorderLayout.CENTER);
 
-        JButton btnAddSkill = createButton("THÃŠM", new Color(13, 110, 253), Color.WHITE);
+        JButton btnAddSkill = createButton("THÊM", new Color(13, 110, 253), Color.WHITE);
         btnAddSkill.setPreferredSize(new Dimension(120, 40));
         btnAddSkill.addActionListener(e -> {
             String s = txtSkill.getText().trim();
-            if (!s.isEmpty() && !s.equals("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)")) {
+            if (!s.isEmpty() && !s.equals("Thêm kỹ năng (ví dụ: React, Quản lý dự án)")) {
                 addSkillTag(s);
                 tagsPanel.revalidate();
                 tagsPanel.repaint();
@@ -355,11 +355,11 @@ public class CVEditorPanel extends JPanel {
 
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("Há»ŒC Váº¤N");
+        JLabel lblTitle = new JLabel("HỌC VẤN");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
-        JButton btnAddEdu = createButton("THÃŠM", new Color(13, 110, 253), Color.WHITE);
+        JButton btnAddEdu = createButton("THÊM", new Color(13, 110, 253), Color.WHITE);
         btnAddEdu.addActionListener(e -> openEducationDialog(null));
         headerPanel.add(btnAddEdu, BorderLayout.EAST);
 
@@ -379,12 +379,11 @@ public class CVEditorPanel extends JPanel {
     
     private void loadEducations() {
         educationTable.removeAll();
-        educationTable.add(createTableRow("TRÆ¯á»œNG", "CHUYÃŠN NGÃ€NH", "NÄ‚M", "THAO TÃC", true));
-        educationTable.removeAll();
-        educationTable.add(createTableRow("TRÆ¯á»œNG", "CHUYÃŠN NGÃ€NH", "NÄ‚M", "THAO TÃC", true));
+        educationTable.add(createEducationHeader());
         if (currentCV != null && currentCV.getEducations() != null) {
             for (Education edu : currentCV.getEducations()) {
-                educationTable.add(createTableRow(edu, false));
+                educationTable.add(createEducationItem(edu));
+                educationTable.add(Box.createRigidArea(new Dimension(0, 10)));
             }
         }
         educationTable.revalidate();
@@ -606,6 +605,87 @@ public class CVEditorPanel extends JPanel {
 
     private String safeText(String value) {
         return value != null ? value : "";
+    }
+
+    private JPanel createEducationHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(248, 249, 250));
+        header.setBorder(new EmptyBorder(10, 12, 10, 12));
+
+        JLabel lbl = new JLabel("Thong tin hoc van");
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lbl.setForeground(new Color(73, 80, 87));
+        header.add(lbl, BorderLayout.WEST);
+        return header;
+    }
+
+    private JPanel createEducationItem(Education education) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setBackground(Color.WHITE);
+        wrapper.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(230, 230, 230), 1),
+                new EmptyBorder(12, 12, 12, 12)
+        ));
+        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(Color.WHITE);
+
+        String year = "Chua cap nhat";
+        if (education.getStartYear() != null && education.getEndYear() != null) {
+            year = education.getStartYear() + " - " + education.getEndYear();
+        } else if (education.getStartYear() != null) {
+            year = "Tu " + education.getStartYear();
+        } else if (education.getEndYear() != null) {
+            year = "Den " + education.getEndYear();
+        }
+
+        content.add(createEducationLine("Truong", safeText(education.getSchool())));
+        content.add(createEducationLine("Bang cap", safeText(education.getDegree())));
+        content.add(createEducationLine("Chuyen nganh", safeText(education.getMajor())));
+        content.add(createEducationLine("Thoi gian", year));
+        content.add(createEducationLine("Mo ta", safeText(education.getDescription())));
+
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actionPanel.setBackground(Color.WHITE);
+
+        JButton btnEdit = new JButton("Sua");
+        btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btnEdit.addActionListener(e -> openEducationDialog(education));
+
+        JButton btnDelete = new JButton("Xoa");
+        btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btnDelete.setForeground(Color.RED);
+        btnDelete.addActionListener(e -> {
+            currentCV.getEducations().remove(education);
+            loadEducations();
+        });
+
+        actionPanel.add(btnEdit);
+        actionPanel.add(btnDelete);
+
+        wrapper.add(content, BorderLayout.CENTER);
+        wrapper.add(actionPanel, BorderLayout.SOUTH);
+        return wrapper;
+    }
+
+    private JPanel createEducationLine(String label, String value) {
+        JPanel line = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        line.setBackground(Color.WHITE);
+
+        JLabel lbl = new JLabel(label + ":");
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lbl.setForeground(new Color(73, 80, 87));
+
+        String displayValue = (value == null || value.isBlank()) ? "Chua cap nhat" : value;
+        JLabel txt = new JLabel(displayValue);
+        txt.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txt.setForeground(new Color(33, 37, 41));
+
+        line.add(lbl);
+        line.add(txt);
+        return line;
     }
 
     private JPanel createTableRow(Education education, boolean isHeader) {
