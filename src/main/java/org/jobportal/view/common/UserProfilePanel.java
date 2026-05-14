@@ -72,7 +72,7 @@ public class UserProfilePanel extends JPanel {
         txtEmail.setText(user.getEmail() != null ? user.getEmail() : "");
         txtAddress.setText(user.getAddress() != null ? user.getAddress() : "");
         txtDateOfBirth.setText(user.getDateOfBirth() != null ? user.getDateOfBirth().format(DOB_FMT) : "");
-        cbGender.setSelectedItem(user.getGender() != null ? user.getGender().name() : "OTHER");
+        cbGender.setSelectedItem(toGenderLabel(user.getGender()));
     }
 
     private JPanel createPageHeader() {
@@ -181,7 +181,7 @@ public class UserProfilePanel extends JPanel {
             }
         }
 
-        Gender gender = Gender.valueOf((String) cbGender.getSelectedItem());
+        Gender gender = toGenderEnum((String) cbGender.getSelectedItem());
         boolean success = userService.updateUserProfile(
                 txtFullName.getText().trim(),
                 txtPhone.getText().trim(),
@@ -335,5 +335,20 @@ public class UserProfilePanel extends JPanel {
         panel.add(Box.createRigidArea(new Dimension(0, 8)));
         panel.add(input);
         return panel;
+    }
+
+    private String toGenderLabel(Gender gender) {
+        if (gender == null) return "Khác";
+        return switch (gender) {
+            case MALE -> "Nam";
+            case FEMALE -> "Nữ";
+            default -> "Khác";
+        };
+    }
+
+    private Gender toGenderEnum(String label) {
+        if ("Nam".equalsIgnoreCase(label)) return Gender.MALE;
+        if ("Nữ".equalsIgnoreCase(label) || "Nu".equalsIgnoreCase(label)) return Gender.FEMALE;
+        return Gender.OTHER;
     }
 }
