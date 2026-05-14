@@ -5,6 +5,12 @@ import org.jobportal.enums.ApplicationStatus;
 import org.jobportal.model.Application;
 
 public interface IApplicationDAO {
+
+    // Chức năng: Lấy đơn ứng tuyển theo applicationId
+    // Đầu vào: applicationId (String) - mã đơn ứng tuyển
+    // Đầu ra: Application - đối tượng đơn ứng tuyển
+    Application findById(String applicationId);
+
     // Chức năng: Lấy danh sách đơn theo ứng viên
     // Đầu vào: candidateId (String)
     // Đầu ra: List<Application>

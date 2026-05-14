@@ -28,6 +28,28 @@ public class ApplicationDAO implements IApplicationDAO {
         return application;
     }
 
+    // Chức năng: Lấy đơn ứng tuyển theo applicationId
+    // Đầu vào: applicationId (String) - mã đơn ứng tuyển
+    // Đầu ra: Application - đối tượng đơn ứng tuyển
+    // Tương tác: Được gọi từ ApplicationService; sẽ dùng JDBC
+    public Application findById(String applicationId) {
+        String sql = "SELECT application_id, candidate_id, recruitment_id, status, applied_date "
+                + "FROM applications WHERE application_id = ?";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, applicationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Loi khi tim application theo id: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
     // Chức năng: Lấy danh sách đơn theo ứng viên
     // Đầu vào: candidateId (String) - mã ứng viên
     // Đầu ra: List<Application> - danh sách đơn
