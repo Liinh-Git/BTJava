@@ -165,9 +165,9 @@ public class UserProfilePanel extends JPanel {
                     txtPhone.getText().trim()
             );
             if (success) {
-                JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -235,18 +235,18 @@ public class UserProfilePanel extends JPanel {
         String confirmPass = new String(txtConfirmPassword.getPassword());
 
         if (oldPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin mật khẩu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin mật khẩu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         boolean success = authService.changePassword(oldPass, newPass, confirmPass);
         if (success) {
-            JOptionPane.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             txtOldPassword.setText("");
             txtNewPassword.setText("");
             txtConfirmPassword.setText("");
         } else {
-            JOptionPane.showMessageDialog(this, "Không thể đổi mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể đổi mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

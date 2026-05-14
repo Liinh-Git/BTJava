@@ -64,14 +64,15 @@ public class UserDAO implements IUserDAO {
         // Bước 1 - Query SELECT theo username và password đã hash
         String sql = "SELECT user_id, username, password_hash, full_name, phone_number, "
                 + "date_of_birth, gender, email, role, is_active, created_at "
-                + "FROM users WHERE username = ? AND password_hash = ?";
+                + "FROM users WHERE (username = ? OR email = ?) AND password_hash = ?";
 
         // Bước 2 - Map ResultSet sang User
         try (Connection conn = DatabaseConfig.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
-            ps.setString(2, passwordHash);
+            ps.setString(2, username);
+            ps.setString(3, passwordHash);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {

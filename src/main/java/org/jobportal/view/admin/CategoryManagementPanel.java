@@ -121,16 +121,16 @@ public class CategoryManagementPanel extends JPanel {
         btnAdd.addActionListener(e -> {
             String catName = txtNewCategory.getText().trim();
             if (catName.isEmpty() || catName.equals("Tên danh mục mới...")) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập tên danh mục!", "Warning", JOptionPane.WARNING_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập tên danh mục!", "Warning", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             boolean success = categoryService.addCategory(catName);
             if (success) {
-                JOptionPane.showMessageDialog(this, "Đã thêm danh mục!");
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đã thêm danh mục!");
                 txtNewCategory.setText("Tên danh mục mới...");
                 loadData();
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể thêm danh mục!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể thêm danh mục!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -230,10 +230,10 @@ public class CategoryManagementPanel extends JPanel {
                     if (newName != null && !newName.trim().isEmpty()) {
                         boolean success = categoryService.updateCategory(category.getCategoryId(), newName.trim());
                         if (success) {
-                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã cập nhật thành công!");
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(CategoryManagementPanel.this, "Đã cập nhật thành công!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -252,10 +252,10 @@ public class CategoryManagementPanel extends JPanel {
                     if (choice == JOptionPane.YES_OPTION) {
                         boolean success = categoryService.deleteCategory(category.getCategoryId());
                         if (success) {
-                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Đã xóa danh mục!");
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(CategoryManagementPanel.this, "Đã xóa danh mục!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi xóa danh mục!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(CategoryManagementPanel.this, "Lỗi khi xóa danh mục!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }

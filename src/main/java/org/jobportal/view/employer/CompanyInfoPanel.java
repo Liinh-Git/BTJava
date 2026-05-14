@@ -202,9 +202,9 @@ public class CompanyInfoPanel extends JPanel {
                     txtDescription.getText().trim()
                 );
                 if (success) {
-                    JOptionPane.showMessageDialog(this, "Cập nhật thông tin công ty thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Cập nhật thông tin công ty thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

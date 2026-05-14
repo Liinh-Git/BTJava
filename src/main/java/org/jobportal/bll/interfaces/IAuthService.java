@@ -9,6 +9,11 @@ public interface IAuthService {
     // Dau ra: boolean
     boolean register(String username, String email, String password, String confirmPassword, Role role);
 
+    // Chuc nang: Lay thong bao loi moi nhat cua thao tac xac thuc
+    // Dau vao: (void)
+    // Dau ra: String
+    String getLastErrorMessage();
+
     // Chuc nang: Xac thuc dang nhap va tra ve thong tin nguoi dung
     // Dau vao: username (String), password (String), role (Role)
     // Dau ra: UserDTO

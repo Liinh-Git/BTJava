@@ -201,11 +201,11 @@ public class JobModerationPanel extends JPanel {
     private void moderate(RecruitmentDTO job, String decision) {
         boolean success = recruitmentService.adminModerate(job.getRecruitmentId(), decision);
         if (success) {
-            JOptionPane.showMessageDialog(this,
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this,
                     "APPROVED".equals(decision) ? "Đã duyệt tin tuyển dụng!" : "Đã từ chối tin tuyển dụng!");
             loadData();
         } else {
-            JOptionPane.showMessageDialog(this, "Không thể cập nhật trạng thái tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể cập nhật trạng thái tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

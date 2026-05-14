@@ -256,10 +256,10 @@ public class UserManagementPanel extends JPanel {
                     if (choice == JOptionPane.YES_OPTION) {
                         boolean success = userService.updateUserStatus(user.getUserId(), !user.isActive());
                         if (success) {
-                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -279,10 +279,10 @@ public class UserManagementPanel extends JPanel {
                     if (choice == JOptionPane.YES_OPTION) {
                         boolean success = userService.deleteUser(user.getUserId());
                         if (success) {
-                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }

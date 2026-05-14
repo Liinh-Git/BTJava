@@ -105,7 +105,7 @@ public class AppliedJobsPanel extends JPanel {
     // Xuat danh sach ra file CSV
     private void exportToCSV() {
         if (currentApps == null || currentApps.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -136,12 +136,12 @@ public class AppliedJobsPanel extends JPanel {
                 fw.write(idx++ + "," + title + "," + company + "," + date + "," + status + "\n");
             }
 
-            JOptionPane.showMessageDialog(this,
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this,
                 "Xuất báo cáo thành công!\nFile: " + file.getAbsolutePath(),
                 "Thành công", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this,
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this,
                 "Lỗi khi xuất file: " + ex.getMessage(),
                 "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -265,7 +265,7 @@ public class AppliedJobsPanel extends JPanel {
     }
 
     private JPanel createRow(String col1, String col2, String col3, String status, String action, boolean isHeader, ApplicationDTO app) {
-        JPanel row = new JPanel(new GridLayout(1, 5));
+        JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
         row.setPreferredSize(new Dimension(0, 70));
@@ -274,32 +274,11 @@ public class AppliedJobsPanel extends JPanel {
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.BLACK;
 
-        // cot 1: Job Title
-        JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
-        p1.setOpaque(false);
-        JLabel l1 = new JLabel(col1);
-        l1.setFont(font); l1.setForeground(textColor);
-        p1.add(l1);
-        row.add(p1);
+        row.add(createTextCell(col1, font, textColor), rowGbc(0, 0.30));
+        row.add(createTextCell(col2, font, textColor), rowGbc(1, 0.24));
+        row.add(createTextCell(col3, font, textColor), rowGbc(2, 0.18));
 
-        // cot 2: Company
-        JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
-        p2.setOpaque(false);
-        JLabel l2 = new JLabel(col2);
-        l2.setFont(font); l2.setForeground(textColor);
-        p2.add(l2);
-        row.add(p2);
-
-        // cot 3: Date
-        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
-        p3.setOpaque(false);
-        JLabel l3 = new JLabel(col3);
-        l3.setFont(font); l3.setForeground(textColor);
-        p3.add(l3);
-        row.add(p3);
-
-        // cot 4: Status
-        JPanel p4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
+        JPanel p4 = new JPanel(new GridBagLayout());
         p4.setOpaque(false);
         if (isHeader) {
             JLabel l4 = new JLabel(status);
@@ -308,14 +287,13 @@ public class AppliedJobsPanel extends JPanel {
         } else {
             p4.add(createStatusBadge(status));
         }
-        row.add(p4);
+        row.add(p4, rowGbc(3, 0.16));
 
-        // cot 5: Actions
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 15));
+        JPanel p5 = new JPanel(new GridBagLayout());
         p5.setOpaque(false);
         if (isHeader) {
             JLabel l5 = new JLabel(action);
-            l5.setFont(new Font("Arial", Font.BOLD, 18));
+            l5.setFont(font);
             l5.setForeground(Color.GRAY);
             p5.add(l5);
         } else {
@@ -329,19 +307,43 @@ public class AppliedJobsPanel extends JPanel {
                     if (confirm == JOptionPane.YES_OPTION) {
                         boolean success = applicationService.cancelApplication(app.getApplicationId());
                         if (success) {
-                            JOptionPane.showMessageDialog(this, "Đã hủy đơn ứng tuyển!");
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đã hủy đơn ứng tuyển!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(this, "Lỗi khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Lỗi khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
             });
             p5.add(btnCancel);
         }
-        row.add(p5);
+        row.add(p5, rowGbc(4, 0.12));
 
         return row;
+    }
+
+    private JPanel createTextCell(String text, Font font, Color color) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        JLabel label = new JLabel(text);
+        label.setFont(font);
+        label.setForeground(color);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        panel.add(label, gbc);
+        return panel;
+    }
+
+    private GridBagConstraints rowGbc(int x, double weight) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = x;
+        gbc.gridy = 0;
+        gbc.weightx = weight;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 20, 0, 20);
+        return gbc;
     }
 
     private JLabel createStatusBadge(String status) {

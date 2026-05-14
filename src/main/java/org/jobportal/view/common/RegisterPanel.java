@@ -54,17 +54,17 @@ public class RegisterPanel extends JPanel {
 
         JPanel nameHeader = new JPanel(new BorderLayout());
         nameHeader.setBackground(Color.WHITE);
-        nameHeader.add(createLabel("FULL NAME"), BorderLayout.WEST);
+        nameHeader.add(createLabel("USERNAME"), BorderLayout.WEST);
         nameHeader.setPreferredSize(new Dimension(370, 20));
         nameHeader.setMaximumSize(new Dimension(370, 20));
         nameHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputPanel.add(nameHeader);
 
-        JTextField txtFullName = new JTextField();
-        txtFullName.setPreferredSize(new Dimension(370, 35));
-        txtFullName.setMaximumSize(new Dimension(370, 35));
-        txtFullName.setAlignmentX(Component.CENTER_ALIGNMENT);
-        inputPanel.add(txtFullName);
+        JTextField txtUsername = new JTextField();
+        txtUsername.setPreferredSize(new Dimension(370, 35));
+        txtUsername.setMaximumSize(new Dimension(370, 35));
+        txtUsername.setAlignmentX(Component.CENTER_ALIGNMENT);
+        inputPanel.add(txtUsername);
         inputPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         JPanel emailHeader = new JPanel(new BorderLayout());
@@ -159,33 +159,35 @@ public class RegisterPanel extends JPanel {
 
         // Event listeners
         btnRegister.addActionListener(e -> {
-            String fullname = txtFullName.getText();
-            String email = txtEmail.getText();
+            String username = txtUsername.getText().trim();
+            String email = txtEmail.getText().trim();
             String pass = new String(txtPass.getPassword());
             String confirm = new String(txtConfirm.getPassword());
 
-            if (fullname.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            if (username.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (!pass.equals(confirm)) {
-                JOptionPane.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             Role selectedRole = cbRole.getSelectedIndex() == 0 ? Role.CANDIDATE : Role.EMPLOYER;
 
-            String username = email.contains("@") ? email.split("@")[0] : email;
-
             boolean registered = authService.register(username, email, pass, confirm, selectedRole);
 
             if (registered) {
-                JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 if (mainFrame != null) {
                     mainFrame.showLogin();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                String message = authService.getLastErrorMessage();
+                if (message == null || message.isBlank()) {
+                    message = "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.";
+                }
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

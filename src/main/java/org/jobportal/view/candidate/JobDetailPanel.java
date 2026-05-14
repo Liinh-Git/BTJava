@@ -186,21 +186,21 @@ public class JobDetailPanel extends JPanel {
         if (recruitment == null) return;
         String shareText = "Tin tuyển dụng: " + recruitment.getTitle() + " - ID: " + recruitment.getRecruitmentId();
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new java.awt.datatransfer.StringSelection(shareText), null);
-        JOptionPane.showMessageDialog(this, "Đã sao chép thông tin công việc vào clipboard!");
+        org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đã sao chép thông tin công việc vào clipboard!");
     }
 
     private void applyJob() {
         if (recruitmentId == null || SessionManager.getInstance().getCurrentUser() == null) return;
         String candidateId = SessionManager.getInstance().getCandidateId();
         if (candidateId == null) {
-            JOptionPane.showMessageDialog(this, "Bạn phải là ứng viên mới có thể nộp hồ sơ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Bạn phải là ứng viên mới có thể nộp hồ sơ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
         boolean success = applicationService.applyRecruitment(candidateId, recruitmentId);
         if (success) {
-            JOptionPane.showMessageDialog(this, "Nộp hồ sơ thành công!");
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Nộp hồ sơ thành công!");
         } else {
-            JOptionPane.showMessageDialog(this, "Bạn đã nộp hồ sơ hoặc có lỗi xảy ra!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Bạn đã nộp hồ sơ hoặc có lỗi xảy ra!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

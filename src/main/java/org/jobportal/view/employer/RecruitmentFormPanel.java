@@ -367,12 +367,12 @@ public class RecruitmentFormPanel extends JPanel {
             String titleVal = txtTitle.getText().trim();
             // Kiem tra neu van la placeholder thi bao loi
             if (titleVal.isEmpty() || titleVal.equals("VD: Senior Frontend Developer (Tailwind CSS)")) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập tiêu đề công việc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập tiêu đề công việc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             String salaryText = txtSalary.getText().trim();
             if (salaryText.isEmpty() || salaryText.equals("VD: 20000000")) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập mức lương!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập mức lương!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             double salary = Double.parseDouble(salaryText);
@@ -383,7 +383,7 @@ public class RecruitmentFormPanel extends JPanel {
 
             String desc = txtDescription.getText().trim();
             if (desc.isEmpty() || desc.equals("Nhập chi tiết công việc, yêu cầu và quyền lợi...")) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập mô tả công việc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập mô tả công việc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             
@@ -398,7 +398,7 @@ public class RecruitmentFormPanel extends JPanel {
             
             boolean success = recruitmentService.postRecruitment(titleVal, catId, jobType, salary, dueDate, desc, null); // location will be resolved from company info in BLL
             if (success) {
-                JOptionPane.showMessageDialog(this, "Đăng tin tuyển dụng thành công, chờ kiểm duyệt!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đăng tin tuyển dụng thành công, chờ kiểm duyệt!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 Window window = SwingUtilities.getWindowAncestor(this);
                 if (window != null) {
                     window.dispose();
@@ -416,10 +416,10 @@ public class RecruitmentFormPanel extends JPanel {
                 cal.add(Calendar.DAY_OF_MONTH, 1);
                 txtDueDate.setValue(cal.getTime());
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể đăng tin. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể đăng tin. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đúng định dạng lương (chỉ nhập số)!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập đúng định dạng lương (chỉ nhập số)!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

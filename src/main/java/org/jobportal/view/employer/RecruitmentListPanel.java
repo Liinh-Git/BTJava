@@ -14,6 +14,11 @@ import org.jobportal.enums.RecruitmentStatus;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -22,8 +27,12 @@ public class RecruitmentListPanel extends JPanel {
 
     private final IRecruitmentService recruitmentService = new RecruitmentService();
     private JPanel tableContainer;
+    private JTable recruitmentTable;
+    private DefaultTableModel recruitmentModel;
+    private List<RecruitmentDTO> displayedJobs = new java.util.ArrayList<>();
     private JLabel lblCount;
     private JPanel paginationPanel;
+    private JPanel footerPanel;
     private int currentPage = 1;
     private int pageSize = 10;
     private String currentKeyword = "";
@@ -48,10 +57,31 @@ public class RecruitmentListPanel extends JPanel {
         mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // 3. bang danh sach tin dang
-        tableContainer = new JPanel();
-        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
+        tableContainer = new JPanel(new BorderLayout());
         tableContainer.setBackground(Color.WHITE);
-        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
+        tableContainer.setBorder(new EmptyBorder(24, 26, 18, 26));
+
+        recruitmentModel = new DefaultTableModel(
+                new Object[]{"TIÊU ĐỀ CÔNG VIỆC", "NGÀY ĐĂNG - HẾT HẠN", "TRẠNG THÁI", "ỨNG VIÊN", "THAO TÁC"},
+                0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 4;
+            }
+        };
+        recruitmentTable = new JTable(recruitmentModel);
+        configureRecruitmentTable();
+
+        JScrollPane tableScroll = new JScrollPane(recruitmentTable);
+        tableScroll.setBorder(BorderFactory.createEmptyBorder());
+        tableScroll.setViewportBorder(BorderFactory.createEmptyBorder());
+        tableScroll.getViewport().setBackground(Color.WHITE);
+        if (tableScroll.getColumnHeader() != null) {
+            tableScroll.getColumnHeader().setBackground(Color.WHITE);
+            tableScroll.getColumnHeader().setBorder(BorderFactory.createEmptyBorder());
+        }
+        tableContainer.add(tableScroll, BorderLayout.CENTER);
         
         mainContent.add(tableContainer);
         
@@ -62,6 +92,43 @@ public class RecruitmentListPanel extends JPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private void configureRecruitmentTable() {
+        recruitmentTable.setRowHeight(58);
+        recruitmentTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        recruitmentTable.setBackground(Color.WHITE);
+        recruitmentTable.setSelectionBackground(new Color(245, 248, 255));
+        recruitmentTable.setSelectionForeground(Color.BLACK);
+        recruitmentTable.setFillsViewportHeight(true);
+        recruitmentTable.setBorder(BorderFactory.createEmptyBorder());
+        recruitmentTable.setShowGrid(false);
+        recruitmentTable.setShowVerticalLines(false);
+        recruitmentTable.setShowHorizontalLines(false);
+        recruitmentTable.setGridColor(Color.WHITE);
+        recruitmentTable.setIntercellSpacing(new Dimension(0, 0));
+
+        recruitmentTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        recruitmentTable.getTableHeader().setForeground(Color.GRAY);
+        recruitmentTable.getTableHeader().setBackground(Color.WHITE);
+        recruitmentTable.getTableHeader().setBorder(BorderFactory.createEmptyBorder());
+        recruitmentTable.getTableHeader().setDefaultRenderer(new RecruitmentHeaderRenderer());
+        recruitmentTable.getTableHeader().setReorderingAllowed(false);
+        recruitmentTable.getTableHeader().setResizingAllowed(false);
+
+        TableColumnModel columns = recruitmentTable.getColumnModel();
+        columns.getColumn(0).setPreferredWidth(240);
+        columns.getColumn(1).setPreferredWidth(230);
+        columns.getColumn(2).setPreferredWidth(190);
+        columns.getColumn(3).setPreferredWidth(170);
+        columns.getColumn(4).setPreferredWidth(190);
+
+        columns.getColumn(0).setCellRenderer(new RecruitmentTextRenderer(SwingConstants.LEFT));
+        columns.getColumn(1).setCellRenderer(new RecruitmentTextRenderer(SwingConstants.LEFT));
+        columns.getColumn(2).setCellRenderer(new StatusCellRenderer());
+        columns.getColumn(3).setCellRenderer(new RecruitmentTextRenderer(SwingConstants.LEFT));
+        columns.getColumn(4).setCellRenderer(new RecruitmentActionRenderer());
+        columns.getColumn(4).setCellEditor(new RecruitmentActionEditor());
     }
 
     private JPanel createPageHeader() {
@@ -165,9 +232,10 @@ public class RecruitmentListPanel extends JPanel {
     }
 
     private void loadData() {
-        tableContainer.removeAll();
-        // header cua bang
-        tableContainer.add(createRow("TIÊU ĐỀ CÔNG VIỆC", "NGÀY ĐĂNG - HẾT HẠN", "TRẠNG THÁI", "ỨNG VIÊN", "THAO TÁC", true, null));
+        if (footerPanel != null) {
+            tableContainer.remove(footerPanel);
+        }
+        recruitmentModel.setRowCount(0);
 
         String employerId = SessionManager.getInstance().getEmployerId();
         List<RecruitmentDTO> allJobs = null;
@@ -199,6 +267,7 @@ public class RecruitmentListPanel extends JPanel {
             }
         }
 
+        displayedJobs = jobs != null ? jobs : new java.util.ArrayList<>();
         if (jobs != null) {
             int maxPage = Math.max(1, (int) Math.ceil((double) jobs.size() / pageSize));
             if (currentPage > maxPage) currentPage = maxPage;
@@ -226,14 +295,20 @@ public class RecruitmentListPanel extends JPanel {
                 
                 String applicants = String.valueOf(job.getApplicationCount());
                 
-                tableContainer.add(createRow(title, dateStr, statusStr, applicants, "", false, job));
+                recruitmentModel.addRow(new Object[]{
+                        title,
+                        dateStr,
+                        statusStr,
+                        applicants + " ứng viên",
+                        ""
+                });
             }
         }
 
         // phan trang
-        JPanel footer = new JPanel(new BorderLayout());
-        footer.setBackground(Color.WHITE);
-        footer.setBorder(new EmptyBorder(15, 20, 15, 20));
+        footerPanel = new JPanel(new BorderLayout());
+        footerPanel.setBackground(Color.WHITE);
+        footerPanel.setBorder(new EmptyBorder(18, 0, 0, 0));
 
         if (lblCount == null) {
             lblCount = new JLabel();
@@ -241,14 +316,14 @@ public class RecruitmentListPanel extends JPanel {
             lblCount.setForeground(Color.GRAY);
         }
         lblCount.setText("Hiển thị " + (jobs != null ? jobs.size() : 0) + " tin đăng");
-        footer.add(lblCount, BorderLayout.WEST);
+        footerPanel.add(lblCount, BorderLayout.WEST);
 
         paginationPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         paginationPanel.setBackground(Color.WHITE);
         updatePaginationUI(jobs != null ? jobs.size() : 0);
-        footer.add(paginationPanel, BorderLayout.EAST);
+        footerPanel.add(paginationPanel, BorderLayout.EAST);
 
-        tableContainer.add(footer);
+        tableContainer.add(footerPanel, BorderLayout.SOUTH);
         tableContainer.revalidate();
         tableContainer.repaint();
         this.revalidate();
@@ -335,7 +410,6 @@ public class RecruitmentListPanel extends JPanel {
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.BLACK;
 
-        // Tieu de
         JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 25));
         p1.setOpaque(false);
         JLabel l1 = new JLabel(col1);
@@ -343,7 +417,6 @@ public class RecruitmentListPanel extends JPanel {
         p1.add(l1);
         row.add(p1);
 
-        // Thoi gian
         JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 25));
         p2.setOpaque(false);
         JLabel l2 = new JLabel(col2);
@@ -351,7 +424,6 @@ public class RecruitmentListPanel extends JPanel {
         p2.add(l2);
         row.add(p2);
 
-        // Trang thai
         JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 20));
         p3.setOpaque(false);
         if (isHeader) {
@@ -363,7 +435,6 @@ public class RecruitmentListPanel extends JPanel {
         }
         row.add(p3);
 
-        // So ung vien
         JPanel p4 = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 25));
         p4.setOpaque(false);
         if (isHeader) {
@@ -379,7 +450,6 @@ public class RecruitmentListPanel extends JPanel {
         }
         row.add(p4);
 
-        // Thao tac
         JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 20));
         p5.setOpaque(false);
         if (isHeader) {
@@ -394,13 +464,13 @@ public class RecruitmentListPanel extends JPanel {
                 if (job != null && status.equals("Đang hoạt động")) {
                     boolean success = recruitmentService.closeRecruitment(job.getRecruitmentId());
                     if (success) {
-                        JOptionPane.showMessageDialog(this, "Đã đóng tin tuyển dụng thành công!");
+                        org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đã đóng tin tuyển dụng thành công!");
                         loadData();
                     } else {
-                        JOptionPane.showMessageDialog(this, "Không thể đóng tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể đóng tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
-                    JOptionPane.showMessageDialog(this, "Chỉ có thể đóng tin đang hoạt động!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Chỉ có thể đóng tin đang hoạt động!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 }
             });
 
@@ -414,10 +484,10 @@ public class RecruitmentListPanel extends JPanel {
                     if (confirm == JOptionPane.YES_OPTION) {
                         boolean success = recruitmentService.deleteRecruitment(job.getRecruitmentId());
                         if (success) {
-                            JOptionPane.showMessageDialog(this, "Đã xóa tin tuyển dụng!");
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đã xóa tin tuyển dụng!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(this, "Không thể xóa tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể xóa tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -429,6 +499,143 @@ public class RecruitmentListPanel extends JPanel {
         row.add(p5);
 
         return row;
+    }
+
+    private RecruitmentDTO getJobAt(int viewRow) {
+        if (viewRow < 0 || displayedJobs == null) return null;
+        int modelRow = recruitmentTable.convertRowIndexToModel(viewRow);
+        int jobIndex = (currentPage - 1) * pageSize + modelRow;
+        if (jobIndex < 0 || jobIndex >= displayedJobs.size()) return null;
+        return displayedJobs.get(jobIndex);
+    }
+
+    private JPanel createRecruitmentActionPanel(int row, boolean editable) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 10));
+        panel.setBackground(Color.WHITE);
+
+        JButton close = new JButton("Đóng");
+        close.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        close.setBackground(Color.WHITE);
+
+        JButton delete = new JButton("Xóa");
+        delete.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        delete.setBackground(Color.WHITE);
+        delete.setForeground(Color.RED);
+
+        if (editable) {
+            close.addActionListener(e -> closeRecruitmentAt(row));
+            delete.addActionListener(e -> deleteRecruitmentAt(row));
+        }
+
+        panel.add(close);
+        panel.add(delete);
+        return panel;
+    }
+
+    private void closeRecruitmentAt(int viewRow) {
+        stopRecruitmentEditing();
+        RecruitmentDTO job = getJobAt(viewRow);
+        if (job == null) return;
+
+        if (job.getAdminStatus() == AdminStatus.APPROVED && job.getStatus() == RecruitmentStatus.OPEN) {
+            boolean success = recruitmentService.closeRecruitment(job.getRecruitmentId());
+            if (success) {
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đã đóng tin tuyển dụng thành công!");
+                loadData();
+            } else {
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể đóng tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Chỉ có thể đóng tin đang hoạt động!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void deleteRecruitmentAt(int viewRow) {
+        stopRecruitmentEditing();
+        RecruitmentDTO job = getJobAt(viewRow);
+        if (job == null) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa tin này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean success = recruitmentService.deleteRecruitment(job.getRecruitmentId());
+            if (success) {
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đã xóa tin tuyển dụng!");
+                loadData();
+            } else {
+                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể xóa tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void stopRecruitmentEditing() {
+        if (recruitmentTable.isEditing() && recruitmentTable.getCellEditor() != null) {
+            recruitmentTable.getCellEditor().stopCellEditing();
+        }
+    }
+
+    private static class RecruitmentHeaderRenderer extends DefaultTableCellRenderer {
+        RecruitmentHeaderRenderer() {
+            setBorder(new EmptyBorder(0, 12, 0, 12));
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected,
+                                                       boolean focused, int row, int column) {
+            super.getTableCellRendererComponent(table, value, selected, focused, row, column);
+            setHorizontalAlignment(column == 4 ? SwingConstants.CENTER : SwingConstants.LEFT);
+            setFont(new Font("Segoe UI", Font.BOLD, 13));
+            setForeground(Color.GRAY);
+            setBackground(Color.WHITE);
+            return this;
+        }
+    }
+
+    private static class RecruitmentTextRenderer extends DefaultTableCellRenderer {
+        RecruitmentTextRenderer(int alignment) {
+            setHorizontalAlignment(alignment);
+            setBorder(new EmptyBorder(0, 12, 0, 12));
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected,
+                                                       boolean focused, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, selected, focused, row, column);
+            component.setFont(table.getFont());
+            return component;
+        }
+    }
+
+    private class StatusCellRenderer implements TableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected,
+                                                       boolean focused, int row, int column) {
+            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 18));
+            panel.setBackground(Color.WHITE);
+            panel.add(createStatusBadge(value != null ? value.toString() : ""));
+            return panel;
+        }
+    }
+
+    private class RecruitmentActionRenderer implements TableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected,
+                                                       boolean focused, int row, int column) {
+            return createRecruitmentActionPanel(row, false);
+        }
+    }
+
+    private class RecruitmentActionEditor extends AbstractCellEditor implements TableCellEditor {
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean selected,
+                                                     int row, int column) {
+            return createRecruitmentActionPanel(row, true);
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "";
+        }
     }
 
     private JLabel createStatusBadge(String status) {
