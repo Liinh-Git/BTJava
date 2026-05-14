@@ -134,9 +134,9 @@ public class CVEditorPanel extends JPanel {
             if (success) {
                 currentCV = cvService.getCV(SessionManager.getInstance().getCandidateId());
                 loadEducations();
-                JOptionPane.showMessageDialog(this, "Lưu CV thành công!");
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lưu CV thành công!");
             } else {
-                JOptionPane.showMessageDialog(this, "Lỗi khi lưu CV!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lỗi khi lưu CV!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -554,7 +554,7 @@ public class CVEditorPanel extends JPanel {
 
         String school = txtSchool.getText().trim();
         if (school.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên trường.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Vui lòng nhập tên trường.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -562,7 +562,7 @@ public class CVEditorPanel extends JPanel {
         Integer endYear = parseYear(txtEndYear.getText().trim());
         if ((!txtStartYear.getText().trim().isEmpty() && startYear == null)
                 || (!txtEndYear.getText().trim().isEmpty() && endYear == null)) {
-            JOptionPane.showMessageDialog(this, "Năm phải là số hợp lệ.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Năm phải là số hợp lệ.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 

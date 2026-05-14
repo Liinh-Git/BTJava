@@ -176,7 +176,7 @@ public class UserProfilePanel extends JPanel {
             try {
                 dob = LocalDate.parse(dobText, DOB_FMT);
             } catch (DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(this, "Ngày sinh không hợp lệ. Dùng định dạng yyyy-MM-dd.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Ngày sinh không hợp lệ. Dùng định dạng yyyy-MM-dd.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -192,9 +192,9 @@ public class UserProfilePanel extends JPanel {
         );
 
         if (success) {
-            JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -257,18 +257,18 @@ public class UserProfilePanel extends JPanel {
         String confirmPass = new String(txtConfirmPassword.getPassword());
 
         if (oldPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
-            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin mật khẩu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin mật khẩu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         boolean success = authService.changePassword(oldPass, newPass, confirmPass);
         if (success) {
-            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             txtOldPassword.setText("");
             txtNewPassword.setText("");
             txtConfirmPassword.setText("");
         } else {
-            org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Không thể đổi mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Không thể đổi mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

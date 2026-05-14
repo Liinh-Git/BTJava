@@ -279,190 +279,154 @@ public class ApplicationReviewPanel extends JPanel {
         paginationPanel.repaint();
     }
 
+
     private JPanel createTableRow(String col1, String col2, String col3, String status, String action,
                                   boolean isHeader, String email, ApplicationDTO app) {
-        final int rowHeight = isHeader ? 56 : 94;
-        final int col1Width = 150; // Ứng viên
-        final int col2Width = 100; // Ngày nộp
-        final int col3Width = 280; // Vị trí ứng tuyển
-        final int col4Width = 90; // Trạng thái
-        final int col5Width = 180; // Thao tác
-
         JPanel row = new JPanel(new GridBagLayout());
-        row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
-        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
-        row.setPreferredSize(new Dimension(col1Width + col2Width + col3Width + col4Width + col5Width, rowHeight));
+        row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
+        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
+        int rowHeight = isHeader ? 56 : 96;
+        row.setPreferredSize(new Dimension(0, rowHeight));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowHeight));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.weighty = 1.0;
 
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.DARK_GRAY;
 
-        // Cột 1: Ứng viên (không avatar)
-        gbc.gridx = 0;
-        gbc.weightx = 0.0;
-        gbc.insets = new Insets(8, 12, 8, 8);
-        JPanel p1 = new JPanel(new GridBagLayout());
-        setFixedColumnWidth(p1, col1Width, rowHeight);
-        p1.setOpaque(false);
+        JPanel applicantCell = createReviewBaseCell(FlowLayout.LEFT, isHeader);
         if (isHeader) {
-            JLabel l1 = new JLabel(col1, SwingConstants.CENTER);
-            l1.setFont(font);
-            l1.setForeground(textColor);
-            p1.add(l1);
+            JLabel label = new JLabel(col1);
+            label.setFont(font);
+            label.setForeground(textColor);
+            applicantCell.add(label);
         } else {
             JPanel info = new JPanel();
             info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
             info.setOpaque(false);
-
-            JLabel lName = new JLabel(col1);
-            lName.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            lName.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            JLabel lEmail = new JLabel(email);
-            lEmail.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-            lEmail.setForeground(Color.GRAY);
-            lEmail.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            info.add(lName);
+            JLabel name = new JLabel(col1);
+            name.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            JLabel mail = new JLabel(valueOrDefault(email, ""));
+            mail.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            mail.setForeground(Color.GRAY);
+            info.add(name);
             info.add(Box.createRigidArea(new Dimension(0, 4)));
-            info.add(lEmail);
-            p1.add(info);
+            info.add(mail);
+            applicantCell.add(info);
         }
-        row.add(p1, gbc);
+        addReviewCell(row, applicantCell, 0, 0.25);
 
-        // Cột 2: Ngày nộp
-        gbc.gridx = 1;
-        gbc.weightx = 0.0;
-        gbc.insets = new Insets(8, 8, 8, 8);
-        JPanel p2 = new JPanel(new GridBagLayout());
-        setFixedColumnWidth(p2, col2Width, rowHeight);
-        p2.setOpaque(false);
-        JLabel l2 = new JLabel(col2, SwingConstants.CENTER);
-        l2.setFont(font);
-        l2.setForeground(textColor);
-        p2.add(l2);
-        row.add(p2, gbc);
+        addReviewCell(row, createReviewTextCell(col2, font, textColor, FlowLayout.CENTER, isHeader), 1, 0.12);
+        addReviewCell(row, createReviewTextCell(col3, font, textColor, FlowLayout.LEFT, isHeader), 2, 0.25);
 
-        // Cột 3: Vị trí hiện tại (center + wrap)
-        gbc.gridx = 2;
-        gbc.weightx = 0.0;
-        JPanel p3 = new JPanel(new GridBagLayout());
-        setFixedColumnWidth(p3, col3Width, rowHeight);
-        p3.setOpaque(false);
+        JPanel statusCell = createReviewBaseCell(FlowLayout.CENTER, isHeader);
         if (isHeader) {
-            JLabel l3 = new JLabel(col3, SwingConstants.CENTER);
-            l3.setFont(font);
-            l3.setForeground(textColor);
-            p3.add(l3);
+            JLabel label = new JLabel(status);
+            label.setFont(font);
+            label.setForeground(textColor);
+            statusCell.add(label);
         } else {
-            int wrapWidth = Math.max(220, col3Width - 24);
-            JLabel wrap = new JLabel("<html><div style='text-align:center; width:" + wrapWidth + "px;'>" + escapeHtml(col3) + "</div></html>", SwingConstants.CENTER);
-            wrap.setFont(font);
-            wrap.setForeground(textColor);
-            p3.add(wrap);
+            statusCell.add(createStatusBadge(status));
         }
-        row.add(p3, gbc);
+        addReviewCell(row, statusCell, 3, 0.14);
 
-        // Cột 4: Trạng thái
-        gbc.gridx = 3;
-        gbc.weightx = 0.0;
-        JPanel p4 = new JPanel(new GridBagLayout());
-        setFixedColumnWidth(p4, col4Width, rowHeight);
-        p4.setOpaque(false);
+        JPanel actionCell = isHeader ? createReviewBaseCell(FlowLayout.CENTER, true) : createTwoRowActionPanel();
         if (isHeader) {
-            JLabel l4 = new JLabel(status, SwingConstants.CENTER);
-            l4.setFont(font);
-            l4.setForeground(textColor);
-            p4.add(l4);
-        } else {
-            p4.add(createStatusBadge(status));
-        }
-        row.add(p4, gbc);
-
-        // Cột 5: Thao tác (text buttons)
-        gbc.gridx = 4;
-        gbc.weightx = 0.0;
-        JPanel p5 = isHeader
-                ? new JPanel(new GridBagLayout())
-                : new JPanel();
-        setFixedColumnWidth(p5, col5Width, rowHeight);
-        p5.setOpaque(false);
-        if (!isHeader) {
-            p5.setLayout(new BoxLayout(p5, BoxLayout.X_AXIS));
-        }
-        if (isHeader) {
-            JLabel l5 = new JLabel(action, SwingConstants.CENTER);
-            l5.setFont(font);
-            l5.setForeground(textColor);
-            p5.add(l5);
+            JLabel label = new JLabel(action);
+            label.setFont(font);
+            label.setForeground(textColor);
+            actionCell.add(label);
         } else {
             boolean canReview = app != null && app.getStatus() == ApplicationStatus.PENDING;
 
-            JLabel linkView = createActionLink("Xem", new Color(13, 110, 253), true, () -> {
+            JButton linkView = createReviewActionButton("Xem", new Color(13, 110, 253), true, () -> {
                 if (app == null) return;
                 UserDTO candidateInfo = applicationService.getCandidateInfo(app.getCandidateId());
                 if (candidateInfo != null) {
                     showCVDetailDialog(app, candidateInfo);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin ứng viên!");
+                    org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Kh\u00f4ng t\u00ecm th\u1ea5y th\u00f4ng tin \u1ee9ng vi\u00ean!");
                 }
             });
-
-            JLabel linkApprove = createActionLink("Chấp nhận", new Color(40, 167, 69), canReview, () -> {
+            JButton linkApprove = createReviewActionButton("Chấp nhận", new Color(173, 173, 173), canReview, () -> {
                 UserDTO current = SessionManager.getInstance().getCurrentUser();
                 if (app != null && current != null) {
                     boolean success = applicationService.approveApplication(current.getUserId(), app.getApplicationId());
                     if (success) {
-                        JOptionPane.showMessageDialog(this, "Đã chấp nhận hồ sơ!");
+                        org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "\u0110\u00e3 ch\u1ea5p nh\u1eadn h\u1ed3 s\u01a1!");
                         loadData();
                     } else {
-                        JOptionPane.showMessageDialog(this, "Không thể thao tác!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Kh\u00f4ng th\u1ec3 thao t\u00e1c!", "L\u1ed7i", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
-
-            JLabel linkReject = createActionLink("Từ chối", new Color(220, 53, 69), canReview, () -> {
+            JButton linkReject = createReviewActionButton("Từ chối", new Color(173, 173, 173), canReview, () -> {
                 UserDTO current = SessionManager.getInstance().getCurrentUser();
                 if (app != null && current != null) {
                     boolean success = applicationService.rejectApplication(current.getUserId(), app.getApplicationId());
                     if (success) {
-                        JOptionPane.showMessageDialog(this, "Đã từ chối hồ sơ!");
+                        org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "\u0110\u00e3 t\u1eeb ch\u1ed1i h\u1ed3 s\u01a1!");
                         loadData();
                     } else {
-                        JOptionPane.showMessageDialog(this, "Không thể thao tác!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Kh\u00f4ng th\u1ec3 thao t\u00e1c!", "L\u1ed7i", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
 
-            JLabel sep1 = new JLabel("|");
-            sep1.setForeground(new Color(180, 180, 180));
-            JLabel sep2 = new JLabel("|");
-            sep2.setForeground(new Color(180, 180, 180));
-
-            p5.add(Box.createHorizontalGlue());
-            p5.add(linkView);
-            p5.add(sep1);
-            p5.add(linkApprove);
-            p5.add(sep2);
-            p5.add(linkReject);
-            p5.add(Box.createHorizontalGlue());
+            addTwoRowButtons(actionCell, linkView, linkApprove, linkReject);
         }
-        row.add(p5, gbc);
-
-        // Cột đệm hấp thụ phần dư để 5 cột chính giữ nguyên bề rộng cố định
-        gbc.gridx = 5;
-        gbc.weightx = 1.0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        JPanel spacer = new JPanel();
-        spacer.setOpaque(false);
-        row.add(spacer, gbc);
-
+        addReviewCell(row, actionCell, 4, 0.24);
         return row;
+    }
+
+    private void addReviewCell(JPanel row, JComponent cell, int column, double weight) {
+        cell.setMinimumSize(new Dimension(0, 0));
+        cell.setPreferredSize(new Dimension(0, 0));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = column;
+        gbc.gridy = 0;
+        gbc.weightx = weight;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        row.add(cell, gbc);
+    }
+
+    private JPanel createReviewBaseCell(int alignment, boolean header) {
+        JPanel panel = new JPanel(new FlowLayout(alignment, alignment == FlowLayout.CENTER ? 4 : 20, header ? 16 : 18));
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private JPanel createTwoRowActionPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private void addTwoRowButtons(JPanel panel, JButton topButton, JButton leftButton, JButton rightButton) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(8, 0, 4, 0);
+        gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(topButton, gbc);
+
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(0, 0, 8, 3);
+        panel.add(leftButton, gbc);
+
+        gbc.gridx = 1;
+        gbc.insets = new Insets(0, 3, 8, 0);
+        panel.add(rightButton, gbc);
+    }
+
+    private JPanel createReviewTextCell(String text, Font font, Color color, int alignment, boolean header) {
+        JPanel panel = createReviewBaseCell(alignment, header);
+        JLabel label = new JLabel(text);
+        label.setFont(font);
+        label.setForeground(color);
+        panel.add(label);
+        return panel;
     }
 
     private void setFixedColumnWidth(JComponent component, int width, int height) {
@@ -606,28 +570,23 @@ public class ApplicationReviewPanel extends JPanel {
     }
 
     private JLabel createStatusBadge(String status) {
-        JLabel badge = new JLabel("  " + status + "  ");
+        JLabel badge = new JLabel(status, SwingConstants.CENTER);
         badge.setFont(new Font("Segoe UI", Font.BOLD, 10));
         badge.setOpaque(true);
+        badge.setPreferredSize(new Dimension(94, 22));
 
-        switch (status) {
-            case "Đang duyệt":
-                badge.setBackground(new Color(230, 230, 230));
-                badge.setForeground(Color.DARK_GRAY);
-                break;
-            case "Đã duyệt":
-                badge.setBackground(new Color(230, 250, 240));
-                badge.setForeground(new Color(40, 167, 69));
-                break;
-            case "Bị từ chối":
-                badge.setBackground(new Color(255, 243, 230));
-                badge.setForeground(new Color(253, 126, 20));
-                break;
-            default:
-                badge.setBackground(new Color(230, 230, 230));
-                badge.setForeground(Color.DARK_GRAY);
-                break;
+        if (status.equals(toStatusLabel(ApplicationStatus.APPROVED))) {
+            badge.setBackground(new Color(230, 250, 240));
+            badge.setForeground(new Color(40, 167, 69));
+        } else if (status.equals(toStatusLabel(ApplicationStatus.REJECTED))) {
+            badge.setBackground(new Color(250, 230, 230));
+            badge.setForeground(new Color(220, 53, 69));
+        } else {
+            badge.setBackground(new Color(255, 243, 205));
+            badge.setForeground(new Color(133, 100, 4));
         }
+
+        badge.setBorder(new LineBorder(badge.getForeground(), 1, false));
         return badge;
     }
 
@@ -656,6 +615,26 @@ public class ApplicationReviewPanel extends JPanel {
             link.setCursor(Cursor.getDefaultCursor());
         }
         return link;
+    }
+
+    private JButton createReviewActionButton(String text, Color color, boolean enabled, Runnable onClick) {
+        JButton button = new JButton(text);
+        int width = "Chấp nhận".equals(text) ? 92 : ("Từ chối".equals(text) ? 78 : 78);
+        button.setPreferredSize(new Dimension(width, 30));
+        button.setMinimumSize(new Dimension(width, 30));
+        button.setMaximumSize(new Dimension(width, 30));
+        button.setMargin(new Insets(0, 4, 0, 4));
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        button.setForeground(Color.WHITE);
+        button.setBackground(enabled ? color : new Color(185, 185, 185));
+        button.setCursor(enabled ? new Cursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+        button.setEnabled(enabled);
+        if (enabled && onClick != null) {
+            button.addActionListener(e -> onClick.run());
+        }
+        return button;
     }
 
     private JButton createPageBtn(String text, boolean active) {

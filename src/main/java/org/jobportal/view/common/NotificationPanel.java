@@ -20,6 +20,7 @@ public class NotificationPanel extends JPanel {
     public NotificationPanel() {
         setLayout(new BorderLayout());
         setBackground(new Color(248, 249, 250));
+        setPreferredSize(new Dimension(940, 640));
 
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
@@ -40,13 +41,24 @@ public class NotificationPanel extends JPanel {
         header.add(title, BorderLayout.WEST);
         header.add(btnRefresh, BorderLayout.EAST);
 
-        listContainer = new JPanel();
+        listContainer = new JPanel() {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension preferred = super.getPreferredSize();
+                Container parent = getParent();
+                if (parent instanceof JViewport viewport) {
+                    preferred.width = viewport.getWidth();
+                }
+                return preferred;
+            }
+        };
         listContainer.setLayout(new BoxLayout(listContainer, BoxLayout.Y_AXIS));
         listContainer.setBackground(Color.WHITE);
         listContainer.setBorder(new LineBorder(new Color(226, 230, 234), 1));
 
         JScrollPane scrollPane = new JScrollPane(listContainer);
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         add(header, BorderLayout.NORTH);
@@ -84,6 +96,7 @@ public class NotificationPanel extends JPanel {
         row.setBackground(rowBg);
         row.setBorder(BorderFactory.createMatteBorder(0, notification.isRead() ? 0 : 3, 1, 0,
             notification.isRead() ? new Color(230, 230, 230) : new Color(13, 110, 253)));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 96));
 
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
@@ -94,7 +107,7 @@ public class NotificationPanel extends JPanel {
         JLabel lblSender = new JLabel(senderName);
         lblSender.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
-        JLabel lblContent = new JLabel("<html>" + escapeHtml(notification.getContent()) + "</html>");
+        JLabel lblContent = new JLabel("<html><body style='width:650px'>" + escapeHtml(notification.getContent()) + "</body></html>");
         lblContent.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblContent.setForeground(Color.DARK_GRAY);
 
@@ -111,11 +124,14 @@ public class NotificationPanel extends JPanel {
         left.add(Box.createRigidArea(new Dimension(0, 6)));
         left.add(lblTime);
 
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 20));
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 20));
         right.setBackground(rowBg);
+        right.setBorder(new EmptyBorder(0, 8, 0, 12));
+        right.setPreferredSize(new Dimension(166, 72));
 
-        JButton btnRead = new JButton(notification.isRead() ? "✓ Đã đọc" : "Đánh dấu đã đọc");
+        JButton btnRead = new JButton(notification.isRead() ? "Đã đọc" : "Đánh dấu đã đọc");
         btnRead.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btnRead.setPreferredSize(new Dimension(130, 30));
         btnRead.setFocusPainted(false);
         btnRead.setBackground(notification.isRead() ? new Color(240, 240, 240) : new Color(230, 245, 255));
         btnRead.setForeground(notification.isRead() ? Color.GRAY : new Color(13, 110, 253));

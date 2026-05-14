@@ -132,7 +132,7 @@ public class MainFrame extends JFrame {
             rootCardLayout.show(rootPanel, CARD_APP);
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải giao diện: " + e.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lỗi khi tải giao diện: " + e.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
         }
     }
     

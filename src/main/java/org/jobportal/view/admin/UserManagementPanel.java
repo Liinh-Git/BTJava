@@ -6,6 +6,7 @@ import org.jobportal.view.common.SidebarPanel;
 import org.jobportal.bll.impl.UserService;
 import org.jobportal.bll.interfaces.IUserService;
 import org.jobportal.dto.UserDTO;
+import org.jobportal.enums.Role;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,8 +19,12 @@ import java.util.List;
 public class UserManagementPanel extends JPanel {
 
     private final IUserService userService = new UserService();
+    private static final String SEARCH_PLACEHOLDER = "Lọc theo tên hoặc email...";
     private JPanel tableContainer;
     private JLabel lblCount;
+    private JTextField txtSearch;
+    private JComboBox<String> cbRole;
+    private JComboBox<String> cbStatus;
 
     public UserManagementPanel() {
         // thiet lap layout chinh
@@ -91,27 +96,56 @@ public class UserManagementPanel extends JPanel {
         filterPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // thanh tim kiem
-        JTextField txtSearch = new JTextField("Lọc theo tên hoặc email...");
+        txtSearch = new JTextField(SEARCH_PLACEHOLDER);
         txtSearch.setPreferredSize(new Dimension(350, 42));
         txtSearch.setForeground(Color.GRAY);
         txtSearch.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(226, 230, 234), 1),
                 new EmptyBorder(5, 15, 5, 15)
         ));
+        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (SEARCH_PLACEHOLDER.equals(txtSearch.getText())) {
+                    txtSearch.setText("");
+                    txtSearch.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtSearch.getText().trim().isEmpty()) {
+                    txtSearch.setText(SEARCH_PLACEHOLDER);
+                    txtSearch.setForeground(Color.GRAY);
+                }
+            }
+        });
+        txtSearch.addActionListener(e -> loadData());
 
         // combobox role
-        JComboBox<String> cbRole = new JComboBox<>(new String[]{"Role: All", "ADMIN", "EMPLOYER", "CANDIDATE"});
-        cbRole.setPreferredSize(new Dimension(200, 42));
+        cbRole = new JComboBox<>(new String[]{"Role: All", "ADMIN", "EMPLOYER", "CANDIDATE"});
+        cbRole.setPreferredSize(new Dimension(150, 42));
         cbRole.setBackground(Color.WHITE);
 
         // combobox status
-        JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Status: All", "Active", "Inactive"});
-        cbStatus.setPreferredSize(new Dimension(200, 42));
+        cbStatus = new JComboBox<>(new String[]{"Status: All", "Active", "Inactive"});
+        cbStatus.setPreferredSize(new Dimension(150, 42));
         cbStatus.setBackground(Color.WHITE);
+
+        JButton btnSearch = new JButton("Tìm kiếm");
+        btnSearch.setPreferredSize(new Dimension(115, 42));
+        btnSearch.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnSearch.setBackground(new Color(13, 110, 253));
+        btnSearch.setForeground(Color.WHITE);
+        btnSearch.setFocusPainted(false);
+        btnSearch.setBorderPainted(false);
+        btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnSearch.addActionListener(e -> loadData());
 
         filterPanel.add(txtSearch);
         filterPanel.add(cbRole);
         filterPanel.add(cbStatus);
+        filterPanel.add(btnSearch);
 
         return filterPanel;
     }
@@ -121,7 +155,7 @@ public class UserManagementPanel extends JPanel {
         // header
         tableContainer.add(createTableRow("TÊN", "EMAIL", "VAI TRÒ", "TRẠNG THÁI", "THAO TÁC", true, "", null, null));
 
-        List<UserDTO> users = userService.getAllUsers(null, null);
+        List<UserDTO> users = userService.searchUsers(getSearchKeyword(), getSelectedRole(), getSelectedStatus());
         
         Color[] bgColors = {
             new Color(220, 230, 255), new Color(240, 240, 245), 
@@ -159,6 +193,27 @@ public class UserManagementPanel extends JPanel {
         tableContainer.add(footer);
         tableContainer.revalidate();
         tableContainer.repaint();
+    }
+
+    private String getSearchKeyword() {
+        if (txtSearch == null) return "";
+        String keyword = txtSearch.getText().trim();
+        return SEARCH_PLACEHOLDER.equals(keyword) ? "" : keyword;
+    }
+
+    private Role getSelectedRole() {
+        if (cbRole == null) return null;
+        String selected = String.valueOf(cbRole.getSelectedItem());
+        if (selected == null || selected.equals("Role: All")) return null;
+        return Role.valueOf(selected);
+    }
+
+    private Boolean getSelectedStatus() {
+        if (cbStatus == null) return null;
+        String selected = String.valueOf(cbStatus.getSelectedItem());
+        if ("Active".equals(selected)) return true;
+        if ("Inactive".equals(selected)) return false;
+        return null;
     }
 
     private JPanel createTableRow(String col1, String col2, String role, String status, String action, boolean isHeader, String initials, Color avatarBg, UserDTO user) {
@@ -251,15 +306,16 @@ public class UserManagementPanel extends JPanel {
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
             btnEdit.addActionListener(e -> {
                 if (user != null) {
-                    int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, 
-                        (user.isActive() ? "Khóa" : "Mở khóa") + " tài khoản này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-                    if (choice == JOptionPane.YES_OPTION) {
+                    boolean confirmed = org.jobportal.view.common.ModernDialogUtils.showConfirm(UserManagementPanel.this,
+                            "Xác nhận",
+                            (user.isActive() ? "Khóa" : "Mở khóa") + " tài khoản này?");
+                    if (confirmed) {
                         boolean success = userService.updateUserStatus(user.getUserId(), !user.isActive());
                         if (success) {
-                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(UserManagementPanel.this, "Đã cập nhật trạng thái!");
                             loadData();
                         } else {
-                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(UserManagementPanel.this, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -275,14 +331,14 @@ public class UserManagementPanel extends JPanel {
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
             btnDelete.addActionListener(e -> {
                 if (user != null) {
-                    int choice = JOptionPane.showConfirmDialog(UserManagementPanel.this, "Xóa tài khoản này vĩnh viễn?", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                    if (choice == JOptionPane.YES_OPTION) {
+                    boolean confirmed = org.jobportal.view.common.ModernDialogUtils.showConfirm(UserManagementPanel.this, "Xác nhận", "Xóa tài khoản này vĩnh viễn?");
+                    if (confirmed) {
                         boolean success = userService.deleteUser(user.getUserId());
                         if (success) {
-                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(UserManagementPanel.this, "Đã xóa tài khoản!");
                             loadData();
                         } else {
-                            org.jobportal.view.common.SuccessDialog.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(UserManagementPanel.this, "Không thể xóa tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }

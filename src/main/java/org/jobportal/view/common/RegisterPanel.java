@@ -165,11 +165,11 @@ public class RegisterPanel extends JPanel {
             String confirm = new String(txtConfirm.getPassword());
 
             if (username.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (!pass.equals(confirm)) {
-                JOptionPane.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -178,12 +178,12 @@ public class RegisterPanel extends JPanel {
             boolean registered = authService.register(username.trim(), email.trim(), pass, confirm, selectedRole);
 
             if (registered) {
-                JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 if (mainFrame != null) {
                     mainFrame.showLogin();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

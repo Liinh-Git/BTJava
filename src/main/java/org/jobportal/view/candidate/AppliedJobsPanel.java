@@ -235,14 +235,14 @@ public class AppliedJobsPanel extends JPanel {
             btnCancel.setForeground(Color.RED);
             btnCancel.addActionListener(e -> {
                 if (app != null) {
-                    int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn hủy đơn ứng tuyển này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-                    if (confirm == JOptionPane.YES_OPTION) {
+                    boolean confirmed = org.jobportal.view.common.ModernDialogUtils.showConfirm(this, "Xác nhận", "Bạn có chắc muốn hủy đơn ứng tuyển này?");
+                    if (confirmed) {
                         boolean success = applicationService.cancelApplication(app.getApplicationId());
                         if (success) {
-                            JOptionPane.showMessageDialog(this, "Đã hủy đơn ứng tuyển!");
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đã hủy đơn ứng tuyển!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(this, "Lỗi khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lỗi khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }

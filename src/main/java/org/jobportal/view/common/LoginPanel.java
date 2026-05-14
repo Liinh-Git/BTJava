@@ -156,12 +156,12 @@ public class LoginPanel extends JPanel {
             UserDTO loggedInUser = authService.login(user, pass, role);
 
             if (loggedInUser != null) {
-                SuccessDialog.showSuccess(this, "\u0110\u0103ng nh\u1eadp th\u00e0nh c\u00f4ng!");
+                ModernDialogUtils.showSuccess(this, "\u0110\u0103ng nh\u1eadp th\u00e0nh c\u00f4ng!");
                 if (mainFrame != null) {
                     mainFrame.onLoginSuccess();
                 }
             } else {
-                org.jobportal.view.common.SuccessDialog.showMessageDialog(this, "Sai tài khoản, mật khẩu hoặc vai trò!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Sai tài khoản, mật khẩu hoặc vai trò!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

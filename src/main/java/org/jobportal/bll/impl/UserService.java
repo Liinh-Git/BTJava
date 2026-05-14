@@ -50,6 +50,32 @@ public class UserService implements IUserService {
         return result;
     }
 
+    @Override
+    public List<UserDTO> searchUsers(String keyword, Role roleFilter, Boolean statusFilter) {
+        List<UserDTO> users = getAllUsers(roleFilter, statusFilter);
+        if (users.isEmpty()) {
+            return users;
+        }
+
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
+        if (normalizedKeyword.isEmpty()) {
+            return users;
+        }
+
+        List<UserDTO> result = new ArrayList<>();
+        for (UserDTO user : users) {
+            String username = user.getUsername() != null ? user.getUsername().toLowerCase() : "";
+            String fullName = user.getFullName() != null ? user.getFullName().toLowerCase() : "";
+            String email = user.getEmail() != null ? user.getEmail().toLowerCase() : "";
+            if (username.contains(normalizedKeyword)
+                    || fullName.contains(normalizedKeyword)
+                    || email.contains(normalizedKeyword)) {
+                result.add(user);
+            }
+        }
+        return result;
+    }
+
     // ------------------------------------------------------------------
     // updateUserStatus
     // ------------------------------------------------------------------
