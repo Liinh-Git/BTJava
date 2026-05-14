@@ -1,4 +1,4 @@
-﻿package org.jobportal.view.candidate;
+package org.jobportal.view.candidate;
 
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
@@ -134,9 +134,9 @@ public class CVEditorPanel extends JPanel {
             if (success) {
                 currentCV = cvService.getCV(SessionManager.getInstance().getCandidateId());
                 loadEducations();
-                JOptionPane.showMessageDialog(this, "Lưu CV thành công!");
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lưu CV thành công!");
             } else {
-                JOptionPane.showMessageDialog(this, "Lỗi khi lưu CV!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lỗi khi lưu CV!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -404,7 +404,7 @@ public class CVEditorPanel extends JPanel {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         actionPanel.setBackground(new Color(248, 249, 250));
 
-        JButton btnSave = createButton("SAVE PROFILE", new Color(13, 110, 253), Color.WHITE);
+        JButton btnSave = createButton("LƯU THAY ĐỔI", new Color(13, 110, 253), Color.WHITE);
         btnSave.setPreferredSize(new Dimension(160, 45));
         btnSave.addActionListener(e -> saveCVData());
 
@@ -530,21 +530,21 @@ public class CVEditorPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 6, 0);
 
-        addEducationField(form, gbc, "TrÆ°á»ng", txtSchool);
-        addEducationField(form, gbc, "Báº±ng cáº¥p", txtDegree);
-        addEducationField(form, gbc, "ChuyÃªn ngÃ nh", txtMajor);
-        addEducationField(form, gbc, "NÄƒm báº¯t Ä‘áº§u", txtStartYear);
-        addEducationField(form, gbc, "NÄƒm káº¿t thÃºc", txtEndYear);
-        addEducationField(form, gbc, "MÃ´ táº£", new JScrollPane(txtDescription));
+        addEducationField(form, gbc, "Trường", txtSchool);
+        addEducationField(form, gbc, "Bằng cấp", txtDegree);
+        addEducationField(form, gbc, "Chuyên ngành", txtMajor);
+        addEducationField(form, gbc, "Năm bắt đầu", txtStartYear);
+        addEducationField(form, gbc, "Năm kết thúc", txtEndYear);
+        addEducationField(form, gbc, "Mô tả", new JScrollPane(txtDescription));
 
         Object oldOkText = UIManager.get("OptionPane.okButtonText");
         Object oldCancelText = UIManager.get("OptionPane.cancelButtonText");
-        UIManager.put("OptionPane.okButtonText", "LÆ°u");
-        UIManager.put("OptionPane.cancelButtonText", "Há»§y");
+        UIManager.put("OptionPane.okButtonText", "Lưu");
+        UIManager.put("OptionPane.cancelButtonText", "Hủy");
         int option = JOptionPane.showConfirmDialog(
                 this,
                 form,
-                existing == null ? "ThÃªm há»c váº¥n" : "Sá»­a há»c váº¥n",
+                existing == null ? "Thêm học vấn" : "Sửa học vấn",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE
         );
@@ -554,7 +554,7 @@ public class CVEditorPanel extends JPanel {
 
         String school = txtSchool.getText().trim();
         if (school.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lÃ²ng nháº­p tÃªn trÆ°á»ng.", "Cáº£nh bÃ¡o", JOptionPane.WARNING_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Vui lòng nhập tên trường.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -562,7 +562,7 @@ public class CVEditorPanel extends JPanel {
         Integer endYear = parseYear(txtEndYear.getText().trim());
         if ((!txtStartYear.getText().trim().isEmpty() && startYear == null)
                 || (!txtEndYear.getText().trim().isEmpty() && endYear == null)) {
-            JOptionPane.showMessageDialog(this, "NÄƒm pháº£i lÃ  sá»‘ há»£p lá»‡.", "Cáº£nh bÃ¡o", JOptionPane.WARNING_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Năm phải là số hợp lệ.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -617,7 +617,7 @@ public class CVEditorPanel extends JPanel {
         header.setBackground(new Color(248, 249, 250));
         header.setBorder(new EmptyBorder(10, 12, 10, 12));
 
-        JLabel lbl = new JLabel("Thong tin hoc van");
+        JLabel lbl = new JLabel("Thông tin học vấn");
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lbl.setForeground(new Color(73, 80, 87));
         header.add(lbl, BorderLayout.WEST);
@@ -637,29 +637,29 @@ public class CVEditorPanel extends JPanel {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(Color.WHITE);
 
-        String year = "Chua cap nhat";
+        String year = "Chưa cập nhật";
         if (education.getStartYear() != null && education.getEndYear() != null) {
             year = education.getStartYear() + " - " + education.getEndYear();
         } else if (education.getStartYear() != null) {
-            year = "Tu " + education.getStartYear();
+            year = "Từ " + education.getStartYear();
         } else if (education.getEndYear() != null) {
-            year = "Den " + education.getEndYear();
+            year = "Đến " + education.getEndYear();
         }
 
-        content.add(createEducationLine("Truong", safeText(education.getSchool())));
-        content.add(createEducationLine("Bang cap", safeText(education.getDegree())));
-        content.add(createEducationLine("Chuyen nganh", safeText(education.getMajor())));
-        content.add(createEducationLine("Thoi gian", year));
-        content.add(createEducationLine("Mo ta", safeText(education.getDescription())));
+        content.add(createEducationLine("Trường", safeText(education.getSchool())));
+        content.add(createEducationLine("Bằng cấp", safeText(education.getDegree())));
+        content.add(createEducationLine("Chuyên ngành", safeText(education.getMajor())));
+        content.add(createEducationLine("Thời gian", year));
+        content.add(createEducationLine("Mô tả", safeText(education.getDescription())));
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actionPanel.setBackground(Color.WHITE);
 
-        JButton btnEdit = new JButton("Sua");
+        JButton btnEdit = new JButton("Sửa");
         btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         btnEdit.addActionListener(e -> openEducationDialog(education));
 
-        JButton btnDelete = new JButton("Xoa");
+        JButton btnDelete = new JButton("Xóa");
         btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         btnDelete.setForeground(Color.RED);
         btnDelete.addActionListener(e -> {
@@ -683,7 +683,7 @@ public class CVEditorPanel extends JPanel {
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lbl.setForeground(new Color(73, 80, 87));
 
-        String displayValue = (value == null || value.isBlank()) ? "Chua cap nhat" : value;
+        String displayValue = (value == null || value.isBlank()) ? "Chưa cập nhật" : value;
         JLabel txt = new JLabel(displayValue);
         txt.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txt.setForeground(new Color(33, 37, 41));
@@ -708,11 +708,11 @@ public class CVEditorPanel extends JPanel {
         if (actionComponent instanceof JPanel actionPanel) {
             actionPanel.removeAll();
 
-            JButton btnEdit = new JButton("Sá»­a");
+            JButton btnEdit = new JButton("Sửa");
             btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             btnEdit.addActionListener(e -> openEducationDialog(education));
 
-            JButton btnDelete = new JButton("XÃ³a");
+            JButton btnDelete = new JButton("Xóa");
             btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             btnDelete.setForeground(Color.RED);
             btnDelete.addActionListener(e -> {
@@ -752,10 +752,10 @@ public class CVEditorPanel extends JPanel {
             // tao nut edit/delete gia
             JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
             actionPanel.setBackground(Color.WHITE);
-            JLabel btnEdit = new JLabel("âœŽ"); // icon but chi
+            JLabel btnEdit = new JLabel("✎"); // icon but chi
             btnEdit.setForeground(Color.GRAY);
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            JLabel btnDel = new JLabel("ðŸ—‘"); // icon thung rac
+            JLabel btnDel = new JLabel("🗑"); // icon thung rac
             btnDel.setForeground(Color.GRAY);
             btnDel.setCursor(new Cursor(Cursor.HAND_CURSOR));
             actionPanel.add(btnEdit);

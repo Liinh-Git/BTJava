@@ -255,49 +255,34 @@ public class EmployerDashboardPanel extends JPanel {
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.DARK_GRAY;
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weighty = 1.0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-
-        // Cột 1: rộng hơn
-        gbc.gridx = 0;
-        gbc.weightx = 0.56; // tăng/giảm theo ý
-        JPanel p1 = new JPanel(new BorderLayout());
-        p1.setOpaque(false);
-        p1.setBorder(new EmptyBorder(0, 30, 0, 10));
-        JLabel l1 = new JLabel(col1);
-        l1.setFont(font);
-        l1.setForeground(isHeader ? textColor : Color.BLACK);
-        p1.add(l1, BorderLayout.WEST);
-        row.add(p1, gbc);
-
-        // Cột 2: hẹp hơn
-        gbc.gridx = 1;
-        gbc.weightx = 0.18;
-        JPanel p2 = new JPanel(new BorderLayout());
-        p2.setOpaque(false);
-        p2.setBorder(new EmptyBorder(0, 20, 0, 10));
-        JLabel l2 = new JLabel(col2);
-        l2.setFont(font);
-        l2.setForeground(textColor);
-        p2.add(l2, BorderLayout.WEST);
-        row.add(p2, gbc);
-
-        // Cột 3: hẹp hơn
-        gbc.gridx = 2;
-        gbc.weightx = 0.26;
-        JPanel p3 = new JPanel(new BorderLayout());
-        p3.setOpaque(false);
-        p3.setBorder(new EmptyBorder(0, 20, 0, 12));
-        JLabel l3 = new JLabel(col3);
-        l3.setFont(font);
-        l3.setForeground(textColor);
-        p3.add(l3, BorderLayout.WEST);
-        row.add(p3, gbc);
+        addRecentCell(row, col1, font, isHeader ? textColor : Color.BLACK, 0, 0.48, SwingConstants.LEFT);
+        addRecentCell(row, col2, font, textColor, 1, 0.24, SwingConstants.CENTER);
+        addRecentCell(row, col3, font, textColor, 2, 0.28, SwingConstants.CENTER);
 
         return row;
+    }
+
+    private void addRecentCell(JPanel row, String text, Font font, Color color, int column, double weight, int alignment) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = column;
+        gbc.gridy = 0;
+        gbc.weightx = weight;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 0, 0, 0);
+
+        JPanel cell = new JPanel(new BorderLayout());
+        cell.setOpaque(false);
+        cell.setBorder(new EmptyBorder(0, alignment == SwingConstants.LEFT ? 40 : 12, 0, 12));
+        cell.setMinimumSize(new Dimension(0, 0));
+        cell.setPreferredSize(new Dimension(0, 0));
+
+        JLabel label = new JLabel(text, alignment);
+        label.setFont(font);
+        label.setForeground(color);
+        cell.add(label, BorderLayout.CENTER);
+
+        row.add(cell, gbc);
     }
 
 

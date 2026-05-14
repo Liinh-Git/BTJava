@@ -1,4 +1,4 @@
-﻿package org.jobportal.view.common;
+package org.jobportal.view.common;
 
 import org.jobportal.bll.impl.AuthService;
 import org.jobportal.bll.impl.UserService;
@@ -6,7 +6,6 @@ import org.jobportal.bll.interfaces.IAuthService;
 import org.jobportal.bll.interfaces.IUserService;
 import org.jobportal.dto.UserDTO;
 import org.jobportal.enums.Gender;
-import org.jobportal.utils.DateUtils;
 import org.jobportal.utils.SessionManager;
 
 import javax.swing.*;
@@ -14,6 +13,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 public class UserProfilePanel extends JPanel {
@@ -32,6 +32,8 @@ public class UserProfilePanel extends JPanel {
     private JPasswordField txtOldPassword;
     private JPasswordField txtNewPassword;
     private JPasswordField txtConfirmPassword;
+
+    private static final DateTimeFormatter DOB_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public UserProfilePanel() {
         setLayout(new BorderLayout());
@@ -69,7 +71,7 @@ public class UserProfilePanel extends JPanel {
         txtPhone.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
         txtEmail.setText(user.getEmail() != null ? user.getEmail() : "");
         txtAddress.setText(user.getAddress() != null ? user.getAddress() : "");
-        txtDateOfBirth.setText(DateUtils.toUiDate(user.getDateOfBirth()));
+        txtDateOfBirth.setText(user.getDateOfBirth() != null ? user.getDateOfBirth().format(DOB_FMT) : "");
         cbGender.setSelectedItem(toGenderLabel(user.getGender()));
     }
 
@@ -172,9 +174,9 @@ public class UserProfilePanel extends JPanel {
         String dobText = txtDateOfBirth.getText().trim();
         if (!dobText.isEmpty()) {
             try {
-                dob = DateUtils.parseUiOrDbDate(dobText);
+                dob = LocalDate.parse(dobText, DOB_FMT);
             } catch (DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(this, "Ngày sinh không hợp lệ. Dùng định dạng dd-MM-yyyy hoặc yyyy-MM-dd.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Ngày sinh không hợp lệ. Dùng định dạng yyyy-MM-dd.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -190,9 +192,9 @@ public class UserProfilePanel extends JPanel {
         );
 
         if (success) {
-            JOptionPane.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Không thể cập nhật thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -255,18 +257,18 @@ public class UserProfilePanel extends JPanel {
         String confirmPass = new String(txtConfirmPassword.getPassword());
 
         if (oldPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin mật khẩu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin mật khẩu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         boolean success = authService.changePassword(oldPass, newPass, confirmPass);
         if (success) {
-            JOptionPane.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đổi mật khẩu thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             txtOldPassword.setText("");
             txtNewPassword.setText("");
             txtConfirmPassword.setText("");
         } else {
-            JOptionPane.showMessageDialog(this, "Không thể đổi mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Không thể đổi mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

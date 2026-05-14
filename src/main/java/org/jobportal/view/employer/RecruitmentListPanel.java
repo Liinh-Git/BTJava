@@ -1,4 +1,4 @@
-﻿package org.jobportal.view.employer;
+package org.jobportal.view.employer;
 
 import org.jobportal.bll.impl.RecruitmentService;
 import org.jobportal.bll.interfaces.IRecruitmentService;
@@ -361,154 +361,150 @@ public class RecruitmentListPanel extends JPanel {
         paginationPanel.repaint();
     }
 
+
     private JPanel createRow(String col1, String col2, String status, String applicants, String action, boolean isHeader, RecruitmentDTO job) {
         JPanel row = new JPanel(new GridBagLayout());
-        row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
-        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
-        row.setPreferredSize(new Dimension(0, isHeader ? 56 : 94));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, isHeader ? 56 : 94));
+        row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
+        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
+        int rowHeight = isHeader ? 56 : 96;
+        row.setPreferredSize(new Dimension(0, rowHeight));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowHeight));
 
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
-        Color headerColor = Color.GRAY;
+        Color textColor = isHeader ? Color.GRAY : Color.BLACK;
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weighty = 1.0;
+        addRecruitmentCell(row, createTextCell(col1, font, textColor, FlowLayout.LEFT, isHeader), 0, 0.30);
+        addRecruitmentCell(row, createTextCell(col2, font, textColor, FlowLayout.CENTER, isHeader), 1, 0.20);
 
-        // Cột tiêu đề
-        gbc.gridx = 0;
-        gbc.weightx = 0.35;
-        gbc.insets = new Insets(8, 18, 8, 8);
-        JPanel p1 = new JPanel(new BorderLayout());
-        p1.setOpaque(false);
+        JPanel statusCell = createBaseCell(FlowLayout.CENTER, isHeader);
         if (isHeader) {
-            JLabel l1 = new JLabel(col1, SwingConstants.CENTER);
-            l1.setFont(font);
-            l1.setForeground(headerColor);
-            p1.add(l1, BorderLayout.CENTER);
+            JLabel label = new JLabel(status);
+            label.setFont(font);
+            label.setForeground(textColor);
+            statusCell.add(label);
         } else {
-            JTextArea l1 = new JTextArea(col1);
-            l1.setEditable(false);
-            l1.setOpaque(false);
-            l1.setLineWrap(true);
-            l1.setWrapStyleWord(true);
-            l1.setFont(font);
-            l1.setForeground(Color.BLACK);
-            l1.setBorder(null);
-            p1.add(l1, BorderLayout.CENTER);
+            statusCell.add(createStatusBadge(status));
         }
-        row.add(p1, gbc);
+        addRecruitmentCell(row, statusCell, 2, 0.16);
 
-        // Cột ngày
-        gbc.gridx = 1;
-        gbc.weightx = 0.22;
-        gbc.insets = new Insets(8, 8, 8, 8);
-        JPanel p2 = new JPanel(new GridBagLayout());
-        p2.setOpaque(false);
-        JLabel l2 = new JLabel(col2, SwingConstants.CENTER);
-        l2.setFont(font);
-        l2.setForeground(isHeader ? headerColor : Color.BLACK);
-        p2.add(l2);
-        row.add(p2, gbc);
-
-        // Cột trạng thái
-        gbc.gridx = 2;
-        gbc.weightx = 0.16;
-        JPanel p3 = new JPanel(new GridBagLayout());
-        p3.setOpaque(false);
+        JPanel applicantCell = createBaseCell(FlowLayout.CENTER, isHeader);
         if (isHeader) {
-            JLabel l3 = new JLabel(status, SwingConstants.CENTER);
-            l3.setFont(font);
-            l3.setForeground(headerColor);
-            p3.add(l3);
+            JLabel label = new JLabel(applicants);
+            label.setFont(font);
+            label.setForeground(textColor);
+            applicantCell.add(label);
         } else {
-            p3.add(createStatusBadge(status));
+            JLabel label = new JLabel(applicants + " \u1ee9ng vi\u00ean");
+            label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            label.setForeground(new Color(13, 110, 253));
+            applicantCell.add(label);
         }
-        row.add(p3, gbc);
+        addRecruitmentCell(row, applicantCell, 3, 0.12);
 
-        // Cột ứng viên
-        gbc.gridx = 3;
-        gbc.weightx = 0.11;
-        JPanel p4 = new JPanel(new GridBagLayout());
-        p4.setOpaque(false);
+        JPanel actionCell = isHeader ? createBaseCell(FlowLayout.CENTER, true) : createTwoRowActionPanel();
         if (isHeader) {
-            JLabel l4 = new JLabel(applicants, SwingConstants.CENTER);
-            l4.setFont(font);
-            l4.setForeground(headerColor);
-            p4.add(l4);
+            JLabel label = new JLabel(action);
+            label.setFont(font);
+            label.setForeground(textColor);
+            actionCell.add(label);
         } else {
-            JLabel l4 = new JLabel(applicants + " ứng viên", SwingConstants.CENTER);
-            l4.setFont(new Font("Segoe UI", Font.BOLD, 13));
-            l4.setForeground(new Color(13, 110, 253));
-            p4.add(l4);
-        }
-        row.add(p4, gbc);
-
-        // Cột thao tác
-        gbc.gridx = 4;
-        gbc.weightx = 0.17;
-        gbc.insets = new Insets(8, 8, 8, 16);
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        p5.setOpaque(false);
-
-        if (isHeader) {
-            JLabel l5 = new JLabel(action, SwingConstants.CENTER);
-            l5.setFont(font);
-            l5.setForeground(headerColor);
-            p5.add(l5);
-        } else {
-            JButton btnDetail = createActionButton("Chi tiết", new Color(13, 110, 253), 78);
+            JButton btnDetail = createActionButton("Chi ti\u1ebft", new Color(13, 110, 253), 88);
             btnDetail.addActionListener(e -> showDetailDialog(job));
 
-            JButton btnClose = createActionButton("Đóng", new Color(108, 117, 125), 58);
+            JButton btnClose = createActionButton("\u0110\u00f3ng", new Color(220, 53, 69), 68);
             btnClose.addActionListener(e -> {
                 if (job != null && job.getAdminStatus() == AdminStatus.APPROVED && job.getStatus() == RecruitmentStatus.OPEN) {
                     boolean success = recruitmentService.closeRecruitment(job.getRecruitmentId());
                     if (success) {
-                        JOptionPane.showMessageDialog(this, "Đã đóng tin tuyển dụng thành công!");
+                        org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "\u0110\u00e3 \u0111\u00f3ng tin tuy\u1ec3n d\u1ee5ng th\u00e0nh c\u00f4ng!");
                         loadData();
                     } else {
-                        JOptionPane.showMessageDialog(this, "Không thể đóng tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Kh\u00f4ng th\u1ec3 \u0111\u00f3ng tin!", "L\u1ed7i", JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
-                    JOptionPane.showMessageDialog(this, "Chỉ có thể đóng tin đang hoạt động!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Ch\u1ec9 c\u00f3 th\u1ec3 \u0111\u00f3ng tin \u0111ang ho\u1ea1t \u0111\u1ed9ng!", "C\u1ea3nh b\u00e1o", JOptionPane.WARNING_MESSAGE);
                 }
             });
 
-            JButton btnDelete = createActionButton("Xóa", new Color(220, 53, 69), 54);
+            JButton btnDelete = createActionButton("X\u00f3a", new Color(220, 53, 69), 68);
             btnDelete.addActionListener(e -> {
                 if (job != null) {
-                    int confirm = JOptionPane.showConfirmDialog(this,
-                            "Bạn có chắc muốn xóa tin này?",
-                            "Xác nhận",
-                            JOptionPane.YES_NO_OPTION);
-                    if (confirm == JOptionPane.YES_OPTION) {
+                    boolean confirmed = org.jobportal.view.common.ModernDialogUtils.showConfirm(this, "X\u00e1c nh\u1eadn", "B\u1ea1n c\u00f3 ch\u1eafc mu\u1ed1n x\u00f3a tin n\u00e0y?");
+                    if (confirmed) {
                         boolean success = recruitmentService.deleteRecruitment(job.getRecruitmentId());
                         if (success) {
-                            JOptionPane.showMessageDialog(this, "Đã xóa tin tuyển dụng!");
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "\u0110\u00e3 x\u00f3a tin tuy\u1ec3n d\u1ee5ng!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(this, "Không thể xóa tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Kh\u00f4ng th\u1ec3 x\u00f3a tin!", "L\u1ed7i", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
             });
 
-            p5.add(btnDetail);
-            p5.add(btnClose);
-            p5.add(btnDelete);
+            addTwoRowButtons(actionCell, btnDetail, btnClose, btnDelete);
         }
-
-        row.add(p5, gbc);
+        addRecruitmentCell(row, actionCell, 4, 0.22);
         return row;
+    }
+
+    private void addRecruitmentCell(JPanel row, JComponent cell, int column, double weight) {
+        cell.setMinimumSize(new Dimension(0, 0));
+        cell.setPreferredSize(new Dimension(0, 0));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = column;
+        gbc.gridy = 0;
+        gbc.weightx = weight;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        row.add(cell, gbc);
+    }
+
+    private JPanel createBaseCell(int alignment, boolean header) {
+        JPanel panel = new JPanel(new FlowLayout(alignment, alignment == FlowLayout.CENTER ? 4 : 20, header ? 16 : 18));
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private JPanel createTwoRowActionPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        return panel;
+    }
+
+    private void addTwoRowButtons(JPanel panel, JButton topButton, JButton leftButton, JButton rightButton) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(8, 0, 4, 0);
+        gbc.anchor = GridBagConstraints.CENTER;
+        panel.add(topButton, gbc);
+
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(0, 0, 8, 3);
+        panel.add(leftButton, gbc);
+
+        gbc.gridx = 1;
+        gbc.insets = new Insets(0, 3, 8, 0);
+        panel.add(rightButton, gbc);
+    }
+
+    private JPanel createTextCell(String text, Font font, Color color, int alignment, boolean header) {
+        JPanel panel = createBaseCell(alignment, header);
+        JLabel label = new JLabel(text);
+        label.setFont(font);
+        label.setForeground(color);
+        panel.add(label);
+        return panel;
     }
 
     private void showDetailDialog(RecruitmentDTO selected) {
         if (selected == null) return;
         RecruitmentDTO job = recruitmentService.getRecruitmentById(selected.getRecruitmentId());
         if (job == null) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin tin đăng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Không tìm thấy thông tin tin đăng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -622,7 +618,7 @@ public class RecruitmentListPanel extends JPanel {
             String dueRaw = txtDueDateEdit.getText().trim();
 
             if (newTitle.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Tiêu đề không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(dialog, "Tiêu đề không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -630,7 +626,7 @@ public class RecruitmentListPanel extends JPanel {
             try {
                 salary = salaryRaw.isEmpty() ? 0 : Double.parseDouble(salaryRaw);
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Lương không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(dialog, "Lương không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -638,7 +634,7 @@ public class RecruitmentListPanel extends JPanel {
             try {
                 dueDate = LocalDate.parse(dueRaw, df);
             } catch (DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(dialog, "Hạn nộp không đúng định dạng dd/MM/yyyy!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(dialog, "Hạn nộp không đúng định dạng dd/MM/yyyy!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -655,11 +651,11 @@ public class RecruitmentListPanel extends JPanel {
             );
 
             if (updated) {
-                JOptionPane.showMessageDialog(dialog, "Cập nhật tin tuyển dụng thành công!");
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(dialog, "Cập nhật tin tuyển dụng thành công!");
                 dialog.dispose();
                 loadData();
             } else {
-                JOptionPane.showMessageDialog(dialog, "Không thể cập nhật tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(dialog, "Không thể cập nhật tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -735,9 +731,10 @@ public class RecruitmentListPanel extends JPanel {
     }
 
     private JLabel createStatusBadge(String status) {
-        JLabel badge = new JLabel("  " + status + "  ");
+        JLabel badge = new JLabel(status, SwingConstants.CENTER);
         badge.setFont(new Font("Segoe UI", Font.BOLD, 11));
         badge.setOpaque(true);
+        badge.setPreferredSize(new Dimension(104, 22));
 
         switch (status) {
             case STATUS_OPEN:
@@ -760,7 +757,7 @@ public class RecruitmentListPanel extends JPanel {
                 break;
         }
 
-        badge.setBorder(new LineBorder(badge.getForeground(), 1, true));
+        badge.setBorder(new LineBorder(badge.getForeground(), 1, false));
         return badge;
     }
 

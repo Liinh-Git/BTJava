@@ -173,14 +173,14 @@ public class JobDetailPanel extends JPanel {
         if (recruitmentId == null || SessionManager.getInstance().getCurrentUser() == null) return;
         String candidateId = SessionManager.getInstance().getCandidateId();
         if (candidateId == null) {
-            JOptionPane.showMessageDialog(this, "Bạn phải là ứng viên mới có thể nộp hồ sơ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Bạn phải là ứng viên mới có thể nộp hồ sơ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
         boolean success = applicationService.applyRecruitment(candidateId, recruitmentId);
         if (success) {
-            JOptionPane.showMessageDialog(this, "Nộp hồ sơ thành công!");
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Nộp hồ sơ thành công!");
         } else {
-            JOptionPane.showMessageDialog(this, "Bạn đã nộp hồ sơ hoặc có lỗi xảy ra!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Bạn đã nộp hồ sơ hoặc có lỗi xảy ra!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

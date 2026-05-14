@@ -108,8 +108,8 @@ public class HeaderPanel extends JPanel {
 
     private void openNotificationDialog() {
         Window owner = SwingUtilities.getWindowAncestor(this);
-        JDialog dialog = new JDialog(owner, "Thong bao", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(520, 600);
+        JDialog dialog = new JDialog(owner, "Thông báo", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(960, 640);
         dialog.setLocationRelativeTo(owner);
         dialog.setLayout(new BorderLayout());
         dialog.add(new NotificationPanel(), BorderLayout.CENTER);

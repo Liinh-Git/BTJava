@@ -1,4 +1,4 @@
-﻿package org.jobportal.view.candidate;
+package org.jobportal.view.candidate;
 
 import org.jobportal.bll.impl.CategoryService;
 import org.jobportal.bll.impl.RecruitmentService;

@@ -264,6 +264,27 @@ public class ApplicationService implements IApplicationService {
         return result;
     }
 
+    @Override
+    public List<ApplicationDTO> getPendingApplicationsByEmployer(String employerId) {
+        if (employerId == null || employerId.isBlank()) return Collections.emptyList();
+
+        List<Recruitment> recruitments = recruitmentDAO.findByEmployerId(employerId);
+        if (recruitments == null || recruitments.isEmpty()) return Collections.emptyList();
+
+        List<ApplicationDTO> result = new ArrayList<>();
+        for (Recruitment recruitment : recruitments) {
+            if (recruitment == null || recruitment.getRecruitmentId() == null) continue;
+            List<Application> apps = applicationDAO.findByRecruitmentId(recruitment.getRecruitmentId());
+            if (apps == null || apps.isEmpty()) continue;
+            for (Application app : apps) {
+                if (app != null && app.getStatus() == ApplicationStatus.PENDING) {
+                    result.add(enrichApplication(app));
+                }
+            }
+        }
+        return result;
+    }
+
     // ------------------------------------------------------------------
     // approveApplication
     // ------------------------------------------------------------------

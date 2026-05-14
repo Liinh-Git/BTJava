@@ -40,6 +40,11 @@ public interface IApplicationService {
     // Dau ra: List<ApplicationDTO>
     List<ApplicationDTO> getApplicationsByRecruitmentId(String recruitmentId);
 
+    // Chuc nang: Lay danh sach ho so dang cho duyet theo employer
+    // Dau vao: employerId (String)
+    // Dau ra: List<ApplicationDTO>
+    List<ApplicationDTO> getPendingApplicationsByEmployer(String employerId);
+
     // Chuc nang: Duyet don ung tuyen
     // Dau vao: userId (String), applicationId (String)
     // Dau ra: boolean

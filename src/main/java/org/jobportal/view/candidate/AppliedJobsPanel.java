@@ -1,4 +1,4 @@
-﻿package org.jobportal.view.candidate;
+package org.jobportal.view.candidate;
 
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
@@ -201,7 +201,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p2);
 
         // cot 3: Date
-        JPanel p3 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
+        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         p3.setOpaque(false);
         JLabel l3 = new JLabel(col3);
         l3.setFont(font); l3.setForeground(textColor);
@@ -209,7 +209,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p3);
 
         // cot 4: Status
-        JPanel p4 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
+        JPanel p4 = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         p4.setOpaque(false);
         if (isHeader) {
             JLabel l4 = new JLabel(status);
@@ -221,7 +221,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p4);
 
         // cot 5: Actions
-        JPanel p5 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.RIGHT, 20, 15));
+        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         p5.setOpaque(false);
         if (isHeader) {
             JLabel l5 = new JLabel(action);
@@ -229,20 +229,20 @@ public class AppliedJobsPanel extends JPanel {
             l5.setForeground(textColor);
             p5.add(l5);
         } else {
-            JButton btnCancel = new JButton("Há»§y");
+            JButton btnCancel = new JButton("Hủy");
             btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             btnCancel.setBackground(Color.WHITE);
             btnCancel.setForeground(Color.RED);
             btnCancel.addActionListener(e -> {
                 if (app != null) {
-                    int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn hủy đơn ứng tuyển này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-                    if (confirm == JOptionPane.YES_OPTION) {
+                    boolean confirmed = org.jobportal.view.common.ModernDialogUtils.showConfirm(this, "Xác nhận", "Bạn có chắc muốn hủy đơn ứng tuyển này?");
+                    if (confirmed) {
                         boolean success = applicationService.cancelApplication(app.getApplicationId());
                         if (success) {
-                            JOptionPane.showMessageDialog(this, "Đã hủy đơn ứng tuyển!");
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đã hủy đơn ứng tuyển!");
                             loadData();
                         } else {
-                            JOptionPane.showMessageDialog(this, "Lỗi khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lỗi khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -260,8 +260,8 @@ public class AppliedJobsPanel extends JPanel {
         badge.setOpaque(true);
 
         switch (status) {
-            case "Äang duyá»‡t":
-            case "Chá» duyá»‡t":
+            case "Đang duyệt":
+            case "Đang chờ duyệt":
                 badge.setBackground(new Color(230, 240, 255));
                 badge.setForeground(new Color(13, 110, 253));
                 break;

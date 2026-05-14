@@ -27,6 +27,11 @@ public interface IUserService {
     // Dau ra: List<UserDTO>
     List<UserDTO> getAllUsers(Role roleFilter, Boolean statusFilter);
 
+    // Chuc nang: Tim kiem nguoi dung theo ten/email, role va trang thai
+    // Dau vao: keyword (String), roleFilter (Role), statusFilter (Boolean)
+    // Dau ra: List<UserDTO>
+    List<UserDTO> searchUsers(String keyword, Role roleFilter, Boolean statusFilter);
+
     // Chuc nang: Cap nhat trang thai user
     // Dau vao: userId (String), isActive (boolean)
     // Dau ra: boolean
