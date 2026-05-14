@@ -30,6 +30,7 @@ public class RecruitmentFormPanel extends JPanel {
     private JTextField txtSalary;
     private JSpinner txtDueDate; // Doi thanh JSpinner de chon ngay thang
     private JTextArea txtDescription;
+    private Runnable onSubmitSuccess;
 
     public RecruitmentFormPanel() {
         // thiet lap layout chinh
@@ -57,6 +58,10 @@ public class RecruitmentFormPanel extends JPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    public void setOnSubmitSuccess(Runnable onSubmitSuccess) {
+        this.onSubmitSuccess = onSubmitSuccess;
     }
 
     private JPanel createPageHeader() {
@@ -372,6 +377,9 @@ public class RecruitmentFormPanel extends JPanel {
             boolean success = recruitmentService.postRecruitment(titleVal, catId, jobType, salary, dueDate, desc, null); // location will be resolved from company info in BLL
             if (success) {
                 org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đăng tin tuyển dụng thành công, chờ kiểm duyệt!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                if (onSubmitSuccess != null) {
+                    onSubmitSuccess.run();
+                }
                 Window window = SwingUtilities.getWindowAncestor(this);
                 if (window instanceof JDialog) {
                     window.dispose();

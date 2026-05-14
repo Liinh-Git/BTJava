@@ -73,6 +73,10 @@ public class RecruitmentListPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
+    public void refreshData() {
+        loadData();
+    }
+
     private JPanel createToolbarSection() {
         JPanel toolbar = new JPanel(new GridBagLayout());
         toolbar.setBackground(new Color(248, 249, 250));
@@ -196,7 +200,9 @@ public class RecruitmentListPanel extends JPanel {
             JDialog dialog = new JDialog((Frame) ancestor, "Đăng tin tuyển dụng", true);
             dialog.setSize(950, 750);
             dialog.setLocationRelativeTo(ancestor);
-            dialog.add(new RecruitmentFormPanel());
+            RecruitmentFormPanel formPanel = new RecruitmentFormPanel();
+            formPanel.setOnSubmitSuccess(this::loadData);
+            dialog.add(formPanel);
             dialog.setVisible(true);
             loadData();
         }

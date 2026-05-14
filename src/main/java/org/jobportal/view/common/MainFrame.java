@@ -87,9 +87,16 @@ public class MainFrame extends JFrame {
                 mainContentPanel.add(new JobModerationPanel(), "Kiểm duyệt tin tuyển dụng");
                 firstMenu = "Thống kê hệ thống";
             } else if (currentRole == Role.EMPLOYER) {
+                RecruitmentListPanel recruitmentListPanel = new RecruitmentListPanel();
+                RecruitmentFormPanel recruitmentFormPanel = new RecruitmentFormPanel();
+                recruitmentFormPanel.setOnSubmitSuccess(() -> SwingUtilities.invokeLater(() -> {
+                    recruitmentListPanel.refreshData();
+                    navigateToMenu("Quản lý tin tuyển dụng");
+                }));
+
                 mainContentPanel.add(new EmployerDashboardPanel(), "Tổng quan");
-                mainContentPanel.add(new RecruitmentFormPanel(), "Đăng tin tuyển dụng");
-                mainContentPanel.add(new RecruitmentListPanel(), "Quản lý tin tuyển dụng");
+                mainContentPanel.add(recruitmentFormPanel, "Đăng tin tuyển dụng");
+                mainContentPanel.add(recruitmentListPanel, "Quản lý tin tuyển dụng");
                 mainContentPanel.add(new ApplicationReviewPanel(), "Danh sách các ứng viên");
                 mainContentPanel.add(new CompanyInfoPanel(), "Thông tin công ty");
                 firstMenu = "Tổng quan";
