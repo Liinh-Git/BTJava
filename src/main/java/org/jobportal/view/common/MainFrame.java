@@ -96,7 +96,7 @@ public class MainFrame extends JFrame {
             }
             
             // Common panels
-            mainContentPanel.add(new UserProfilePanel(), "Thông tin người dùng");
+            mainContentPanel.add(new UserProfilePanel(), "Thong tin nguoi dung");
             JPanel settingsPanel = new JPanel(new BorderLayout());
             JLabel lblSettings = new JLabel("Chức năng Cài đặt đang được phát triển", SwingConstants.CENTER);
             lblSettings.setFont(new Font("Segoe UI", Font.BOLD, 24));
@@ -150,3 +150,4 @@ public class MainFrame extends JFrame {
         });
     }
 }
+

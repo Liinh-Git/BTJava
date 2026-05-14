@@ -1,5 +1,7 @@
 package org.jobportal.dto;
 
+import java.time.LocalDate;
+import org.jobportal.enums.Gender;
 import org.jobportal.enums.Role;
 
 public class UserDTO {
@@ -8,6 +10,8 @@ public class UserDTO {
     private String fullName;
     private String email;
     private String phoneNumber;
+    private LocalDate dateOfBirth;
+    private Gender gender;
     private Role role;
     private boolean active;
     private String companyName;
@@ -67,6 +71,22 @@ public class UserDTO {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
     }
 
     public Role getRole() {

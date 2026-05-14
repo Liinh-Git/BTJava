@@ -54,17 +54,17 @@ public class RegisterPanel extends JPanel {
 
         JPanel nameHeader = new JPanel(new BorderLayout());
         nameHeader.setBackground(Color.WHITE);
-        nameHeader.add(createLabel("FULL NAME"), BorderLayout.WEST);
+        nameHeader.add(createLabel("USERNAME"), BorderLayout.WEST);
         nameHeader.setPreferredSize(new Dimension(370, 20));
         nameHeader.setMaximumSize(new Dimension(370, 20));
         nameHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
         inputPanel.add(nameHeader);
 
-        JTextField txtFullName = new JTextField();
-        txtFullName.setPreferredSize(new Dimension(370, 35));
-        txtFullName.setMaximumSize(new Dimension(370, 35));
-        txtFullName.setAlignmentX(Component.CENTER_ALIGNMENT);
-        inputPanel.add(txtFullName);
+        JTextField txtUsername = new JTextField();
+        txtUsername.setPreferredSize(new Dimension(370, 35));
+        txtUsername.setMaximumSize(new Dimension(370, 35));
+        txtUsername.setAlignmentX(Component.CENTER_ALIGNMENT);
+        inputPanel.add(txtUsername);
         inputPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         JPanel emailHeader = new JPanel(new BorderLayout());
@@ -159,12 +159,12 @@ public class RegisterPanel extends JPanel {
 
         // Event listeners
         btnRegister.addActionListener(e -> {
-            String fullname = txtFullName.getText();
+            String username = txtUsername.getText();
             String email = txtEmail.getText();
             String pass = new String(txtPass.getPassword());
             String confirm = new String(txtConfirm.getPassword());
 
-            if (fullname.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
+            if (username.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -175,9 +175,7 @@ public class RegisterPanel extends JPanel {
 
             Role selectedRole = cbRole.getSelectedIndex() == 0 ? Role.CANDIDATE : Role.EMPLOYER;
 
-            String username = email.contains("@") ? email.split("@")[0] : email;
-
-            boolean registered = authService.register(username, email, pass, confirm, selectedRole);
+            boolean registered = authService.register(username.trim(), email.trim(), pass, confirm, selectedRole);
 
             if (registered) {
                 JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.", "Success", JOptionPane.INFORMATION_MESSAGE);

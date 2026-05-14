@@ -22,7 +22,7 @@ public class User {
     }
 
     public User(String userId, String username, String passwordHash, String fullName, String phoneNumber,
-                LocalDate dateOfBirth, Gender gender, String email, Role role, boolean active,
+                LocalDate dateOfBirth, Gender gender, String email, String address, Role role, boolean active,
                 LocalDateTime createdAt) {
         this.userId = userId;
         this.username = username;

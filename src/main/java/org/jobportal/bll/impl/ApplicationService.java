@@ -141,7 +141,7 @@ public class ApplicationService implements IApplicationService {
     public boolean cancelApplication(String applicationId) {
         if (applicationId == null || applicationId.isBlank()) return false;
 
-        // Tim don (DAO tra Application theo Id â€” tim thong qua findByCandidateId de loc)
+        // Tim don (DAO tra Application theo Id — tim thong qua findByCandidateId de loc)
         String candidateId = session.getCandidateId();
         if (candidateId == null) {
             System.err.println("[ApplicationService] cancelApplication: chua dang nhap hoac khong phai CANDIDATE.");

@@ -122,7 +122,7 @@ public class AuthService implements IAuthService {
 
         // 5. Tao User va luu vao DB
         User user = new User(userId, username, passwordHash,
-                username,   // fullName mac dinh = username; View co the cap nhat sau
+                null,       // fullName tam de null, se cap nhat sau o UserProfile
                 null, null, null, email,
                 role, true, now);
         boolean userSaved = userDAO.insert(user);
@@ -286,7 +286,7 @@ public class AuthService implements IAuthService {
     // ------------------------------------------------------------------
 
     private UserDTO mapToDTO(User user) {
-        return new UserDTO(
+        UserDTO dto = new UserDTO(
                 user.getUserId(),
                 user.getUsername(),
                 user.getFullName(),
@@ -296,5 +296,9 @@ public class AuthService implements IAuthService {
                 user.isActive(),
                 null   // companyName: se set sau neu la EMPLOYER
         );
+        dto.setDateOfBirth(user.getDateOfBirth());
+        dto.setGender(user.getGender());
+        return dto;
     }
 }
+

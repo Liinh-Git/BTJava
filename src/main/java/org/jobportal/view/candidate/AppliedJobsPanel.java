@@ -123,7 +123,6 @@ public class AppliedJobsPanel extends JPanel {
 
         try (FileWriter fw = new FileWriter(file)) {
             // Ghi header
-            fw.write("\uFEFF"); // BOM de Excel doc dung UTF-8
             fw.write("STT,Tên công việc,Công ty,Ngày ứng tuyển,Trạng thái\n");
 
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");

@@ -24,6 +24,7 @@ public class CVEditorPanel extends JPanel {
     private CVDTO currentCV;
 
     private JTextField txtFullName;
+    private JTextField txtUsername;
     private JTextField txtTitle;
     private JTextField txtLocation;
     private JTextField txtEmail;
@@ -75,7 +76,8 @@ public class CVEditorPanel extends JPanel {
     private void loadData() {
         UserDTO user = SessionManager.getInstance().getCurrentUser();
         if (user != null) {
-            txtFullName.setText(user.getFullName() != null && !user.getFullName().isEmpty() ? user.getFullName() : user.getUsername());
+            txtUsername.setText(user.getUsername() != null ? user.getUsername() : "");
+            txtFullName.setText(user.getFullName() != null ? user.getFullName() : "");
             txtEmail.setText(user.getEmail() != null ? user.getEmail() : "");
             txtPhone.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
 
@@ -156,9 +158,24 @@ public class CVEditorPanel extends JPanel {
         titleBox.add(lblBadge);
         headerPanel.add(titleBox, BorderLayout.WEST);
 
+        JPanel actionButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actionButtons.setBackground(Color.WHITE);
+
+        JButton btnReloadProfile = createButton("TẢI LẠI", Color.WHITE, new Color(13, 110, 253));
+        btnReloadProfile.setBorder(new LineBorder(new Color(13, 110, 253), 1));
+        btnReloadProfile.addActionListener(e -> loadData());
+
+        JButton btnAccountSettings = createButton("TÀI KHOẢN", Color.WHITE, new Color(13, 110, 253));
+        btnAccountSettings.setBorder(new LineBorder(new Color(13, 110, 253), 1));
+        btnAccountSettings.addActionListener(e -> openAccountSettingsTab());
+
         JButton btnSave = createButton("SAVE CHANGES", new Color(13, 110, 253), Color.WHITE);
         btnSave.addActionListener(e -> saveCVData());
-        headerPanel.add(btnSave, BorderLayout.EAST);
+
+        actionButtons.add(btnReloadProfile);
+        actionButtons.add(btnAccountSettings);
+        actionButtons.add(btnSave);
+        headerPanel.add(actionButtons, BorderLayout.EAST);
 
         card.add(headerPanel);
         card.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -169,8 +186,16 @@ public class CVEditorPanel extends JPanel {
         JPanel formPanel = new JPanel(new GridLayout(3, 2, 20, 15));
         formPanel.setBackground(Color.WHITE);
 
+        JPanel p0 = createFormGroup("Tài khoản", "");
+        txtUsername = (JTextField) p0.getComponent(2);
+        txtUsername.setEditable(false);
+        txtUsername.setBackground(new Color(245, 247, 250));
+        formPanel.add(p0);
+
         JPanel p1 = createFormGroup("Họ tên", "Nguyễn Văn A");
         txtFullName = (JTextField) p1.getComponent(2);
+        txtFullName.setEditable(false);
+        txtFullName.setBackground(new Color(245, 247, 250));
         formPanel.add(p1);
         
         JPanel p2 = createFormGroup("Vị trí mong muốn", "Lập trình viên Java");
@@ -183,10 +208,14 @@ public class CVEditorPanel extends JPanel {
         
         JPanel p4 = createFormGroup("Email", "email@example.com");
         txtEmail = (JTextField) p4.getComponent(2);
+        txtEmail.setEditable(false);
+        txtEmail.setBackground(new Color(245, 247, 250));
         formPanel.add(p4);
         
         JPanel p5 = createFormGroup("Số điện thoại", "0900000000");
         txtPhone = (JTextField) p5.getComponent(2);
+        txtPhone.setEditable(false);
+        txtPhone.setBackground(new Color(245, 247, 250));
         formPanel.add(p5);
 
         card.add(formPanel);
@@ -463,6 +492,13 @@ public class CVEditorPanel extends JPanel {
         }
     }
 
+    private void openAccountSettingsTab() {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof org.jobportal.view.common.MainFrame mainFrame) {
+            mainFrame.navigateToMenu("Thong tin nguoi dung");
+        }
+    }
+
     private void openEducationDialog(Education existing) {
         if (currentCV == null) return;
         if (currentCV.getEducations() == null) {
@@ -667,3 +703,4 @@ public class CVEditorPanel extends JPanel {
         });
     }
 }
+

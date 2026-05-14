@@ -1,7 +1,9 @@
 package org.jobportal.bll.interfaces;
 
 import java.util.List;
+import java.time.LocalDate;
 import org.jobportal.dto.UserDTO;
+import org.jobportal.enums.Gender;
 import org.jobportal.enums.Role;
 
 public interface IUserService {
@@ -13,7 +15,7 @@ public interface IUserService {
     // Chuc nang: Cap nhat thong tin ca nhan cho user dang dang nhap
     // Dau vao: fullName (String), phoneNumber (String)
     // Dau ra: boolean
-    boolean updateUserProfile(String fullName, String phoneNumber);
+    boolean updateUserProfile(String fullName, String phoneNumber, String email, LocalDate dateOfBirth, Gender gender);
 
     // Chuc nang: Lay thong tin employer
     // Dau vao: userId (String)
