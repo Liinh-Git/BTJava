@@ -183,7 +183,11 @@ public class RegisterPanel extends JPanel {
                     mainFrame.showLogin();
                 }
             } else {
-                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                String error = authService.getLastErrorMessage();
+                if (error == null || error.isBlank()) {
+                    error = "Đăng ký thất bại! Tên đăng nhập/Email đã tồn tại hoặc không hợp lệ.";
+                }
+                org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, error, "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 

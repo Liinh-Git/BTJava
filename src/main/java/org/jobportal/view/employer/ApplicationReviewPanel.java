@@ -346,7 +346,7 @@ public class ApplicationReviewPanel extends JPanel {
                     org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Kh\u00f4ng t\u00ecm th\u1ea5y th\u00f4ng tin \u1ee9ng vi\u00ean!");
                 }
             });
-            JButton linkApprove = createReviewActionButton("Chấp nhận", new Color(173, 173, 173), canReview, () -> {
+            JButton linkApprove = createReviewActionButton("Chấp nhận", new Color(40, 167, 69), canReview, () -> {
                 UserDTO current = SessionManager.getInstance().getCurrentUser();
                 if (app != null && current != null) {
                     boolean success = applicationService.approveApplication(current.getUserId(), app.getApplicationId());
@@ -358,7 +358,7 @@ public class ApplicationReviewPanel extends JPanel {
                     }
                 }
             });
-            JButton linkReject = createReviewActionButton("Từ chối", new Color(173, 173, 173), canReview, () -> {
+            JButton linkReject = createReviewActionButton("Từ chối", new Color(220, 53, 69), canReview, () -> {
                 UserDTO current = SessionManager.getInstance().getCurrentUser();
                 if (app != null && current != null) {
                     boolean success = applicationService.rejectApplication(current.getUserId(), app.getApplicationId());

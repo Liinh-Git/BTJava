@@ -67,6 +67,88 @@ public final class ModernDialogUtils {
         return confirmed[0];
     }
 
+    public static String showInputDialog(Component parent, String title, String label, String initialValue) {
+        Window owner = parent != null ? SwingUtilities.getWindowAncestor(parent) : null;
+        JDialog dialog = new JDialog(owner, APP_TITLE, Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setUndecorated(true);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        final String[] result = {null};
+
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(Color.WHITE);
+        root.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(210, 210, 210), 1),
+                new EmptyBorder(20, 22, 22, 22)
+        ));
+
+        JTextField input = new JTextField(initialValue != null ? initialValue : "");
+        input.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        input.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(210, 210, 210), 1),
+                new EmptyBorder(7, 10, 7, 10)
+        ));
+
+        JPanel body = new JPanel(new GridBagLayout());
+        body.setBackground(Color.WHITE);
+        body.setBorder(new EmptyBorder(18, 0, 18, 0));
+
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(BLUE);
+
+        JLabel inputLabel = new JLabel(label);
+        inputLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        inputLabel.setForeground(TEXT_DARK);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(0, 0, 16, 0);
+        body.add(titleLabel, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        body.add(inputLabel, gbc);
+
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        body.add(input, gbc);
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
+        footer.setBackground(Color.WHITE);
+
+        JButton ok = createFlatButton("OK", BLUE, BLUE_HOVER);
+        JButton cancel = createFlatButton("Hủy", new Color(108, 117, 125), new Color(90, 98, 104));
+        ok.addActionListener(e -> {
+            result[0] = input.getText();
+            dialog.dispose();
+        });
+        cancel.addActionListener(e -> dialog.dispose());
+        footer.add(ok);
+        footer.add(cancel);
+
+        root.add(createHeader(), BorderLayout.NORTH);
+        root.add(body, BorderLayout.CENTER);
+        root.add(footer, BorderLayout.SOUTH);
+
+        dialog.setContentPane(root);
+        dialog.setSize(new Dimension(430, 260));
+        dialog.setLocationRelativeTo(parent);
+        dialog.getRootPane().setDefaultButton(ok);
+        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowOpened(java.awt.event.WindowEvent e) {
+                input.requestFocusInWindow();
+                input.selectAll();
+            }
+        });
+        dialog.setVisible(true);
+        return result[0];
+    }
+
     public static void showMessageDialog(Component parent, Object message) {
         showMessageDialog(parent, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -143,12 +225,7 @@ public final class ModernDialogUtils {
         title.setForeground(type == DialogType.ERROR ? ERROR_COLOR : BLUE);
         title.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JLabel content = new JLabel(toHtmlMessage(message));
-        content.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        content.setForeground(TEXT_DARK);
-        content.setHorizontalAlignment(SwingConstants.CENTER);
-        content.setVerticalAlignment(SwingConstants.CENTER);
-        // content.setPreferredSize(new Dimension(330, content.getPreferredSize().height));
+        JTextPane content = createMessagePane(message);
 
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 14, 0);
@@ -160,6 +237,8 @@ public final class ModernDialogUtils {
 
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
         body.add(content, gbc);
         return body;
     }
@@ -234,14 +313,25 @@ public final class ModernDialogUtils {
         return button;
     }
 
-    private static String toHtmlMessage(String message) {
-        String safe = message == null ? "" : message
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\n", "<br>");
-        // Sửa dòng return dưới đây
-        return "<html><div style='text-align: center; width: 300px;'>" + safe + "</div></html>";
+    private static JTextPane createMessagePane(String message) {
+        JTextPane text = new JTextPane();
+        text.setText(message == null ? "" : message);
+        text.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        text.setForeground(TEXT_DARK);
+        text.setOpaque(false);
+        text.setEditable(false);
+        text.setFocusable(false);
+        text.setBorder(null);
+
+        javax.swing.text.SimpleAttributeSet attrs = new javax.swing.text.SimpleAttributeSet();
+        javax.swing.text.StyleConstants.setAlignment(attrs, javax.swing.text.StyleConstants.ALIGN_CENTER);
+        text.getStyledDocument().setParagraphAttributes(0, text.getDocument().getLength(), attrs, false);
+
+        int width = DIALOG_SIZE.width - 44;
+        text.setSize(new Dimension(width, Short.MAX_VALUE));
+        text.setPreferredSize(new Dimension(width, Math.max(24, text.getPreferredSize().height)));
+        text.setMinimumSize(new Dimension(0, 24));
+        return text;
     }
 
     private enum DialogType {

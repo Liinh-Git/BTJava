@@ -17,7 +17,6 @@ import org.jobportal.utils.SessionManager;
 import org.jobportal.utils.ValidationUtils;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  * AuthService - Xu ly nghiep vu xac thuc (dang ky, dang nhap, dang xuat, doi mat khau).
@@ -117,11 +116,16 @@ public class AuthService implements IAuthService {
 
         // 5. Tao User va luu vao DB
         User user = new User(userId, username, passwordHash,
-                null,       // fullName tam de null, se cap nhat sau o UserProfile
+                username,   // fullName tam dung username vi DB bat buoc NOT NULL; user cap nhat sau o UserProfile
                 null, null, null, email,
                 null,       // address tam de null, se cap nhat sau o UserProfile
                 role, true, now);
-        boolean userSaved = userDAO.insert(user);
+        boolean userSaved;
+        try {
+            userSaved = userDAO.insert(user);
+        } catch (RuntimeException ex) {
+            return fail("Không thể lưu tài khoản người dùng: " + ex.getMessage());
+        }
         if (!userSaved) {
             return fail("Không thể lưu tài khoản người dùng.");
         }
@@ -136,6 +140,7 @@ public class AuthService implements IAuthService {
             Candidate candidate = new Candidate(candidateId, userId);
             boolean candidateSaved = candidateDAO.insert(candidate);
             if (!candidateSaved) {
+                userDAO.delete(userId);
                 return fail("Không thể tạo hồ sơ ứng viên.");
             }
 
@@ -149,6 +154,7 @@ public class AuthService implements IAuthService {
             Employer employer = new Employer(employerId, userId, username, null, null);
             boolean employerSaved = employerDAO.insert(employer);
             if (!employerSaved) {
+                userDAO.delete(userId);
                 return fail("Không thể tạo hồ sơ nhà tuyển dụng.");
             }
         }
