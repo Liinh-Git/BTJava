@@ -108,6 +108,7 @@ public class MainFrame extends JFrame {
 
             if (!firstMenu.isEmpty()) {
                 mainCardLayout.show(mainContentPanel, firstMenu);
+                sidebarPanel.setActiveMenu(firstMenu);
             }
 
             // Handle menu selection from SidebarPanel
@@ -117,6 +118,7 @@ public class MainFrame extends JFrame {
                     showLogin();
                 } else {
                     mainCardLayout.show(mainContentPanel, resolveCardKey(menuTitle));
+                    sidebarPanel.setActiveMenu(menuTitle);
                 }
             });
 
@@ -143,6 +145,9 @@ public class MainFrame extends JFrame {
     public void navigateToMenu(String menuTitle) {
         if (mainContentPanel != null && mainCardLayout != null) {
             mainCardLayout.show(mainContentPanel, resolveCardKey(menuTitle));
+            if (sidebarPanel != null) {
+                sidebarPanel.setActiveMenu(menuTitle);
+            }
         }
     }
 

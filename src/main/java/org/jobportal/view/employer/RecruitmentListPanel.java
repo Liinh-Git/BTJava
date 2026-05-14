@@ -153,13 +153,19 @@ public class RecruitmentListPanel extends JPanel {
         leftGbc.insets = new Insets(0, 0, 0, 0);
         left.add(btnSearch, leftGbc);
 
-        JButton btnCreate = new JButton("Đăng tin mới");
+        JButton btnCreate = new JButton("+ Đăng tin mới");
         btnCreate.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnCreate.setBackground(new Color(13, 110, 253));
         btnCreate.setForeground(Color.WHITE);
         btnCreate.setFocusPainted(false);
         btnCreate.setBorderPainted(false);
-        btnCreate.setPreferredSize(new Dimension(150, 80));
+        btnCreate.setOpaque(true);
+        btnCreate.setContentAreaFilled(true);
+        btnCreate.setHorizontalAlignment(SwingConstants.CENTER);
+        btnCreate.setMargin(new Insets(0, 12, 0, 12));
+        btnCreate.setPreferredSize(new Dimension(176, 40));
+        btnCreate.setMinimumSize(new Dimension(176, 40));
+        btnCreate.setMaximumSize(new Dimension(176, 40));
         btnCreate.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCreate.addActionListener(e -> openCreateDialog());
 
@@ -357,10 +363,10 @@ public class RecruitmentListPanel extends JPanel {
 
     private JPanel createRow(String col1, String col2, String status, String applicants, String action, boolean isHeader, RecruitmentDTO job) {
         JPanel row = new JPanel(new GridBagLayout());
-        row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
-        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
-        row.setPreferredSize(new Dimension(0, isHeader ? 56 : 84));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, isHeader ? 56 : 84));
+        row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
+        row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
+        row.setPreferredSize(new Dimension(0, isHeader ? 56 : 94));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, isHeader ? 56 : 94));
 
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color headerColor = Color.GRAY;
@@ -443,7 +449,7 @@ public class RecruitmentListPanel extends JPanel {
         gbc.gridx = 4;
         gbc.weightx = 0.17;
         gbc.insets = new Insets(8, 8, 8, 16);
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 16));
+        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         p5.setOpaque(false);
 
         if (isHeader) {

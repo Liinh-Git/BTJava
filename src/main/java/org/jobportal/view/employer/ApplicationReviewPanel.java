@@ -475,49 +475,78 @@ public class ApplicationReviewPanel extends JPanel {
     private void showCVDetailDialog(ApplicationDTO app, UserDTO candidateInfo) {
         CVDTO cv = cvService.getCV(app.getCandidateId());
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBorder(new EmptyBorder(20, 24, 20, 24));
-        content.setBackground(Color.WHITE);
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(230, 230, 230), 1),
+                new EmptyBorder(20, 24, 20, 24)
+        ));
 
-        addSectionTitle(content, "Thông tin cá nhân");
-        content.add(createInfoLine("Họ tên", candidateInfo.getFullName()));
-        content.add(createInfoLine("Email", candidateInfo.getEmail()));
-        content.add(createInfoLine("Điện thoại", candidateInfo.getPhoneNumber()));
-        content.add(createInfoLine("Địa điểm", cv != null ? cv.getLocation() : null));
-        content.add(createInfoLine("Vị trí mong muốn", cv != null ? cv.getDesiredPosition() : null));
+        JLabel lblHeader = new JLabel("CHI TIẾT CV ỨNG VIÊN");
+        lblHeader.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(lblHeader);
+        card.add(Box.createRigidArea(new Dimension(0, 10)));
+        card.add(new JSeparator());
+        card.add(Box.createRigidArea(new Dimension(0, 8)));
 
-        addSectionTitle(content, "Mục tiêu nghề nghiệp");
-        content.add(createTextBlock(cv != null ? cv.getObjective() : null));
+        addSectionTitle(card, "Thông tin cá nhân");
+        card.add(createInfoLine("Họ tên", candidateInfo.getFullName()));
+        card.add(createInfoLine("Email", candidateInfo.getEmail()));
+        card.add(createInfoLine("Điện thoại", candidateInfo.getPhoneNumber()));
+        card.add(createInfoLine("Địa điểm", cv != null ? cv.getLocation() : null));
+        card.add(createInfoLine("Vị trí mong muốn", cv != null ? cv.getDesiredPosition() : null));
 
-        addSectionTitle(content, "Kỹ năng");
-        content.add(createTextBlock(cv != null ? cv.getSkills() : null));
+        addSectionTitle(card, "Mục tiêu nghề nghiệp");
+        card.add(createTextBlock(cv != null ? cv.getObjective() : null));
 
-        addSectionTitle(content, "Học vấn");
+        addSectionTitle(card, "Kỹ năng");
+        card.add(createTextBlock(cv != null ? cv.getSkills() : null));
+
+        addSectionTitle(card, "Học vấn");
         if (cv != null && cv.getEducations() != null && !cv.getEducations().isEmpty()) {
             for (Education education : cv.getEducations()) {
-                content.add(createEducationBlock(education));
+                card.add(createEducationBlock(education));
+                card.add(Box.createRigidArea(new Dimension(0, 8)));
             }
         } else {
-            content.add(createTextBlock("Chưa có thông tin học vấn."));
+            card.add(createTextBlock("Chưa có thông tin học vấn."));
         }
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(new Color(248, 249, 250));
+        content.setBorder(new EmptyBorder(16, 16, 16, 16));
+        content.add(card);
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setPreferredSize(new Dimension(620, 620));
+        scrollPane.getViewport().setBackground(new Color(248, 249, 250));
 
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Chi tiết CV", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(new Color(248, 249, 250));
         dialog.add(scrollPane, BorderLayout.CENTER);
 
         JButton btnClose = new JButton("Đóng");
+        btnClose.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnClose.setBackground(new Color(13, 110, 253));
+        btnClose.setForeground(Color.WHITE);
+        btnClose.setFocusPainted(false);
+        btnClose.setBorderPainted(false);
+        btnClose.setPreferredSize(new Dimension(100, 34));
         btnClose.addActionListener(e -> dialog.dispose());
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 10));
+        footer.setBackground(Color.WHITE);
+        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(230, 230, 230)));
         footer.add(btnClose);
         dialog.add(footer, BorderLayout.SOUTH);
 
-        dialog.pack();
+        dialog.setSize(860, 700);
+        dialog.setMinimumSize(new Dimension(760, 620));
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
