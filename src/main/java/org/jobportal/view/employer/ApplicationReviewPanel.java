@@ -20,6 +20,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,7 +148,7 @@ public class ApplicationReviewPanel extends JPanel {
 
     private void loadData() {
         tableContainer.removeAll();
-        tableContainer.add(createTableRow("ỨNG VIÊN", "NGÀY NỘP", "VỊ TRÍ HIỆN TẠI", "TRẠNG THÁI", "THAO TÁC", true, null, null));
+        tableContainer.add(createTableRow("ỨNG VIÊN", "NGÀY NỘP", "VỊ TRÍ ỨNG TUYỂN", "TRẠNG THÁI", "THAO TÁC", true, null, null));
 
         String employerId = SessionManager.getInstance().getEmployerId();
         List<ApplicationDTO> allApps = new ArrayList<>();
@@ -279,11 +281,18 @@ public class ApplicationReviewPanel extends JPanel {
 
     private JPanel createTableRow(String col1, String col2, String col3, String status, String action,
                                   boolean isHeader, String email, ApplicationDTO app) {
+        final int rowHeight = isHeader ? 56 : 94;
+        final int col1Width = 150; // Ứng viên
+        final int col2Width = 100; // Ngày nộp
+        final int col3Width = 280; // Vị trí ứng tuyển
+        final int col4Width = 90; // Trạng thái
+        final int col5Width = 180; // Thao tác
+
         JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
-        row.setPreferredSize(new Dimension(0, isHeader ? 56 : 94));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, isHeader ? 56 : 94));
+        row.setPreferredSize(new Dimension(col1Width + col2Width + col3Width + col4Width + col5Width, rowHeight));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowHeight));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
@@ -295,9 +304,10 @@ public class ApplicationReviewPanel extends JPanel {
 
         // Cột 1: Ứng viên (không avatar)
         gbc.gridx = 0;
-        gbc.weightx = 0.34;
+        gbc.weightx = 0.0;
         gbc.insets = new Insets(8, 12, 8, 8);
         JPanel p1 = new JPanel(new GridBagLayout());
+        setFixedColumnWidth(p1, col1Width, rowHeight);
         p1.setOpaque(false);
         if (isHeader) {
             JLabel l1 = new JLabel(col1, SwingConstants.CENTER);
@@ -327,9 +337,10 @@ public class ApplicationReviewPanel extends JPanel {
 
         // Cột 2: Ngày nộp
         gbc.gridx = 1;
-        gbc.weightx = 0.14;
+        gbc.weightx = 0.0;
         gbc.insets = new Insets(8, 8, 8, 8);
         JPanel p2 = new JPanel(new GridBagLayout());
+        setFixedColumnWidth(p2, col2Width, rowHeight);
         p2.setOpaque(false);
         JLabel l2 = new JLabel(col2, SwingConstants.CENTER);
         l2.setFont(font);
@@ -339,8 +350,9 @@ public class ApplicationReviewPanel extends JPanel {
 
         // Cột 3: Vị trí hiện tại (center + wrap)
         gbc.gridx = 2;
-        gbc.weightx = 0.28;
+        gbc.weightx = 0.0;
         JPanel p3 = new JPanel(new GridBagLayout());
+        setFixedColumnWidth(p3, col3Width, rowHeight);
         p3.setOpaque(false);
         if (isHeader) {
             JLabel l3 = new JLabel(col3, SwingConstants.CENTER);
@@ -348,7 +360,8 @@ public class ApplicationReviewPanel extends JPanel {
             l3.setForeground(textColor);
             p3.add(l3);
         } else {
-            JLabel wrap = new JLabel("<html><div style='text-align:center; width:320px;'>" + escapeHtml(col3) + "</div></html>", SwingConstants.CENTER);
+            int wrapWidth = Math.max(220, col3Width - 24);
+            JLabel wrap = new JLabel("<html><div style='text-align:center; width:" + wrapWidth + "px;'>" + escapeHtml(col3) + "</div></html>", SwingConstants.CENTER);
             wrap.setFont(font);
             wrap.setForeground(textColor);
             p3.add(wrap);
@@ -357,8 +370,9 @@ public class ApplicationReviewPanel extends JPanel {
 
         // Cột 4: Trạng thái
         gbc.gridx = 3;
-        gbc.weightx = 0.12;
+        gbc.weightx = 0.0;
         JPanel p4 = new JPanel(new GridBagLayout());
+        setFixedColumnWidth(p4, col4Width, rowHeight);
         p4.setOpaque(false);
         if (isHeader) {
             JLabel l4 = new JLabel(status, SwingConstants.CENTER);
@@ -372,35 +386,34 @@ public class ApplicationReviewPanel extends JPanel {
 
         // Cột 5: Thao tác (text buttons)
         gbc.gridx = 4;
-        gbc.weightx = 0.12;
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
+        gbc.weightx = 0.0;
+        JPanel p5 = isHeader
+                ? new JPanel(new GridBagLayout())
+                : new JPanel();
+        setFixedColumnWidth(p5, col5Width, rowHeight);
         p5.setOpaque(false);
+        if (!isHeader) {
+            p5.setLayout(new BoxLayout(p5, BoxLayout.X_AXIS));
+        }
         if (isHeader) {
             JLabel l5 = new JLabel(action, SwingConstants.CENTER);
             l5.setFont(font);
             l5.setForeground(textColor);
             p5.add(l5);
         } else {
-            JButton btnView = createActionBtn("Xem", new Color(13, 110, 253));
-            btnView.addActionListener(e -> {
-                if (app != null) {
-                    UserDTO candidateInfo = applicationService.getCandidateInfo(app.getCandidateId());
-                    if (candidateInfo != null) {
-                        showCVDetailDialog(app, candidateInfo);
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin ứng viên!");
-                    }
+            boolean canReview = app != null && app.getStatus() == ApplicationStatus.PENDING;
+
+            JLabel linkView = createActionLink("Xem", new Color(13, 110, 253), true, () -> {
+                if (app == null) return;
+                UserDTO candidateInfo = applicationService.getCandidateInfo(app.getCandidateId());
+                if (candidateInfo != null) {
+                    showCVDetailDialog(app, candidateInfo);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin ứng viên!");
                 }
             });
 
-            JButton btnApprove = createActionBtn("Chấp nhận", new Color(40, 167, 69));
-            JButton btnReject = createActionBtn("Từ chối", new Color(220, 53, 69));
-
-            boolean canReview = app != null && app.getStatus() == ApplicationStatus.PENDING;
-            btnApprove.setEnabled(canReview);
-            btnReject.setEnabled(canReview);
-
-            btnApprove.addActionListener(e -> {
+            JLabel linkApprove = createActionLink("Chấp nhận", new Color(40, 167, 69), canReview, () -> {
                 UserDTO current = SessionManager.getInstance().getCurrentUser();
                 if (app != null && current != null) {
                     boolean success = applicationService.approveApplication(current.getUserId(), app.getApplicationId());
@@ -413,7 +426,7 @@ public class ApplicationReviewPanel extends JPanel {
                 }
             });
 
-            btnReject.addActionListener(e -> {
+            JLabel linkReject = createActionLink("Từ chối", new Color(220, 53, 69), canReview, () -> {
                 UserDTO current = SessionManager.getInstance().getCurrentUser();
                 if (app != null && current != null) {
                     boolean success = applicationService.rejectApplication(current.getUserId(), app.getApplicationId());
@@ -426,61 +439,114 @@ public class ApplicationReviewPanel extends JPanel {
                 }
             });
 
-            p5.add(btnView);
-            p5.add(btnApprove);
-            p5.add(btnReject);
+            JLabel sep1 = new JLabel("|");
+            sep1.setForeground(new Color(180, 180, 180));
+            JLabel sep2 = new JLabel("|");
+            sep2.setForeground(new Color(180, 180, 180));
+
+            p5.add(Box.createHorizontalGlue());
+            p5.add(linkView);
+            p5.add(sep1);
+            p5.add(linkApprove);
+            p5.add(sep2);
+            p5.add(linkReject);
+            p5.add(Box.createHorizontalGlue());
         }
         row.add(p5, gbc);
 
+        // Cột đệm hấp thụ phần dư để 5 cột chính giữ nguyên bề rộng cố định
+        gbc.gridx = 5;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        JPanel spacer = new JPanel();
+        spacer.setOpaque(false);
+        row.add(spacer, gbc);
+
         return row;
+    }
+
+    private void setFixedColumnWidth(JComponent component, int width, int height) {
+        Dimension d = new Dimension(width, height);
+        component.setPreferredSize(d);
+        component.setMinimumSize(d);
+        component.setMaximumSize(new Dimension(width, Integer.MAX_VALUE));
     }
 
     private void showCVDetailDialog(ApplicationDTO app, UserDTO candidateInfo) {
         CVDTO cv = cvService.getCV(app.getCandidateId());
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBorder(new EmptyBorder(20, 24, 20, 24));
-        content.setBackground(Color.WHITE);
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(230, 230, 230), 1),
+                new EmptyBorder(20, 24, 20, 24)
+        ));
 
-        addSectionTitle(content, "Thông tin cá nhân");
-        content.add(createInfoLine("Họ tên", candidateInfo.getFullName()));
-        content.add(createInfoLine("Email", candidateInfo.getEmail()));
-        content.add(createInfoLine("Điện thoại", candidateInfo.getPhoneNumber()));
-        content.add(createInfoLine("Địa điểm", cv != null ? cv.getLocation() : null));
-        content.add(createInfoLine("Vị trí mong muốn", cv != null ? cv.getDesiredPosition() : null));
+        JLabel lblHeader = new JLabel("CHI TIẾT CV ỨNG VIÊN");
+        lblHeader.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(lblHeader);
+        card.add(Box.createRigidArea(new Dimension(0, 10)));
+        card.add(new JSeparator());
+        card.add(Box.createRigidArea(new Dimension(0, 8)));
 
-        addSectionTitle(content, "Mục tiêu nghề nghiệp");
-        content.add(createTextBlock(cv != null ? cv.getObjective() : null));
+        addSectionTitle(card, "Thông tin cá nhân");
+        card.add(createInfoLine("Họ tên", candidateInfo.getFullName()));
+        card.add(createInfoLine("Email", candidateInfo.getEmail()));
+        card.add(createInfoLine("Điện thoại", candidateInfo.getPhoneNumber()));
+        card.add(createInfoLine("Địa điểm", cv != null ? cv.getLocation() : null));
+        card.add(createInfoLine("Vị trí mong muốn", cv != null ? cv.getDesiredPosition() : null));
 
-        addSectionTitle(content, "Kỹ năng");
-        content.add(createTextBlock(cv != null ? cv.getSkills() : null));
+        addSectionTitle(card, "Mục tiêu nghề nghiệp");
+        card.add(createTextBlock(cv != null ? cv.getObjective() : null));
 
-        addSectionTitle(content, "Học vấn");
+        addSectionTitle(card, "Kỹ năng");
+        card.add(createTextBlock(cv != null ? cv.getSkills() : null));
+
+        addSectionTitle(card, "Học vấn");
         if (cv != null && cv.getEducations() != null && !cv.getEducations().isEmpty()) {
             for (Education education : cv.getEducations()) {
-                content.add(createEducationBlock(education));
+                card.add(createEducationBlock(education));
+                card.add(Box.createRigidArea(new Dimension(0, 8)));
             }
         } else {
-            content.add(createTextBlock("Chưa có thông tin học vấn."));
+            card.add(createTextBlock("Chưa có thông tin học vấn."));
         }
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(new Color(248, 249, 250));
+        content.setBorder(new EmptyBorder(16, 16, 16, 16));
+        content.add(card);
 
         JScrollPane scrollPane = new JScrollPane(content);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setPreferredSize(new Dimension(620, 620));
+        scrollPane.getViewport().setBackground(new Color(248, 249, 250));
 
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Chi tiết CV", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(new Color(248, 249, 250));
         dialog.add(scrollPane, BorderLayout.CENTER);
 
         JButton btnClose = new JButton("Đóng");
+        btnClose.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnClose.setBackground(new Color(13, 110, 253));
+        btnClose.setForeground(Color.WHITE);
+        btnClose.setFocusPainted(false);
+        btnClose.setBorderPainted(false);
+        btnClose.setPreferredSize(new Dimension(100, 34));
         btnClose.addActionListener(e -> dialog.dispose());
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 10));
+        footer.setBackground(Color.WHITE);
+        footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(230, 230, 230)));
         footer.add(btnClose);
         dialog.add(footer, BorderLayout.SOUTH);
 
-        dialog.pack();
+        dialog.setSize(860, 700);
+        dialog.setMinimumSize(new Dimension(760, 620));
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
@@ -571,16 +637,25 @@ public class ApplicationReviewPanel extends JPanel {
         return "Đang duyệt";
     }
 
-    private JButton createActionBtn(String text, Color color) {
-        JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(92, 30));
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btn.setForeground(color);
-        btn.setBackground(Color.WHITE);
-        btn.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return btn;
+    private JLabel createActionLink(String text, Color color, boolean enabled, Runnable onClick) {
+        JLabel link = new JLabel();
+        link.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        if (enabled) {
+            link.setText("<html><u>" + text + "</u></html>");
+            link.setForeground(color);
+            link.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            link.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (onClick != null) onClick.run();
+                }
+            });
+        } else {
+            link.setText(text);
+            link.setForeground(new Color(170, 170, 170));
+            link.setCursor(Cursor.getDefaultCursor());
+        }
+        return link;
     }
 
     private JButton createPageBtn(String text, boolean active) {

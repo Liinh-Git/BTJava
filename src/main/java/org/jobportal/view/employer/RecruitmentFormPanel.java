@@ -101,7 +101,7 @@ public class RecruitmentFormPanel extends JPanel {
         gbc.weightx = 0.5;
 
         // dong 1: Tieu de cong viec (chiem 2 cot)
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 1;
         formGrid.add(createLabel("TIÊU ĐỀ CÔNG VIỆC"), gbc);
 
         gbc.gridy = 1; gbc.insets = new Insets(0, 0, 20, 0);

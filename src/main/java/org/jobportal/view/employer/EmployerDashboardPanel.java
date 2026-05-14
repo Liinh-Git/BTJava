@@ -249,8 +249,8 @@ public class EmployerDashboardPanel extends JPanel {
         JPanel row = new JPanel(new GridBagLayout());
         row.setBackground(isHeader ? new Color(248, 249, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        row.setPreferredSize(new Dimension(0, 50));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 64));
+        row.setPreferredSize(new Dimension(0, 64));
 
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.DARK_GRAY;
@@ -264,34 +264,37 @@ public class EmployerDashboardPanel extends JPanel {
         // Cột 1: rộng hơn
         gbc.gridx = 0;
         gbc.weightx = 0.56; // tăng/giảm theo ý
-        JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel p1 = new JPanel(new BorderLayout());
         p1.setOpaque(false);
+        p1.setBorder(new EmptyBorder(0, 30, 0, 10));
         JLabel l1 = new JLabel(col1);
         l1.setFont(font);
         l1.setForeground(isHeader ? textColor : Color.BLACK);
-        p1.add(l1);
+        p1.add(l1, BorderLayout.WEST);
         row.add(p1, gbc);
 
         // Cột 2: hẹp hơn
         gbc.gridx = 1;
         gbc.weightx = 0.18;
-        JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 15));
+        JPanel p2 = new JPanel(new BorderLayout());
         p2.setOpaque(false);
+        p2.setBorder(new EmptyBorder(0, 20, 0, 10));
         JLabel l2 = new JLabel(col2);
         l2.setFont(font);
         l2.setForeground(textColor);
-        p2.add(l2);
+        p2.add(l2, BorderLayout.WEST);
         row.add(p2, gbc);
 
         // Cột 3: hẹp hơn
         gbc.gridx = 2;
         gbc.weightx = 0.26;
-        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 15));
+        JPanel p3 = new JPanel(new BorderLayout());
         p3.setOpaque(false);
+        p3.setBorder(new EmptyBorder(0, 20, 0, 12));
         JLabel l3 = new JLabel(col3);
         l3.setFont(font);
         l3.setForeground(textColor);
-        p3.add(l3);
+        p3.add(l3, BorderLayout.WEST);
         row.add(p3, gbc);
 
         return row;
@@ -299,11 +302,16 @@ public class EmployerDashboardPanel extends JPanel {
 
 
     private JPanel createEmptyRow() {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel row = new JPanel(new BorderLayout());
         row.setBackground(Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        row.add(new JLabel("Chưa có tin đăng nào."));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 64));
+        row.setPreferredSize(new Dimension(0, 64));
+        JPanel left = new JPanel(new BorderLayout());
+        left.setOpaque(false);
+        left.setBorder(new EmptyBorder(0, 30, 0, 10));
+        left.add(new JLabel("Chưa có tin đăng nào."), BorderLayout.WEST);
+        row.add(left, BorderLayout.CENTER);
         return row;
     }
 

@@ -9,7 +9,7 @@ public class JobCardPanel extends JPanel {
 
     private static final int ACTION_BUTTON_WIDTH = 80;
     private static final int ACTION_BUTTON_HEIGHT = 30;
-    private static final int CARD_HEIGHT = 245;
+    private static final int CARD_HEIGHT = 260;
     private static final int DESCRIPTION_HEIGHT = 40;
 
     private JPanel bottomPanel;
