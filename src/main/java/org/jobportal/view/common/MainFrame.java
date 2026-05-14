@@ -20,6 +20,9 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MainFrame extends JFrame {
+    private static final String CARD_LOGIN = "Login";
+    private static final String CARD_REGISTER = "Register";
+    private static final String CARD_APP = "App";
     private static final String CARD_USER_PROFILE = "CARD_USER_PROFILE";
     private static final String CARD_SETTINGS = "CARD_SETTINGS";
     
@@ -44,11 +47,11 @@ public class MainFrame extends JFrame {
         LoginPanel loginPanel = new LoginPanel(this);
         RegisterPanel registerPanel = new RegisterPanel(this);
         
-        rootPanel.add(loginPanel, "Đăng nhập");
-        rootPanel.add(registerPanel, "Đăng ký");
+        rootPanel.add(loginPanel, CARD_LOGIN);
+        rootPanel.add(registerPanel, CARD_REGISTER);
         
         add(rootPanel);
-        rootCardLayout.show(rootPanel, "Đăng nhập"); // Show login initially
+        rootCardLayout.show(rootPanel, CARD_LOGIN);
         
         setLocationRelativeTo(null);
     }
@@ -121,10 +124,10 @@ public class MainFrame extends JFrame {
 
             appPanel.add(mainContentPanel, BorderLayout.CENTER);
             
-            rootPanel.add(appPanel, "App");
+            rootPanel.add(appPanel, CARD_APP);
             rootPanel.revalidate();
             rootPanel.repaint();
-            rootCardLayout.show(rootPanel, "App");
+            rootCardLayout.show(rootPanel, CARD_APP);
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi khi tải giao diện: " + e.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
@@ -132,11 +135,11 @@ public class MainFrame extends JFrame {
     }
     
     public void showRegister() {
-        rootCardLayout.show(rootPanel, "Register");
+        rootCardLayout.show(rootPanel, CARD_REGISTER);
     }
     
     public void showLogin() {
-        rootCardLayout.show(rootPanel, "Login");
+        rootCardLayout.show(rootPanel, CARD_LOGIN);
     }
     
     public void navigateToMenu(String menuTitle) {

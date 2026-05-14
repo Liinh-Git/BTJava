@@ -72,8 +72,7 @@ public class UserDAO implements IUserDAO {
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
-            ps.setString(2, username);
-            ps.setString(3, passwordHash);
+            ps.setString(2, passwordHash);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
