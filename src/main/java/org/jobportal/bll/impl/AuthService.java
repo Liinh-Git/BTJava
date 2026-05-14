@@ -75,39 +75,33 @@ public class AuthService implements IAuthService {
     @Override
     public boolean register(String username, String email, String password,
                             String confirmPassword, Role role) {
+        lastErrorMessage = null;
 
         // 1. Khong cho tao ADMIN tu giao dien
         if (role == Role.ADMIN) {
-            System.err.println("[AuthService] register: khong the tao tai khoan ADMIN tu UI.");
-            return false;
+            return fail("Không thể tạo tài khoản quản trị từ màn hình đăng ký.");
         }
 
         // 2. Validate cac truong bat buoc
         if (!ValidationUtils.isValidUsername(username)) {
-            System.err.println("[AuthService] register: username khong hop le.");
-            return false;
+            return fail("Tên đăng nhập phải dài 4-50 ký tự và chỉ gồm chữ, số hoặc dấu gạch dưới.");
         }
         if (!ValidationUtils.isValidEmail(email)) {
-            System.err.println("[AuthService] register: email khong hop le.");
-            return false;
+            return fail("Email không hợp lệ.");
         }
         if (!ValidationUtils.isValidPassword(password)) {
-            System.err.println("[AuthService] register: mat khau qua ngan (toi thieu 6 ky tu).");
-            return false;
+            return fail("Mật khẩu phải có ít nhất 6 ký tự.");
         }
         if (!ValidationUtils.isPasswordMatch(password, confirmPassword)) {
-            System.err.println("[AuthService] register: mat khau xac nhan khong khop.");
-            return false;
+            return fail("Mật khẩu xác nhận không khớp.");
         }
 
         // 3. Kiem tra trung username / email
         if (userDAO.existsByUsername(username)) {
-            System.err.println("[AuthService] register: username da ton tai.");
-            return false;
+            return fail("Tên đăng nhập đã tồn tại.");
         }
         if (userDAO.existsByEmail(email)) {
-            System.err.println("[AuthService] register: email da ton tai.");
-            return false;
+            return fail("Email đã tồn tại.");
         }
 
         // 4. Sinh ID va hash password
@@ -129,8 +123,7 @@ public class AuthService implements IAuthService {
                 role, true, now);
         boolean userSaved = userDAO.insert(user);
         if (!userSaved) {
-            System.err.println("[AuthService] register: luu User vao DB that bai.");
-            return false;
+            return fail("Không thể lưu tài khoản người dùng.");
         }
 
         // 6. Tao profile tuong ung theo role
@@ -143,8 +136,7 @@ public class AuthService implements IAuthService {
             Candidate candidate = new Candidate(candidateId, userId);
             boolean candidateSaved = candidateDAO.insert(candidate);
             if (!candidateSaved) {
-                System.err.println("[AuthService] register: luu Candidate that bai. (User da duoc tao - can rollback thu cong neu co giao dich)");
-                return false;
+                return fail("Không thể tạo hồ sơ ứng viên.");
             }
 
         } else if (role == Role.EMPLOYER) {
@@ -157,8 +149,7 @@ public class AuthService implements IAuthService {
             Employer employer = new Employer(employerId, userId, username, null, null);
             boolean employerSaved = employerDAO.insert(employer);
             if (!employerSaved) {
-                System.err.println("[AuthService] register: luu Employer that bai.");
-                return false;
+                return fail("Không thể tạo hồ sơ nhà tuyển dụng.");
             }
         }
 
@@ -307,6 +298,12 @@ public class AuthService implements IAuthService {
         dto.setDateOfBirth(user.getDateOfBirth());
         dto.setGender(user.getGender());
         return dto;
+    }
+
+    private boolean fail(String message) {
+        lastErrorMessage = message;
+        System.err.println("[AuthService] " + message);
+        return false;
     }
 }
 
