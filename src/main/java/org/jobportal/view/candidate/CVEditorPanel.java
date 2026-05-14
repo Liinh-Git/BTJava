@@ -404,7 +404,7 @@ public class CVEditorPanel extends JPanel {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         actionPanel.setBackground(new Color(248, 249, 250));
 
-        JButton btnSave = createButton("SAVE PROFILE", new Color(13, 110, 253), Color.WHITE);
+        JButton btnSave = createButton("LƯU THAY ĐỔI", new Color(13, 110, 253), Color.WHITE);
         btnSave.setPreferredSize(new Dimension(160, 45));
         btnSave.addActionListener(e -> saveCVData());
 
