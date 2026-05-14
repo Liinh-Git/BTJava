@@ -11,6 +11,7 @@ import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -76,14 +77,19 @@ public class RecruitmentListPanel extends JPanel {
         JPanel toolbar = new JPanel(new GridBagLayout());
         toolbar.setBackground(new Color(248, 249, 250));
         toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
-        toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 0, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        toolbar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+        toolbar.setBorder(new EmptyBorder(0, 0, 0, 0));
+
+        JPanel left = new JPanel(new GridBagLayout());
+        left.setAlignmentX(Component.LEFT_ALIGNMENT);
+        left.setOpaque(false);
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        right.setOpaque(false);
 
         txtSearch = new JTextField();
-        txtSearch.setPreferredSize(new Dimension(300, 38));
+        txtSearch.setColumns(24);
+        txtSearch.setPreferredSize(new Dimension(420, 38));
+        txtSearch.setMinimumSize(new Dimension(220, 38));
         txtSearch.setText(SEARCH_PLACEHOLDER);
         txtSearch.setForeground(Color.GRAY);
         txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -109,10 +115,12 @@ public class RecruitmentListPanel extends JPanel {
                 STATUS_CLOSED,
         });
         cbStatus.setPreferredSize(new Dimension(160, 38));
+        cbStatus.setMinimumSize(new Dimension(140, 38));
         cbStatus.setBackground(Color.WHITE);
 
         JButton btnSearch = new JButton("Tìm kiếm");
         btnSearch.setPreferredSize(new Dimension(96, 38));
+        btnSearch.setMinimumSize(new Dimension(96, 38));
         btnSearch.setBackground(Color.WHITE);
         btnSearch.setBorder(new LineBorder(new Color(210, 210, 210), 1));
         btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -128,35 +136,51 @@ public class RecruitmentListPanel extends JPanel {
             loadData();
         });
 
-        gbc.gridx = 0;
-        gbc.weightx = 1.0;
-        toolbar.add(txtSearch, gbc);
-        gbc.gridx = 1;
-        gbc.weightx = 0;
-        toolbar.add(cbStatus, gbc);
-        gbc.gridx = 2;
-        toolbar.add(btnSearch, gbc);
+        GridBagConstraints leftGbc = new GridBagConstraints();
+        leftGbc.gridy = 0;
+        leftGbc.insets = new Insets(0, 0, 0, 10);
+        leftGbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton btnCreate = new JButton("+ Đăng tin mới");
+        leftGbc.gridx = 0;
+        leftGbc.weightx = 1.0;
+        left.add(txtSearch, leftGbc);
+
+        leftGbc.gridx = 1;
+        leftGbc.weightx = 0.0;
+        left.add(cbStatus, leftGbc);
+
+        leftGbc.gridx = 2;
+        leftGbc.insets = new Insets(0, 0, 0, 0);
+        left.add(btnSearch, leftGbc);
+
+        JButton btnCreate = new JButton("Đăng tin mới");
         btnCreate.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnCreate.setBackground(new Color(13, 110, 253));
         btnCreate.setForeground(Color.WHITE);
         btnCreate.setFocusPainted(false);
         btnCreate.setBorderPainted(false);
-        btnCreate.setPreferredSize(new Dimension(150, 40));
+        btnCreate.setPreferredSize(new Dimension(150, 80));
         btnCreate.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCreate.addActionListener(e -> openCreateDialog());
 
-        gbc.gridx = 3;
-        gbc.weightx = 1.0;
-        JPanel spacer = new JPanel();
-        spacer.setOpaque(false);
-        toolbar.add(spacer, gbc);
+        right.add(btnCreate);
 
-        gbc.gridx = 4;
-        gbc.weightx = 0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        toolbar.add(btnCreate, gbc);
+        GridBagConstraints rootGbc = new GridBagConstraints();
+        rootGbc.gridy = 0;
+        rootGbc.fill = GridBagConstraints.HORIZONTAL;
+        rootGbc.insets = new Insets(0, 0, 0, 0);
+
+        rootGbc.gridx = 0;
+        rootGbc.weightx = 1.0;
+        rootGbc.anchor = GridBagConstraints.WEST;
+        toolbar.add(left, rootGbc);
+
+        rootGbc.gridx = 1;
+        rootGbc.weightx = 0.0;
+        rootGbc.anchor = GridBagConstraints.EAST;
+        rootGbc.insets = new Insets(0, 14, 0, 0);
+        toolbar.add(right, rootGbc);
+
         return toolbar;
     }
 
@@ -491,40 +515,93 @@ public class RecruitmentListPanel extends JPanel {
         JTextArea txtDescEdit = new JTextArea(valueOrEmpty(job.getDescription()), 6, 30);
         txtDescEdit.setLineWrap(true);
         txtDescEdit.setWrapStyleWord(true);
+        txtDescEdit.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        txtDescEdit.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setBorder(new EmptyBorder(8, 8, 8, 8));
+        JLabel lblCompany = new JLabel(valueOrEmpty(job.getCompanyName()));
+        lblCompany.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblCompany.setForeground(new Color(108, 117, 125));
+
+        JLabel lblType = new JLabel(" " + toJobTypeLabel(job.getJobType()) + " ");
+        lblType.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblType.setOpaque(true);
+        lblType.setBackground(new Color(225, 230, 255));
+        lblType.setForeground(new Color(50, 70, 150));
+        lblType.setBorder(new EmptyBorder(5, 10, 5, 10));
+
+        JPanel headerCard = createDialogCard();
+        headerCard.setLayout(new BorderLayout(12, 0));
+        JPanel leftHeader = new JPanel();
+        leftHeader.setLayout(new BoxLayout(leftHeader, BoxLayout.Y_AXIS));
+        leftHeader.setOpaque(false);
+        JLabel lblTitle = new JLabel(valueOrEmpty(job.getTitle()));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 30));
+        leftHeader.add(lblTitle);
+        leftHeader.add(Box.createRigidArea(new Dimension(0, 6)));
+        leftHeader.add(lblCompany);
+        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        rightHeader.setOpaque(false);
+        rightHeader.add(lblType);
+        headerCard.add(leftHeader, BorderLayout.CENTER);
+        headerCard.add(rightHeader, BorderLayout.EAST);
+
+        JPanel formCard = createDialogCard();
+        formCard.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 4, 4, 4);
+        gbc.insets = new Insets(6, 6, 6, 6);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
-        gbc.gridx = 0; gbc.gridy = 0; form.add(new JLabel("Tiêu đề"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0; form.add(txtTitleEdit, gbc);
+        gbc.gridx = 0; gbc.gridy = 0;
+        formCard.add(createEditGroup("Tiêu đề công việc", txtTitleEdit), gbc);
+        gbc.gridx = 1;
+        formCard.add(createEditGroup("Địa điểm", txtLocationEdit), gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0; form.add(new JLabel("Lương"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0; form.add(txtSalaryEdit, gbc);
+        gbc.gridx = 0; gbc.gridy = 1;
+        formCard.add(createEditGroup("Mức lương", txtSalaryEdit), gbc);
+        gbc.gridx = 1;
+        formCard.add(createEditGroup("Hạn nộp (dd/MM/yyyy)", txtDueDateEdit), gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0; form.add(new JLabel("Hạn nộp (dd/MM/yyyy)"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0; form.add(txtDueDateEdit, gbc);
+        JTextField txtCategory = new JTextField(valueOrEmpty(job.getCategoryName()));
+        txtCategory.setEditable(false);
+        JTextField txtCreatedDate = new JTextField(job.getCreatedDate() != null ? job.getCreatedDate().format(df) : "");
+        txtCreatedDate.setEditable(false);
 
-        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0; form.add(new JLabel("Địa điểm"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0; form.add(txtLocationEdit, gbc);
+        gbc.gridx = 0; gbc.gridy = 2;
+        formCard.add(createEditGroup("Danh mục", txtCategory), gbc);
+        gbc.gridx = 1;
+        formCard.add(createEditGroup("Ngày đăng", txtCreatedDate), gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4; gbc.anchor = GridBagConstraints.NORTHWEST; form.add(new JLabel("Mô tả"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1.0; gbc.fill = GridBagConstraints.BOTH; gbc.weighty = 1.0;
-        form.add(new JScrollPane(txtDescEdit), gbc);
+        JPanel descCard = createDialogCard();
+        descCard.setLayout(new BorderLayout());
+        JLabel lblDesc = new JLabel("Mô tả công việc");
+        lblDesc.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblDesc.setBorder(new EmptyBorder(0, 0, 10, 0));
+        descCard.add(lblDesc, BorderLayout.NORTH);
+        JScrollPane descScroll = new JScrollPane(txtDescEdit);
+        descScroll.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+        descScroll.setPreferredSize(new Dimension(0, 200));
+        descCard.add(descScroll, BorderLayout.CENTER);
 
-        JLabel lblHint = new JLabel("Chỉnh sửa trực tiếp thông tin tin tuyển dụng.");
-        lblHint.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblHint.setForeground(new Color(108, 117, 125));
-        lblHint.setBorder(new EmptyBorder(8, 10, 0, 10));
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(new Color(248, 249, 250));
+        content.setBorder(new EmptyBorder(16, 16, 16, 16));
+        content.add(headerCard);
+        content.add(Box.createRigidArea(new Dimension(0, 14)));
+        content.add(formCard);
+        content.add(Box.createRigidArea(new Dimension(0, 14)));
+        content.add(descCard);
 
         Window owner = SwingUtilities.getWindowAncestor(this);
         JDialog dialog = new JDialog(owner, "Chi tiết tin tuyển dụng", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setLayout(new BorderLayout());
-        dialog.add(lblHint, BorderLayout.NORTH);
-        dialog.add(new JScrollPane(form), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(content);
+        scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        dialog.add(scrollPane, BorderLayout.CENTER);
 
         JButton btnSave = new JButton("Lưu");
         btnSave.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -589,13 +666,54 @@ public class RecruitmentListPanel extends JPanel {
         footer.add(btnSave);
         dialog.add(footer, BorderLayout.SOUTH);
 
-        dialog.setSize(760, 620);
+        dialog.setSize(980, 760);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
 
     private String valueOrEmpty(String value) {
         return value != null ? value : "";
+    }
+
+    private String toJobTypeLabel(JobType jobType) {
+        if (jobType == JobType.PARTTIME) return "Part-time";
+        if (jobType == JobType.INTERNSHIP) return "Internship";
+        return "Full-time";
+    }
+
+    private JPanel createDialogCard() {
+        JPanel card = new JPanel();
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(220, 220, 220), 1),
+                new EmptyBorder(16, 18, 16, 18)
+        ));
+        return card;
+    }
+
+    private JPanel createEditGroup(String label, JComponent input) {
+        JPanel group = new JPanel();
+        group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
+        group.setOpaque(false);
+
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl.setForeground(new Color(108, 117, 125));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        input.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        input.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        input.setPreferredSize(new Dimension(320, 36));
+        input.setBorder(new CompoundBorder(
+                new LineBorder(new Color(220, 220, 220), 1),
+                new EmptyBorder(6, 10, 6, 10)
+        ));
+        input.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        group.add(lbl);
+        group.add(Box.createRigidArea(new Dimension(0, 6)));
+        group.add(input);
+        return group;
     }
 
     private JButton createActionButton(String text, Color color, int width) {
