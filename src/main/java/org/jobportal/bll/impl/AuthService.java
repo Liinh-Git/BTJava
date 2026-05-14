@@ -124,6 +124,7 @@ public class AuthService implements IAuthService {
         User user = new User(userId, username, passwordHash,
                 null,       // fullName tam de null, se cap nhat sau o UserProfile
                 null, null, null, email,
+                null,       // address tam de null, se cap nhat sau o UserProfile
                 role, true, now);
         boolean userSaved = userDAO.insert(user);
         if (!userSaved) {
@@ -291,6 +292,7 @@ public class AuthService implements IAuthService {
                 user.getUsername(),
                 user.getFullName(),
                 user.getEmail(),
+                user.getAddress(),
                 user.getPhoneNumber(),
                 user.getRole(),
                 user.isActive(),

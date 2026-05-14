@@ -292,7 +292,7 @@ public class ApplicationService implements IApplicationService {
 
         return new UserDTO(
                 user.getUserId(), user.getUsername(), user.getFullName(),
-                user.getEmail(), user.getPhoneNumber(),
+                user.getEmail(), user.getAddress(), user.getPhoneNumber(),
                 user.getRole(), user.isActive(), null
         );
     }

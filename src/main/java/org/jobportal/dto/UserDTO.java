@@ -9,6 +9,7 @@ public class UserDTO {
     private String username;
     private String fullName;
     private String email;
+    private String address;
     private String phoneNumber;
     private LocalDate dateOfBirth;
     private Gender gender;
@@ -21,12 +22,13 @@ public class UserDTO {
     public UserDTO() {
     }
 
-    public UserDTO(String userId, String username, String fullName, String email, String phoneNumber,
+    public UserDTO(String userId, String username, String fullName, String email, String address, String phoneNumber,
                    Role role, boolean active, String companyName) {
         this.userId = userId;
         this.username = username;
         this.fullName = fullName;
         this.email = email;
+        this.address = address;
         this.phoneNumber = phoneNumber;
         this.role = role;
         this.active = active;
@@ -71,6 +73,14 @@ public class UserDTO {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public LocalDate getDateOfBirth() {

@@ -1,4 +1,4 @@
-package org.jobportal.view.common;
+﻿package org.jobportal.view.common;
 
 import org.jobportal.view.admin.AdminDashboardPanel;
 import org.jobportal.view.admin.CategoryManagementPanel;
@@ -20,6 +20,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MainFrame extends JFrame {
+    private static final String CARD_USER_PROFILE = "CARD_USER_PROFILE";
+    private static final String CARD_SETTINGS = "CARD_SETTINGS";
     
     private CardLayout rootCardLayout;
     private JPanel rootPanel;
@@ -32,7 +34,7 @@ public class MainFrame extends JFrame {
     private SidebarPanel sidebarPanel;
 
     public MainFrame() {
-        setTitle("Ứng dụng JobPortal");
+        setTitle("Hệ thống Tìm kiếm Việc làm");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 850);
         
@@ -42,11 +44,11 @@ public class MainFrame extends JFrame {
         LoginPanel loginPanel = new LoginPanel(this);
         RegisterPanel registerPanel = new RegisterPanel(this);
         
-        rootPanel.add(loginPanel, "Login");
-        rootPanel.add(registerPanel, "Register");
+        rootPanel.add(loginPanel, "Đăng nhập");
+        rootPanel.add(registerPanel, "Đăng ký");
         
         add(rootPanel);
-        rootCardLayout.show(rootPanel, "Login"); // Show login initially
+        rootCardLayout.show(rootPanel, "Đăng nhập"); // Show login initially
         
         setLocationRelativeTo(null);
     }
@@ -96,12 +98,12 @@ public class MainFrame extends JFrame {
             }
             
             // Common panels
-            mainContentPanel.add(new UserProfilePanel(), "Thong tin nguoi dung");
+            mainContentPanel.add(new UserProfilePanel(), CARD_USER_PROFILE);
             JPanel settingsPanel = new JPanel(new BorderLayout());
             JLabel lblSettings = new JLabel("Chức năng Cài đặt đang được phát triển", SwingConstants.CENTER);
             lblSettings.setFont(new Font("Segoe UI", Font.BOLD, 24));
             settingsPanel.add(lblSettings, BorderLayout.CENTER);
-            mainContentPanel.add(settingsPanel, "Cài đặt");
+            mainContentPanel.add(settingsPanel, CARD_SETTINGS);
 
             if (!firstMenu.isEmpty()) {
                 mainCardLayout.show(mainContentPanel, firstMenu);
@@ -113,7 +115,7 @@ public class MainFrame extends JFrame {
                     SessionManager.getInstance().logout();
                     showLogin();
                 } else {
-                    mainCardLayout.show(mainContentPanel, menuTitle);
+                    mainCardLayout.show(mainContentPanel, resolveCardKey(menuTitle));
                 }
             });
 
@@ -125,7 +127,7 @@ public class MainFrame extends JFrame {
             rootCardLayout.show(rootPanel, "App");
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi khi nạp giao diện: " + e.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lỗi khi tải giao diện: " + e.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -139,8 +141,20 @@ public class MainFrame extends JFrame {
     
     public void navigateToMenu(String menuTitle) {
         if (mainContentPanel != null && mainCardLayout != null) {
-            mainCardLayout.show(mainContentPanel, menuTitle);
+            mainCardLayout.show(mainContentPanel, resolveCardKey(menuTitle));
         }
+    }
+
+    private String resolveCardKey(String menuTitle) {
+        if (menuTitle == null) return "";
+        String normalized = menuTitle.trim();
+        if ("Thông tin người dùng".equalsIgnoreCase(normalized) || "Thong tin nguoi dung".equalsIgnoreCase(normalized)) {
+            return CARD_USER_PROFILE;
+        }
+        if ("Cài đặt".equalsIgnoreCase(normalized) || "Cai dat".equalsIgnoreCase(normalized)) {
+            return CARD_SETTINGS;
+        }
+        return normalized;
     }
 
     public static void main(String[] args) {
@@ -150,4 +164,5 @@ public class MainFrame extends JFrame {
         });
     }
 }
+
 

@@ -160,7 +160,7 @@ public class UserService implements IUserService {
      * Cap nhat thong tin ca nhan (ten hien thi, so dien thoai) cho user dang dang nhap.
      */
     @Override
-    public boolean updateUserProfile(String fullName, String phoneNumber, String email, LocalDate dateOfBirth, Gender gender) {
+    public boolean updateUserProfile(String fullName, String phoneNumber, String email, String address, LocalDate dateOfBirth, Gender gender) {
         if (!session.isLoggedIn()) {
             System.err.println("[UserService] updateUserProfile: chua dang nhap.");
             return false;
@@ -186,6 +186,8 @@ public class UserService implements IUserService {
         String phone = (phoneNumber != null) ? phoneNumber.trim() : null;
         user.setPhoneNumber((phone != null && !phone.isEmpty()) ? phone : null);
         user.setEmail(email.trim());
+        String addr = (address != null) ? address.trim() : null;
+        user.setAddress((addr != null && !addr.isEmpty()) ? addr : null);
         user.setDateOfBirth(dateOfBirth);
         user.setGender(gender);
 
@@ -196,6 +198,7 @@ public class UserService implements IUserService {
                 current.setFullName(user.getFullName());
                 current.setPhoneNumber(user.getPhoneNumber());
                 current.setEmail(user.getEmail());
+                current.setAddress(user.getAddress());
                 current.setDateOfBirth(user.getDateOfBirth());
                 current.setGender(user.getGender());
             }
@@ -213,6 +216,7 @@ public class UserService implements IUserService {
                 user.getUsername(),
                 user.getFullName(),
                 user.getEmail(),
+                user.getAddress(),
                 user.getPhoneNumber(),
                 user.getRole(),
                 user.isActive(),

@@ -37,6 +37,7 @@ public class UserDAO implements IUserDAO {
         }
 
         user.setEmail(rs.getString("email"));
+        user.setAddress(rs.getString("address"));
 
         // role lưu dạng VARCHAR (ADMIN/EMPLOYER/CANDIDATE)
         String roleStr = rs.getString("role");
@@ -63,7 +64,7 @@ public class UserDAO implements IUserDAO {
     public User findByUsernameAndPassword(String username, String passwordHash) {
         // Bước 1 - Query SELECT theo username và password đã hash
         String sql = "SELECT user_id, username, password_hash, full_name, phone_number, "
-                + "date_of_birth, gender, email, role, is_active, created_at "
+                + "date_of_birth, gender, email, address, role, is_active, created_at "
                 + "FROM users WHERE username = ? AND password_hash = ?";
 
         // Bước 2 - Map ResultSet sang User
@@ -93,7 +94,7 @@ public class UserDAO implements IUserDAO {
     public User findById(String userId) {
         // Bước 1 - Query SELECT theo userId
         String sql = "SELECT user_id, username, password_hash, full_name, phone_number, "
-                + "date_of_birth, gender, email, role, is_active, created_at "
+                + "date_of_birth, gender, email, address, role, is_active, created_at "
                 + "FROM users WHERE user_id = ?";
 
         // Bước 2 - Map ResultSet sang User
@@ -124,7 +125,7 @@ public class UserDAO implements IUserDAO {
         // Bước 1 - Tạo query SELECT với bộ lọc động
         StringBuilder sql = new StringBuilder(
                 "SELECT user_id, username, password_hash, full_name, phone_number, "
-                        + "date_of_birth, gender, email, role, is_active, created_at "
+                        + "date_of_birth, gender, email, address, role, is_active, created_at "
                         + "FROM users WHERE 1=1");
 
         List<Object> params = new ArrayList<>();
@@ -174,8 +175,8 @@ public class UserDAO implements IUserDAO {
     public boolean insert(User user) {
         // Bước 1 - Tạo câu lệnh INSERT user
         String sql = "INSERT INTO users (user_id, username, password_hash, full_name, phone_number, "
-                + "date_of_birth, gender, email, role, is_active, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "date_of_birth, gender, email, address, role, is_active, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         // Bước 2 - Thực thi và lấy kết quả
         try (Connection conn = DatabaseConfig.getConnection();
@@ -202,14 +203,15 @@ public class UserDAO implements IUserDAO {
             }
 
             ps.setString(8, user.getEmail());
-            ps.setString(9, user.getRole().name());
-            ps.setBoolean(10, user.isActive());
+            ps.setString(9, user.getAddress());
+            ps.setString(10, user.getRole().name());
+            ps.setBoolean(11, user.isActive());
 
             // created_at có thể null (DB dùng DEFAULT CURRENT_TIMESTAMP)
             if (user.getCreatedAt() != null) {
-                ps.setTimestamp(11, java.sql.Timestamp.valueOf(user.getCreatedAt()));
+                ps.setTimestamp(12, java.sql.Timestamp.valueOf(user.getCreatedAt()));
             } else {
-                ps.setNull(11, java.sql.Types.TIMESTAMP);
+                ps.setNull(12, java.sql.Types.TIMESTAMP);
             }
 
             // Bước 3 - Trả về boolean
@@ -228,7 +230,7 @@ public class UserDAO implements IUserDAO {
     public boolean update(User user) {
         // Bước 1 - Tạo câu lệnh UPDATE user
         String sql = "UPDATE users SET full_name = ?, phone_number = ?, date_of_birth = ?, "
-                + "gender = ?, email = ? WHERE user_id = ?";
+                + "gender = ?, email = ?, address = ? WHERE user_id = ?";
 
         // Bước 2 - Thực thi và lấy kết quả
         try (Connection conn = DatabaseConfig.getConnection();
@@ -250,7 +252,8 @@ public class UserDAO implements IUserDAO {
             }
 
             ps.setString(5, user.getEmail());
-            ps.setString(6, user.getUserId());
+            ps.setString(6, user.getAddress());
+            ps.setString(7, user.getUserId());
 
             // Bước 3 - Trả về boolean
             return ps.executeUpdate() > 0;

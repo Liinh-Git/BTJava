@@ -1,4 +1,4 @@
-package org.jobportal.view.candidate;
+﻿package org.jobportal.view.candidate;
 
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
@@ -26,10 +26,11 @@ public class CVEditorPanel extends JPanel {
     private JTextField txtFullName;
     private JTextField txtUsername;
     private JTextField txtTitle;
-    private JTextField txtLocation;
+    private JTextField txtAddress;
     private JTextField txtEmail;
     private JTextField txtPhone;
-    
+    private JTextField txtBirthday;
+    private JTextField txtGender;
     private JTextArea txtObjective;
     private JTextField txtSkill;
     private JPanel tagsPanel;
@@ -80,6 +81,9 @@ public class CVEditorPanel extends JPanel {
             txtFullName.setText(user.getFullName() != null ? user.getFullName() : "");
             txtEmail.setText(user.getEmail() != null ? user.getEmail() : "");
             txtPhone.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
+            txtAddress.setText(user.getAddress() != null ? user.getAddress() : "");
+            txtBirthday.setText(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : "");
+            txtGender.setText(user.getGender() != null ? user.getGender().name() : "");
 
             String candidateId = SessionManager.getInstance().getCandidateId();
             currentCV = cvService.getCV(candidateId);
@@ -90,7 +94,6 @@ public class CVEditorPanel extends JPanel {
             }
 
             if (currentCV.getDesiredPosition() != null) txtTitle.setText(currentCV.getDesiredPosition());
-            txtLocation.setText(currentCV.getLocation() != null ? currentCV.getLocation() : "");
             if (currentCV.getObjective() != null && !currentCV.getObjective().isEmpty()) {
                 txtObjective.setText(currentCV.getObjective());
                 txtObjective.setForeground(Color.BLACK);
@@ -121,7 +124,6 @@ public class CVEditorPanel extends JPanel {
             if (objText.equals("Innovative and results-driven...")) objText = "";
             currentCV.setObjective(objText);
             currentCV.setSkills(String.join(", ", skillList));
-            currentCV.setLocation(txtLocation.getText().trim());
             
             if (currentCV.getEducations() == null) {
                 currentCV.setEducations(new ArrayList<>());
@@ -130,9 +132,9 @@ public class CVEditorPanel extends JPanel {
             if (success) {
                 currentCV = cvService.getCV(SessionManager.getInstance().getCandidateId());
                 loadEducations();
-                JOptionPane.showMessageDialog(this, "Lưu CV thành công!");
+                JOptionPane.showMessageDialog(this, "LÆ°u CV thÃ nh cÃ´ng!");
             } else {
-                JOptionPane.showMessageDialog(this, "Lỗi khi lưu CV!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lá»—i khi lÆ°u CV!", "Lá»—i", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -147,9 +149,9 @@ public class CVEditorPanel extends JPanel {
 
         JPanel titleBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         titleBox.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("THÔNG TIN CÁ NHÂN");
+        JLabel lblTitle = new JLabel("THÃ”NG TIN CÃ NHÃ‚N");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        JLabel lblBadge = new JLabel(" HỒ SƠ ĐANG HOẠT ĐỘNG ");
+        JLabel lblBadge = new JLabel(" Há»’ SÆ  ÄANG HOáº T Äá»˜NG ");
         lblBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblBadge.setForeground(new Color(40, 167, 69)); // mau xanh la
         lblBadge.setBackground(new Color(233, 245, 236));
@@ -161,11 +163,11 @@ public class CVEditorPanel extends JPanel {
         JPanel actionButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionButtons.setBackground(Color.WHITE);
 
-        JButton btnReloadProfile = createButton("TẢI LẠI", Color.WHITE, new Color(13, 110, 253));
+        JButton btnReloadProfile = createButton("Táº¢I Láº I", Color.WHITE, new Color(13, 110, 253));
         btnReloadProfile.setBorder(new LineBorder(new Color(13, 110, 253), 1));
         btnReloadProfile.addActionListener(e -> loadData());
 
-        JButton btnAccountSettings = createButton("TÀI KHOẢN", Color.WHITE, new Color(13, 110, 253));
+        JButton btnAccountSettings = createButton("TÃ€I KHOáº¢N", Color.WHITE, new Color(13, 110, 253));
         btnAccountSettings.setBorder(new LineBorder(new Color(13, 110, 253), 1));
         btnAccountSettings.addActionListener(e -> openAccountSettingsTab());
 
@@ -192,31 +194,46 @@ public class CVEditorPanel extends JPanel {
         txtUsername.setBackground(new Color(245, 247, 250));
         formPanel.add(p0);
 
-        JPanel p1 = createFormGroup("Họ tên", "Nguyễn Văn A");
+        JPanel p1 = createFormGroup("Há» vÃ  tÃªn", "Nguyá»…n VÄƒn A");
         txtFullName = (JTextField) p1.getComponent(2);
         txtFullName.setEditable(false);
         txtFullName.setBackground(new Color(245, 247, 250));
         formPanel.add(p1);
         
-        JPanel p2 = createFormGroup("Vị trí mong muốn", "Lập trình viên Java");
-        txtTitle = (JTextField) p2.getComponent(2);
-        formPanel.add(p2);
-        
-        JPanel p3 = createFormGroup("Địa điểm", "TP. Hồ Chí Minh");
-        txtLocation = (JTextField) p3.getComponent(2);
-        formPanel.add(p3);
-        
-        JPanel p4 = createFormGroup("Email", "email@example.com");
-        txtEmail = (JTextField) p4.getComponent(2);
-        txtEmail.setEditable(false);
-        txtEmail.setBackground(new Color(245, 247, 250));
-        formPanel.add(p4);
-        
-        JPanel p5 = createFormGroup("Số điện thoại", "0900000000");
-        txtPhone = (JTextField) p5.getComponent(2);
+        JPanel p2 = createFormGroup("Sá»‘ Ä‘iá»‡n thoáº¡i", "0900000000");
+        txtPhone = (JTextField) p2.getComponent(2);
         txtPhone.setEditable(false);
         txtPhone.setBackground(new Color(245, 247, 250));
+        formPanel.add(p2);
+
+        JPanel p3 = createFormGroup("Email", "email@example.com");
+        txtEmail = (JTextField) p3.getComponent(2);
+        txtEmail.setEditable(false);
+        txtEmail.setBackground(new Color(245, 247, 250));
+        formPanel.add(p3);
+
+        JPanel p4 = createFormGroup("Äá»‹a chá»‰ hiá»‡n táº¡i", "123 ÄÆ°á»ng ABC, Quáº­n 1, TP.HCM");
+        txtAddress = (JTextField) p4.getComponent(2);
+        txtAddress.setEditable(false);
+        txtAddress.setBackground(new Color(245, 247, 250));
+        formPanel.add(p4);
+
+        JPanel p5 = createFormGroup("NgÃ y sinh", "01/01/1990");
+        txtBirthday = (JTextField) p5.getComponent(2);
+        txtBirthday.setEditable(false);
+        txtBirthday.setBackground(new Color(245, 247, 250));
         formPanel.add(p5);
+
+        JPanel p6 = createFormGroup("Giá»›i tÃ­nh", "Nam");
+        txtGender = (JTextField) p6.getComponent(2);
+        txtGender.setEditable(false);
+        txtGender.setBackground(new Color(245, 247, 250));
+        formPanel.add(p6);
+
+        JPanel p7 = createFormGroup("Vá»‹ trÃ­ mong muá»‘n", "Láº­p trÃ¬nh viÃªn Java");
+        txtTitle = (JTextField) p7.getComponent(2);
+        formPanel.add(p7);      
+        
 
         card.add(formPanel);
         return card;
@@ -228,11 +245,11 @@ public class CVEditorPanel extends JPanel {
 
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("OBJECTIVE");
+        JLabel lblTitle = new JLabel("Má»¤C TIÃŠU");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
-        JLabel lblReset = new JLabel("RESET TO DEFAULT");
+        JLabel lblReset = new JLabel("Äáº¶T Láº I");
         lblReset.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblReset.setForeground(new Color(13, 110, 253));
         lblReset.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -277,7 +294,7 @@ public class CVEditorPanel extends JPanel {
 
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("SKILLS");
+        JLabel lblTitle = new JLabel("Ká»¸ NÄ‚NG");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
@@ -289,30 +306,30 @@ public class CVEditorPanel extends JPanel {
         // thanh them skill
         JPanel inputPanel = new JPanel(new BorderLayout(10, 0));
         inputPanel.setBackground(Color.WHITE);
-        txtSkill = new JTextField("Add a skill (e.g. React, Project Management)");
+        txtSkill = new JTextField("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)");
         txtSkill.setForeground(Color.GRAY);
         txtSkill.setPreferredSize(new Dimension(0, 40));
         txtSkill.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtSkill.getText().equals("Add a skill (e.g. React, Project Management)")) {
+                if (txtSkill.getText().equals("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)")) {
                     txtSkill.setText("");
                     txtSkill.setForeground(Color.BLACK);
                 }
             }
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (txtSkill.getText().isEmpty()) {
-                    txtSkill.setText("Add a skill (e.g. React, Project Management)");
+                    txtSkill.setText("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)");
                     txtSkill.setForeground(Color.GRAY);
                 }
             }
         });
         inputPanel.add(txtSkill, BorderLayout.CENTER);
 
-        JButton btnAddSkill = createButton("ADD SKILL", new Color(13, 110, 253), Color.WHITE);
+        JButton btnAddSkill = createButton("THÃŠM", new Color(13, 110, 253), Color.WHITE);
         btnAddSkill.setPreferredSize(new Dimension(120, 40));
         btnAddSkill.addActionListener(e -> {
             String s = txtSkill.getText().trim();
-            if (!s.isEmpty() && !s.equals("Add a skill (e.g. React, Project Management)")) {
+            if (!s.isEmpty() && !s.equals("ThÃªm ká»¹ nÄƒng (vÃ­ dá»¥: React, Quáº£n lÃ½ dá»± Ã¡n)")) {
                 addSkillTag(s);
                 tagsPanel.revalidate();
                 tagsPanel.repaint();
@@ -338,11 +355,11 @@ public class CVEditorPanel extends JPanel {
 
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
-        JLabel lblTitle = new JLabel("HỌC VẤN");
+        JLabel lblTitle = new JLabel("Há»ŒC Váº¤N");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
-        JButton btnAddEdu = createButton("THÊM HỌC VẤN", new Color(33, 37, 41), Color.WHITE);
+        JButton btnAddEdu = createButton("THÃŠM", new Color(13, 110, 253), Color.WHITE);
         btnAddEdu.addActionListener(e -> openEducationDialog(null));
         headerPanel.add(btnAddEdu, BorderLayout.EAST);
 
@@ -362,9 +379,9 @@ public class CVEditorPanel extends JPanel {
     
     private void loadEducations() {
         educationTable.removeAll();
-        educationTable.add(createTableRow("TRƯỜNG", "CHUYÊN NGÀNH", "NĂM", "THAO TÁC", true));
+        educationTable.add(createTableRow("TRÆ¯á»œNG", "CHUYÃŠN NGÃ€NH", "NÄ‚M", "THAO TÃC", true));
         educationTable.removeAll();
-        educationTable.add(createTableRow("TRƯỜNG", "CHUYÊN NGÀNH", "NĂM", "THAO TÁC", true));
+        educationTable.add(createTableRow("TRÆ¯á»œNG", "CHUYÃŠN NGÃ€NH", "NÄ‚M", "THAO TÃC", true));
         if (currentCV != null && currentCV.getEducations() != null) {
             for (Education edu : currentCV.getEducations()) {
                 educationTable.add(createTableRow(edu, false));
@@ -383,28 +400,14 @@ public class CVEditorPanel extends JPanel {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         actionPanel.setBackground(new Color(248, 249, 250));
 
-        JButton btnDiscard = createButton("DISCARD CHANGES", Color.WHITE, Color.DARK_GRAY);
-        btnDiscard.setBorder(new LineBorder(Color.LIGHT_GRAY, 1));
-        btnDiscard.setPreferredSize(new Dimension(160, 45));
-
-        JButton btnSave = createButton("SAVE PROFILE", new Color(33, 37, 41), Color.WHITE);
+        JButton btnSave = createButton("SAVE PROFILE", new Color(13, 110, 253), Color.WHITE);
         btnSave.setPreferredSize(new Dimension(160, 45));
         btnSave.addActionListener(e -> saveCVData());
 
-        actionPanel.add(btnDiscard);
         actionPanel.add(btnSave);
 
         wrapper.add(actionPanel);
         wrapper.add(Box.createRigidArea(new Dimension(0, 30)));
-
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        footerPanel.setBackground(new Color(248, 249, 250));
-        JLabel lblFooter = new JLabel("© 2024 JobPortal Professional Services. All rights reserved.");
-        lblFooter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblFooter.setForeground(Color.GRAY);
-        footerPanel.add(lblFooter);
-
-        wrapper.add(footerPanel);
 
         return wrapper;
     }
@@ -523,21 +526,21 @@ public class CVEditorPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 0, 6, 0);
 
-        addEducationField(form, gbc, "Trường", txtSchool);
-        addEducationField(form, gbc, "Bằng cấp", txtDegree);
-        addEducationField(form, gbc, "Chuyên ngành", txtMajor);
-        addEducationField(form, gbc, "Năm bắt đầu", txtStartYear);
-        addEducationField(form, gbc, "Năm kết thúc", txtEndYear);
-        addEducationField(form, gbc, "Mô tả", new JScrollPane(txtDescription));
+        addEducationField(form, gbc, "TrÆ°á»ng", txtSchool);
+        addEducationField(form, gbc, "Báº±ng cáº¥p", txtDegree);
+        addEducationField(form, gbc, "ChuyÃªn ngÃ nh", txtMajor);
+        addEducationField(form, gbc, "NÄƒm báº¯t Ä‘áº§u", txtStartYear);
+        addEducationField(form, gbc, "NÄƒm káº¿t thÃºc", txtEndYear);
+        addEducationField(form, gbc, "MÃ´ táº£", new JScrollPane(txtDescription));
 
         Object oldOkText = UIManager.get("OptionPane.okButtonText");
         Object oldCancelText = UIManager.get("OptionPane.cancelButtonText");
-        UIManager.put("OptionPane.okButtonText", "Lưu");
-        UIManager.put("OptionPane.cancelButtonText", "Hủy");
+        UIManager.put("OptionPane.okButtonText", "LÆ°u");
+        UIManager.put("OptionPane.cancelButtonText", "Há»§y");
         int option = JOptionPane.showConfirmDialog(
                 this,
                 form,
-                existing == null ? "Thêm học vấn" : "Sửa học vấn",
+                existing == null ? "ThÃªm há»c váº¥n" : "Sá»­a há»c váº¥n",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE
         );
@@ -547,7 +550,7 @@ public class CVEditorPanel extends JPanel {
 
         String school = txtSchool.getText().trim();
         if (school.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên trường.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lÃ²ng nháº­p tÃªn trÆ°á»ng.", "Cáº£nh bÃ¡o", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -555,7 +558,7 @@ public class CVEditorPanel extends JPanel {
         Integer endYear = parseYear(txtEndYear.getText().trim());
         if ((!txtStartYear.getText().trim().isEmpty() && startYear == null)
                 || (!txtEndYear.getText().trim().isEmpty() && endYear == null)) {
-            JOptionPane.showMessageDialog(this, "Năm phải là số hợp lệ.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "NÄƒm pháº£i lÃ  sá»‘ há»£p lá»‡.", "Cáº£nh bÃ¡o", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -620,11 +623,11 @@ public class CVEditorPanel extends JPanel {
         if (actionComponent instanceof JPanel actionPanel) {
             actionPanel.removeAll();
 
-            JButton btnEdit = new JButton("Sửa");
+            JButton btnEdit = new JButton("Sá»­a");
             btnEdit.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             btnEdit.addActionListener(e -> openEducationDialog(education));
 
-            JButton btnDelete = new JButton("Xóa");
+            JButton btnDelete = new JButton("XÃ³a");
             btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             btnDelete.setForeground(Color.RED);
             btnDelete.addActionListener(e -> {
@@ -664,10 +667,10 @@ public class CVEditorPanel extends JPanel {
             // tao nut edit/delete gia
             JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
             actionPanel.setBackground(Color.WHITE);
-            JLabel btnEdit = new JLabel("✎"); // icon but chi
+            JLabel btnEdit = new JLabel("âœŽ"); // icon but chi
             btnEdit.setForeground(Color.GRAY);
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            JLabel btnDel = new JLabel("🗑"); // icon thung rac
+            JLabel btnDel = new JLabel("ðŸ—‘"); // icon thung rac
             btnDel.setForeground(Color.GRAY);
             btnDel.setCursor(new Cursor(Cursor.HAND_CURSOR));
             actionPanel.add(btnEdit);
@@ -703,4 +706,6 @@ public class CVEditorPanel extends JPanel {
         });
     }
 }
+
+
 

@@ -14,6 +14,7 @@ public class User {
     private LocalDate dateOfBirth;
     private Gender gender;
     private String email;
+    private String address;
     private Role role;
     private boolean active;
     private LocalDateTime createdAt;
@@ -32,6 +33,7 @@ public class User {
         this.dateOfBirth = dateOfBirth;
         this.gender = gender;
         this.email = email;
+        this.address = address;
         this.role = role;
         this.active = active;
         this.createdAt = createdAt;
@@ -99,6 +101,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public Role getRole() {

@@ -25,6 +25,7 @@ public class UserProfilePanel extends JPanel {
     private JTextField txtFullName;
     private JTextField txtPhone;
     private JTextField txtEmail;
+    private JTextField txtAddress;
     private JTextField txtDateOfBirth;
     private JComboBox<String> cbGender;
 
@@ -69,6 +70,7 @@ public class UserProfilePanel extends JPanel {
         txtFullName.setText(user.getFullName() != null ? user.getFullName() : "");
         txtPhone.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
         txtEmail.setText(user.getEmail() != null ? user.getEmail() : "");
+        txtAddress.setText(user.getAddress() != null ? user.getAddress() : "");
         txtDateOfBirth.setText(user.getDateOfBirth() != null ? user.getDateOfBirth().format(DOB_FMT) : "");
         cbGender.setSelectedItem(user.getGender() != null ? user.getGender().name() : "OTHER");
     }
@@ -129,12 +131,17 @@ public class UserProfilePanel extends JPanel {
         card.add(emailPanel);
         card.add(Box.createRigidArea(new Dimension(0, 12)));
 
+        JPanel addressPanel = createInputGroup("Địa chỉ", false);
+        txtAddress = (JTextField) addressPanel.getComponent(2);
+        card.add(addressPanel);
+        card.add(Box.createRigidArea(new Dimension(0, 12)));
+
         JPanel dobPanel = createInputGroup("Ngày sinh", false);
         txtDateOfBirth = (JTextField) dobPanel.getComponent(2);
         card.add(dobPanel);
         card.add(Box.createRigidArea(new Dimension(0, 12)));
 
-        cbGender = new JComboBox<>(new String[]{"MALE", "FEMALE", "OTHER"});
+        cbGender = new JComboBox<>(new String[]{"Nam", "Nữ", "Khác"});
         cbGender.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         cbGender.setBackground(Color.WHITE);
         JPanel genderPanel = createInputGroup("Giới tính", cbGender);
@@ -144,16 +151,16 @@ public class UserProfilePanel extends JPanel {
     }
 
     private JPanel createProfileActions() {
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         actionPanel.setBackground(new Color(248, 249, 250));
         actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton btnSave = new JButton("Lưu thông tin cá nhân");
-        btnSave.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btnSave.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnSave.setBackground(new Color(13, 110, 253));
         btnSave.setForeground(Color.WHITE);
         btnSave.setBorderPainted(false);
-        btnSave.setPreferredSize(new Dimension(230, 45));
+        btnSave.setPreferredSize(new Dimension(210, 45));
         btnSave.setFocusPainted(false);
         btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnSave.addActionListener(e -> handleUpdateProfile());
@@ -179,6 +186,7 @@ public class UserProfilePanel extends JPanel {
                 txtFullName.getText().trim(),
                 txtPhone.getText().trim(),
                 txtEmail.getText().trim(),
+                txtAddress.getText().trim(),
                 dob,
                 gender
         );
@@ -225,12 +233,12 @@ public class UserProfilePanel extends JPanel {
     }
 
     private JPanel createPasswordActions() {
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         actionPanel.setBackground(new Color(248, 249, 250));
         actionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton btnChangePassword = new JButton("Đổi mật khẩu");
-        btnChangePassword.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btnChangePassword.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnChangePassword.setBackground(new Color(13, 110, 253));
         btnChangePassword.setForeground(Color.WHITE);
         btnChangePassword.setBorderPainted(false);
