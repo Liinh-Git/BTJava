@@ -373,7 +373,7 @@ public class RecruitmentFormPanel extends JPanel {
             if (success) {
                 org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đăng tin tuyển dụng thành công, chờ kiểm duyệt!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 Window window = SwingUtilities.getWindowAncestor(this);
-                if (window != null) {
+                if (window instanceof JDialog) {
                     window.dispose();
                     return;
                 }
