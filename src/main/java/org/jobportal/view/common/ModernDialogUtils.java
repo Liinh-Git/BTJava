@@ -67,45 +67,6 @@ public final class ModernDialogUtils {
         return confirmed[0];
     }
 
-    public static String showInputDialog(Component parent, String title, String label, String initialValue) {
-        Window owner = parent != null ? SwingUtilities.getWindowAncestor(parent) : null;
-        JDialog dialog = new JDialog(owner, APP_TITLE, Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setUndecorated(true);
-        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
-        final String[] result = {null};
-
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(Color.WHITE);
-        root.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(210, 210, 210), 1),
-                new EmptyBorder(20, 22, 22, 22)
-        ));
-
-        root.add(createHeader(), BorderLayout.NORTH);
-        root.add(createInputBody(title, label, initialValue), BorderLayout.CENTER);
-        root.add(createInputFooter(dialog, result, root), BorderLayout.SOUTH);
-
-        dialog.setContentPane(root);
-        dialog.setSize(new Dimension(430, 260));
-        dialog.setLocationRelativeTo(parent);
-
-        JTextField input = findInputField(root);
-        dialog.getRootPane().setDefaultButton((JButton) root.getClientProperty("okButton"));
-        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowOpened(java.awt.event.WindowEvent e) {
-                if (input != null) {
-                    input.requestFocusInWindow();
-                    input.selectAll();
-                }
-            }
-        });
-
-        dialog.setVisible(true);
-        return result[0];
-    }
-
     public static void showMessageDialog(Component parent, Object message) {
         showMessageDialog(parent, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -187,7 +148,7 @@ public final class ModernDialogUtils {
         content.setForeground(TEXT_DARK);
         content.setHorizontalAlignment(SwingConstants.CENTER);
         content.setVerticalAlignment(SwingConstants.CENTER);
-        content.setMinimumSize(new Dimension(0, 24));
+        // content.setPreferredSize(new Dimension(330, content.getPreferredSize().height));
 
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 14, 0);
@@ -199,8 +160,6 @@ public final class ModernDialogUtils {
 
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
         body.add(content, gbc);
         return body;
     }
@@ -232,86 +191,6 @@ public final class ModernDialogUtils {
 
         footer.add(ok);
         return footer;
-    }
-
-    private static JComponent createInputBody(String titleText, String labelText, String initialValue) {
-        JPanel body = new JPanel(new GridBagLayout());
-        body.setBackground(Color.WHITE);
-        body.setBorder(new EmptyBorder(18, 0, 18, 0));
-
-        JLabel title = new JLabel(titleText);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        title.setForeground(BLUE);
-        title.setHorizontalAlignment(SwingConstants.CENTER);
-
-        JLabel label = new JLabel(labelText);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        label.setForeground(TEXT_DARK);
-
-        JTextField input = new JTextField(initialValue != null ? initialValue : "");
-        input.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        input.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(210, 210, 210), 1),
-                new EmptyBorder(7, 10, 7, 10)
-        ));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 0, 16, 0);
-        body.add(title, gbc);
-
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0.0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(0, 0, 8, 0);
-        body.add(label, gbc);
-
-        gbc.gridy = 2;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        body.add(input, gbc);
-
-        body.putClientProperty("inputField", input);
-        return body;
-    }
-
-    private static JComponent createInputFooter(JDialog dialog, String[] result, JPanel root) {
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
-        footer.setBackground(Color.WHITE);
-
-        JButton ok = createFlatButton("OK", BLUE, BLUE_HOVER);
-        JButton cancel = createFlatButton("Hủy", new Color(108, 117, 125), new Color(90, 98, 104));
-        ok.addActionListener(e -> {
-            JTextField input = findInputField(root);
-            result[0] = input != null ? input.getText() : "";
-            dialog.dispose();
-        });
-        cancel.addActionListener(e -> dialog.dispose());
-
-        root.putClientProperty("okButton", ok);
-        footer.add(ok);
-        footer.add(cancel);
-        return footer;
-    }
-
-    private static JTextField findInputField(Container container) {
-        for (Component component : container.getComponents()) {
-            if (component instanceof JTextField textField) {
-                return textField;
-            }
-            if (component instanceof Container child) {
-                JTextField found = findInputField(child);
-                if (found != null) return found;
-            }
-        }
-        return null;
     }
 
     private static JComponent createConfirmFooter(JDialog dialog, boolean[] confirmed) {
@@ -361,7 +240,8 @@ public final class ModernDialogUtils {
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\n", "<br>");
-        return "<html><div style='text-align:center; width:100%;'>" + safe + "</div></html>";
+        // Sửa dòng return dưới đây
+        return "<html><div style='text-align: center; width: 300px;'>" + safe + "</div></html>";
     }
 
     private enum DialogType {
