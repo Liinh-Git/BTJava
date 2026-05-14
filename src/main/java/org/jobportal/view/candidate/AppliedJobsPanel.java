@@ -60,6 +60,10 @@ public class AppliedJobsPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
+    public void refreshData() {
+        loadData();
+    }
+
     // ham tao 3 the thong ke
     private void updateStats(String candidateId) {
         statsPanel.removeAll();

@@ -101,8 +101,15 @@ public class MainFrame extends JFrame {
                 mainContentPanel.add(new CompanyInfoPanel(), "Thông tin công ty");
                 firstMenu = "Tổng quan";
             } else if (currentRole == Role.CANDIDATE) {
-                mainContentPanel.add(new JobSearchPanel(), "Tìm việc");
-                mainContentPanel.add(new AppliedJobsPanel(), "Đã ứng tuyển");
+                JobSearchPanel jobSearchPanel = new JobSearchPanel();
+                AppliedJobsPanel appliedJobsPanel = new AppliedJobsPanel();
+                jobSearchPanel.setOnApplySuccess(() -> SwingUtilities.invokeLater(() -> {
+                    appliedJobsPanel.refreshData();
+                    navigateToMenu("Đã ứng tuyển");
+                }));
+
+                mainContentPanel.add(jobSearchPanel, "Tìm việc");
+                mainContentPanel.add(appliedJobsPanel, "Đã ứng tuyển");
                 mainContentPanel.add(new CVEditorPanel(), "Quản lý CV");
                 firstMenu = "Tìm việc";
             }

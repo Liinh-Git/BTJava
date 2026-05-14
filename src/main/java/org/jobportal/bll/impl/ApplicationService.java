@@ -118,7 +118,7 @@ public class ApplicationService implements IApplicationService {
             String receiverUserId = getEmployerUserId(r.getEmployerId());
 
             // Lay ten ung vien de hien thi trong thong bao
-            String candidateName = "Ung vien";
+            String candidateName = "Ứng viên";
             if (senderUserId != null) {
                 User cu = userDAO.findById(senderUserId);
                 if (cu != null && cu.getFullName() != null && !cu.getFullName().isBlank()) {
@@ -129,8 +129,8 @@ public class ApplicationService implements IApplicationService {
             }
 
             if (receiverUserId != null) {
-                String content = "Ung vien " + candidateName
-                        + " da nop ho so ung tuyen vao vi tri: " + r.getTitle();
+                String content = "Ứng viên " + candidateName
+                        + " đã nộp hồ sơ ứng tuyển vào vị trí: " + r.getTitle();
                 notificationService.sendNotification(senderUserId, receiverUserId, content);
             }
         }
@@ -376,9 +376,9 @@ public class ApplicationService implements IApplicationService {
         boolean updated = applicationDAO.updateStatus(applicationId, newStatus);
         if (updated) {
             String candidateUserId = getCandidateUserId(target.getCandidateId());
-            String jobTitle = (recruitment.getTitle() != null) ? recruitment.getTitle() : "(khong ro vi tri)";
+            String jobTitle = (recruitment.getTitle() != null) ? recruitment.getTitle() : "(không rõ vị trí)";
 
-            String companyName = "Nha tuyen dung";
+            String companyName = "Nhà tuyển dụng";
             org.jobportal.model.Employer emp = new org.jobportal.dal.impl.EmployerDAO().findById(recruitment.getEmployerId());
             if (emp != null && emp.getCompanyName() != null) {
                 companyName = emp.getCompanyName();
@@ -386,11 +386,11 @@ public class ApplicationService implements IApplicationService {
 
             String content;
             if (newStatus == ApplicationStatus.APPROVED) {
-                content = "Chuc mung! Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
-                        + "\" tai " + companyName + " da duoc CHAP NHAN.";
+                content = "Chúc mừng! Hồ sơ ứng tuyển của bạn vào vị trí \"" + jobTitle
+                        + "\" tại " + companyName + " đã được chấp nhận.";
             } else {
-                content = "Ho so ung tuyen cua ban vao vi tri \"" + jobTitle
-                        + "\" tai " + companyName + " da bi TU CHOI. Cam on ban da quan tam!";
+                content = "Hồ sơ ứng tuyển của bạn vào vị trí \"" + jobTitle
+                        + "\" tại " + companyName + " đã bị từ chối. Cảm ơn bạn đã quan tâm!";
             }
 
             if (candidateUserId != null) {

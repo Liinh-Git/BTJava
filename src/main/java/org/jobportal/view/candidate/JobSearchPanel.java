@@ -32,6 +32,7 @@ public class JobSearchPanel extends JPanel {
     private JPanel paginationPanel;
     private int currentPage = 1;
     private final int pageSize = 10;
+    private Runnable onApplySuccess;
 
     public JobSearchPanel() {
         setBackground(new Color(248, 249, 250));
@@ -196,9 +197,15 @@ public class JobSearchPanel extends JPanel {
             dialog.setSize(980, 680);
             dialog.setResizable(false);
             dialog.setLocationRelativeTo(null);
-            dialog.add(new JobDetailPanel(job.getRecruitmentId(), dialog));
+            JobDetailPanel detailPanel = new JobDetailPanel(job.getRecruitmentId(), dialog);
+            detailPanel.setOnApplySuccess(onApplySuccess);
+            dialog.add(detailPanel);
             dialog.setVisible(true);
         }
+    }
+
+    public void setOnApplySuccess(Runnable onApplySuccess) {
+        this.onApplySuccess = onApplySuccess;
     }
 
     private JPanel createEmptyPanel() {
