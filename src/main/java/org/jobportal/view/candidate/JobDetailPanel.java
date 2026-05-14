@@ -26,6 +26,7 @@ public class JobDetailPanel extends JPanel {
     @SuppressWarnings("unused")
     private final JDialog parentDialog;
     private final RecruitmentDTO recruitment;
+    private Runnable onApplySuccess;
 
     public JobDetailPanel(String recruitmentId, JDialog parentDialog) {
         this.recruitmentId = recruitmentId;
@@ -179,9 +180,19 @@ public class JobDetailPanel extends JPanel {
         boolean success = applicationService.applyRecruitment(candidateId, recruitmentId);
         if (success) {
             org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Nộp hồ sơ thành công!");
+            if (onApplySuccess != null) {
+                onApplySuccess.run();
+            }
+            if (parentDialog != null) {
+                parentDialog.dispose();
+            }
         } else {
             org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Bạn đã nộp hồ sơ hoặc có lỗi xảy ra!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    public void setOnApplySuccess(Runnable onApplySuccess) {
+        this.onApplySuccess = onApplySuccess;
     }
 
     private JPanel createCardPanel() {

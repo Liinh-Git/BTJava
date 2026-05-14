@@ -247,8 +247,8 @@ public class RecruitmentService implements IRecruitmentService {
                 Employer employer = employerDAO.findById(r.getEmployerId());
                 String receiverUserId = employer != null ? employer.getUserId() : null;
                 if (receiverUserId != null) {
-                    String content = "Tin tuyen dung \"" + r.getTitle() + "\" da "
-                            + ("APPROVED".equals(decision) ? "duoc duyet." : "bi tu choi.");
+                    String content = "Tin tuyển dụng \"" + r.getTitle() + "\" đã "
+                            + ("APPROVED".equals(decision) ? "được duyệt." : "bị từ chối.");
                     notificationService.sendNotification(session.getCurrentUserId(), receiverUserId, content);
                 }
             }
