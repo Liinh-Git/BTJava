@@ -21,8 +21,10 @@ import org.jobportal.model.Candidate;
 import org.jobportal.model.Employer;
 import org.jobportal.model.Recruitment;
 import org.jobportal.model.User;
+import org.jobportal.utils.IdGenerator;
 import org.jobportal.utils.SessionManager;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,8 +50,8 @@ public class ApplicationService implements IApplicationService {
 
     /** Sinh applicationId format "APP-" + 6 so => 10 ky tu */
     private String generateApplicationId() {
-        long ts = System.currentTimeMillis() % 1_000_000L;
-        return String.format("APP-%06d", ts);
+        String latestId = applicationDAO.getLatestApplicationId();
+        return IdGenerator.nextId(latestId, "APP", 6);
     }
 
     // ------------------------------------------------------------------
@@ -64,7 +66,14 @@ public class ApplicationService implements IApplicationService {
      */
     @Override
     public boolean applyRecruitment(String candidateId, String recruitmentId) {
-        if (candidateId == null || recruitmentId == null) return false;
+        if (candidateId == null || candidateId.isBlank() || recruitmentId == null || recruitmentId.isBlank()) {
+            return false;
+        }
+
+        if (candidateDAO.findById(candidateId) == null) {
+            System.err.println("[ApplicationService] applyRecruitment: candidateId khong ton tai = " + candidateId);
+            return false;
+        }
 
         // 1. Lay va kiem tra tin tuyen dung
         Recruitment r = recruitmentDAO.findById(recruitmentId);
@@ -76,7 +85,7 @@ public class ApplicationService implements IApplicationService {
             System.err.println("[ApplicationService] applyRecruitment: tin da dong hoac het han.");
             return false;
         }
-        if (r.getDueDate() != null && r.getDueDate().isBefore(LocalDateTime.now())) {
+        if (r.getDueDate() != null && r.getDueDate().toLocalDate().isBefore(LocalDate.now())) {
             System.err.println("[ApplicationService] applyRecruitment: tin het han nop.");
             return false;
         }
@@ -87,20 +96,21 @@ public class ApplicationService implements IApplicationService {
             return false;
         }
 
-        // 3. Sinh ID
+        // 3. Sinh ID theo ID lon nhat + 1
         String applicationId = generateApplicationId();
-        while (true) {
-            // Kiem tra co the lay application nay khong (don gian: thu insert, neu loi thi sinh lai)
-            // Thay bang check khac neu DAO ho tro
-            break;
-        }
 
         // 4. Tao don
         Application app = new Application(
                 applicationId, candidateId, recruitmentId,
                 ApplicationStatus.PENDING, LocalDateTime.now()
         );
-        boolean inserted = applicationDAO.insert(app);
+        boolean inserted;
+        try {
+            inserted = applicationDAO.insert(app);
+        } catch (RuntimeException ex) {
+            System.err.println("[ApplicationService] applyRecruitment: loi khi insert application: " + ex.getMessage());
+            return false;
+        }
         if (inserted) {
             // Lay userId cua candidate de lam sender
             String senderUserId = getCandidateUserId(candidateId);

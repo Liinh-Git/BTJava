@@ -74,6 +74,24 @@ public class NotificationDAO implements INotificationDAO {
     }
 
     @Override
+    public String getLatestNotificationId() {
+        String sql = "SELECT notification_id FROM notifications "
+                + "WHERE notification_id LIKE 'NOT-%' "
+                + "ORDER BY notification_id DESC LIMIT 1";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Loi khi lay notification_id moi nhat: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    @Override
     public boolean updateIsRead(String notificationId, boolean isRead) {
         String sql = "UPDATE notifications SET is_read = ? WHERE notification_id = ?";
 

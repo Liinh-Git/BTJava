@@ -177,7 +177,8 @@ public class RecruitmentDAO implements IRecruitmentDAO {
                 + "r.job_type, r.status, r.admin_status, r.salary, r.location, r.experience_required, "
                 + "r.created_date, r.due_date "
                 + "FROM recruitments r "
-                + "WHERE r.status = 'OPEN' AND r.admin_status = 'APPROVED'");
+                + "WHERE r.status = 'OPEN' AND r.admin_status = 'APPROVED' "
+                + "AND (r.due_date IS NULL OR DATE(r.due_date) >= CURDATE())");
 
         List<Object> params = new ArrayList<>();
 
@@ -218,6 +219,24 @@ public class RecruitmentDAO implements IRecruitmentDAO {
 
         // Bước 3 - Trả về danh sách
         return result;
+    }
+
+    @Override
+    public String getLatestRecruitmentId() {
+        String sql = "SELECT recruitment_id FROM recruitments "
+                + "WHERE recruitment_id LIKE 'REC-%' "
+                + "ORDER BY recruitment_id DESC LIMIT 1";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Loi khi lay recruitment_id moi nhat: " + e.getMessage(), e);
+        }
+        return null;
     }
 
     // Chức năng: Thêm tin tuyển dụng

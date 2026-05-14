@@ -15,6 +15,10 @@ public interface INotificationDAO {
     // Đầu ra: boolean
     boolean insert(Notification notification);
 
+    // Chức năng: Lấy notification_id mới nhất hiện có (format NOT-xxxxxx)
+    // Đầu ra: String notificationId hoặc null nếu chưa có dữ liệu
+    String getLatestNotificationId();
+
     // Chức năng: Cập nhật trạng thái đã đọc
     // Đầu vào: notificationId (String), isRead (boolean)
     // Đầu ra: boolean

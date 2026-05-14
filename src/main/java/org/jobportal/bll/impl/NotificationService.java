@@ -11,6 +11,7 @@ import org.jobportal.dal.interfaces.IUserDAO;
 import org.jobportal.dto.NotificationDTO;
 import org.jobportal.model.Notification;
 import org.jobportal.model.User;
+import org.jobportal.utils.IdGenerator;
 import org.jobportal.utils.SessionManager;
 
 public class NotificationService implements INotificationService {
@@ -88,7 +89,7 @@ public class NotificationService implements INotificationService {
     }
 
     private String generateNotificationId() {
-        long ts = System.currentTimeMillis() % 1_000_000L;
-        return String.format("NOT-%06d", ts);
+        String latestId = notificationDAO.getLatestNotificationId();
+        return IdGenerator.nextId(latestId, "NOT", 6);
     }
 }

@@ -8,6 +8,7 @@ import org.jobportal.bll.interfaces.ICVService;
 import org.jobportal.dto.CVDTO;
 import org.jobportal.dto.UserDTO;
 import org.jobportal.model.Education;
+import org.jobportal.utils.DateUtils;
 import org.jobportal.utils.SessionManager;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ public class CVEditorPanel extends JPanel {
     private JTextField txtPhone;
     private JTextField txtBirthday;
     private JTextField txtGender;
+    private JTextField txtSalary;
     private JTextArea txtObjective;
     private JTextField txtSkill;
     private JPanel tagsPanel;
@@ -82,7 +84,7 @@ public class CVEditorPanel extends JPanel {
             txtEmail.setText(user.getEmail() != null ? user.getEmail() : "");
             txtPhone.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "");
             txtAddress.setText(user.getAddress() != null ? user.getAddress() : "");
-            txtBirthday.setText(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : "");
+            txtBirthday.setText(DateUtils.toUiDate(user.getDateOfBirth()));
             txtGender.setText(user.getGender() != null ? user.getGender().name() : "");
 
             String candidateId = SessionManager.getInstance().getCandidateId();
@@ -233,7 +235,10 @@ public class CVEditorPanel extends JPanel {
         JPanel p7 = createFormGroup("Vị trí mong muốn", "Lập trình viên Java");
         txtTitle = (JTextField) p7.getComponent(2);
         formPanel.add(p7);      
-        
+
+        JPanel p8 = createFormGroup("Mức lương mong muốn", "10 - 15 triệu VND");
+        txtSalary = (JTextField) p8.getComponent(2);
+        formPanel.add(p8);
 
         card.add(formPanel);
         return card;

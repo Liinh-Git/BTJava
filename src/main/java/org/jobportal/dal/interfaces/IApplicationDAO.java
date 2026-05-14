@@ -56,6 +56,10 @@ public interface IApplicationDAO {
     // Đầu ra: boolean
     boolean insert(Application application);
 
+    // Chức năng: Lấy application_id lớn nhất hiện có (theo format APP-xxxxxx)
+    // Đầu ra: String applicationId hoặc null nếu chưa có dữ liệu
+    String getLatestApplicationId();
+
     // Chức năng: Xóa đơn ứng tuyển
     // Đầu vào: applicationId (String)
     // Đầu ra: boolean

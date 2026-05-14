@@ -1,4 +1,4 @@
-package org.jobportal.view.candidate;
+﻿package org.jobportal.view.candidate;
 
 import org.jobportal.bll.impl.CategoryService;
 import org.jobportal.bll.impl.RecruitmentService;
@@ -193,8 +193,9 @@ public class JobSearchPanel extends JPanel {
         Window ancestor = SwingUtilities.getWindowAncestor(this);
         if (ancestor instanceof Frame) {
             JDialog dialog = new JDialog((Frame) ancestor, "Chi tiết việc làm", true);
-            dialog.setSize(1000, 800);
-            dialog.setLocationRelativeTo(ancestor);
+            dialog.setSize(980, 680);
+            dialog.setResizable(false);
+            dialog.setLocationRelativeTo(null);
             dialog.add(new JobDetailPanel(job.getRecruitmentId(), dialog));
             dialog.setVisible(true);
         }
@@ -273,3 +274,4 @@ public class JobSearchPanel extends JPanel {
         });
     }
 }
+

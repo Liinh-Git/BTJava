@@ -36,6 +36,7 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         setTitle("Hệ thống Tìm kiếm Việc làm");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setSize(1200, 850);
         
         rootCardLayout = new CardLayout();
@@ -132,11 +133,11 @@ public class MainFrame extends JFrame {
     }
     
     public void showRegister() {
-        rootCardLayout.show(rootPanel, "Register");
+        rootCardLayout.show(rootPanel, "Đăng ký");
     }
     
     public void showLogin() {
-        rootCardLayout.show(rootPanel, "Login");
+        rootCardLayout.show(rootPanel, "Đăng nhập");
     }
     
     public void navigateToMenu(String menuTitle) {

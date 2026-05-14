@@ -1,4 +1,4 @@
-package org.jobportal.view.candidate;
+﻿package org.jobportal.view.candidate;
 
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
@@ -77,11 +77,11 @@ public class AppliedJobsPanel extends JPanel {
             
             statsPanel.add(createStatCard("TỔNG ĐƠN", String.valueOf(total), null));
             statsPanel.add(createStatCard("ĐƠN CHỜ DUYỆT", String.valueOf(pending), null));
-            statsPanel.add(createStatCard("TỈ LỆ ĐƯỢC DUYỆT", String.format("%.1f%%", rate), null));
+            statsPanel.add(createStatCard("TỶ LỆ ĐƯỢC DUYỆT", String.format("%.1f%%", rate), null));
         } else {
             statsPanel.add(createStatCard("TỔNG ĐƠN", "0", null));
             statsPanel.add(createStatCard("ĐƠN CHỜ DUYỆT", "0", null));
-            statsPanel.add(createStatCard("TỈ LỆ ĐƯỢC DUYỆT", "0%", null));
+            statsPanel.add(createStatCard("TỶ LỆ ĐƯỢC DUYỆT", "0%", null));
         }
         statsPanel.revalidate();
         statsPanel.repaint();
@@ -147,8 +147,6 @@ public class AppliedJobsPanel extends JPanel {
                 
                 tableContainer.add(createRow(title, company, dateStr, statusStr, "...", false, app));
             }
-        } else {
-            tableContainer.add(createEmptyStateRow());
         }
 
         JPanel footer = new JPanel(new BorderLayout());
@@ -160,7 +158,7 @@ public class AppliedJobsPanel extends JPanel {
             lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             lblCount.setForeground(Color.GRAY);
         }
-        lblCount.setText("Hiá»ƒn thá»‹ " + (currentApps != null ? currentApps.size() : 0) + " Ä‘Æ¡n á»©ng tuyá»ƒn");
+        lblCount.setText("Hiển thị " + (currentApps != null ? currentApps.size() : 0) + " đơn ứng tuyển");
         footer.add(lblCount, BorderLayout.WEST);
 
         if (currentApps != null && !currentApps.isEmpty()) {
@@ -175,25 +173,13 @@ public class AppliedJobsPanel extends JPanel {
         tableContainer.repaint();
     }
 
-    private JPanel createEmptyStateRow() {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setBackground(Color.WHITE);
-        row.setBorder(new EmptyBorder(28, 20, 28, 20));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
-
-        JLabel lbl = new JLabel("Hiện chưa có đơn ứng tuyển nào.");
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lbl.setForeground(new Color(108, 117, 125));
-        row.add(lbl, BorderLayout.CENTER);
-        return row;
-    }
-
     private JPanel createRow(String col1, String col2, String col3, String status, String action, boolean isHeader, ApplicationDTO app) {
         JPanel row = new JPanel(new GridLayout(1, 5));
         row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
-        row.setPreferredSize(new Dimension(0, 70));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        int rowHeight = isHeader ? 56 : 70;
+        row.setPreferredSize(new Dimension(0, rowHeight));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowHeight));
 
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.BLACK;
@@ -223,7 +209,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p3);
 
         // cot 4: Status
-        JPanel p4 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 20));
+        JPanel p4 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
         p4.setOpaque(false);
         if (isHeader) {
             JLabel l4 = new JLabel(status);
@@ -243,7 +229,7 @@ public class AppliedJobsPanel extends JPanel {
             l5.setForeground(textColor);
             p5.add(l5);
         } else {
-            JButton btnCancel = new JButton("Hủy");
+            JButton btnCancel = new JButton("Há»§y");
             btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             btnCancel.setBackground(Color.WHITE);
             btnCancel.setForeground(Color.RED);
@@ -274,8 +260,8 @@ public class AppliedJobsPanel extends JPanel {
         badge.setOpaque(true);
 
         switch (status) {
-            case "Đang duyệt":
-            case "Chờ duyệt":
+            case "Äang duyá»‡t":
+            case "Chá» duyá»‡t":
                 badge.setBackground(new Color(230, 240, 255));
                 badge.setForeground(new Color(13, 110, 253));
                 break;
@@ -296,7 +282,7 @@ public class AppliedJobsPanel extends JPanel {
     private String toStatusLabel(ApplicationStatus status) {
         if (status == ApplicationStatus.APPROVED) return "Đã duyệt";
         if (status == ApplicationStatus.REJECTED) return "Bị từ chối";
-        return "Đang duyệt";
+        return "Đang chờ duyệt";
     }
 
     private JButton createPageBtn(String text, boolean active) {
@@ -342,3 +328,4 @@ public class AppliedJobsPanel extends JPanel {
         });
     }
 }
+

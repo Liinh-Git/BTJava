@@ -31,6 +31,10 @@ public interface IRecruitmentDAO {
     // Đầu ra: boolean
     boolean insert(Recruitment recruitment);
 
+    // Chức năng: Lấy recruitment_id mới nhất hiện có (format REC-xxxxxx)
+    // Đầu ra: String recruitmentId hoặc null nếu chưa có dữ liệu
+    String getLatestRecruitmentId();
+
     // Chức năng: Cập nhật tin tuyển dụng
     // Đầu vào: recruitment (Recruitment)
     // Đầu ra: boolean
