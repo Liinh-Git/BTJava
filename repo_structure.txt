@@ -37,14 +37,20 @@ JobPortalSystem/
               - UserDAO.java
             - interfaces/
               - IApplicationDAO.java
+              - ICandidateDAO.java
               - ICategoryDAO.java
               - ICVDAO.java
+              - IEmployerDAO.java
               - INotificationDAO.java
               - IRecruitmentDAO.java
               - IUserDAO.java
           - docs/
+            - architecture_guide.txt
             - data_overview.txt
+            - function_design_specification.txt
+            - implementation_plan.txt
             - process.txt
+            - team_contract_guide.txt
           - dto/
             - ApplicationDTO.java
             - CVDTO.java
@@ -52,6 +58,7 @@ JobPortalSystem/
             - RecruitmentDTO.java
             - UserDTO.java
           - enums/
+            - AdminStatus.java
             - ApplicationStatus.java
             - Gender.java
             - JobType.java
@@ -71,6 +78,7 @@ JobPortalSystem/
             - WorkExperience.java
           - utils/
             - DateUtils.java
+            - IdGenerator.java
             - PasswordUtils.java
             - SessionManager.java
             - ValidationUtils.java
@@ -90,8 +98,10 @@ JobPortalSystem/
               - JobCardPanel.java
               - LoginPanel.java
               - MainFrame.java
+              - NotificationPanel.java
               - RegisterPanel.java
               - SidebarPanel.java
+              - UserProfilePanel.java
             - employer/
               - ApplicationReviewPanel.java
               - CompanyInfoPanel.java
@@ -103,10 +113,23 @@ JobPortalSystem/
       - db/
         - schema.sql
       - images/
+        - avt/
+          - 6858504.png
+        - noti/
+          - noti.jpg
+        - setting/
+          - 3524659.png
   - test/
     - java/
-- target/
-  - classes/
-  - generated-sources/
-    - annotations/
-  - test-classes/
+      - org/
+        - jobportal/
+          - dal/
+            - ApplicationDAOTest.java
+            - CandidateDAOTest.java
+            - CategoryDAOTest.java
+            - CVDAOTest.java
+            - DalIntegrationTestBase.java
+            - EmployerDAOTest.java
+            - NotificationDAOTest.java
+            - RecruitmentDAOTest.java
+            - UserDAOTest.java
