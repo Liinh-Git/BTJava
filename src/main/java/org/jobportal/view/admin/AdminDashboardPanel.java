@@ -5,6 +5,8 @@ import org.jobportal.bll.impl.UserService;
 import org.jobportal.bll.interfaces.IRecruitmentService;
 import org.jobportal.bll.interfaces.IUserService;
 import org.jobportal.enums.Role;
+import org.jobportal.view.common.HeaderPanel;
+import org.jobportal.view.common.SidebarPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -179,5 +181,21 @@ public class AdminDashboardPanel extends JPanel {
         row.add(p1);
         row.add(p2);
         return row;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Quản trị - Thống kê hệ thống");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1200, 900);
+            frame.setLayout(new BorderLayout());
+
+            frame.add(new HeaderPanel(), BorderLayout.NORTH);
+            frame.add(new SidebarPanel(Role.ADMIN), BorderLayout.WEST);
+            frame.add(new AdminDashboardPanel(), BorderLayout.CENTER);
+
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }

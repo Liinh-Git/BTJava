@@ -1,4 +1,5 @@
 package org.jobportal.view.employer;
+
 import org.jobportal.bll.impl.CategoryService;
 import org.jobportal.bll.impl.RecruitmentService;
 import org.jobportal.model.Category;

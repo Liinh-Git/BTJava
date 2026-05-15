@@ -1,4 +1,5 @@
 package org.jobportal.view.common;
+
 import org.jobportal.enums.Role;
 
 import javax.swing.*;

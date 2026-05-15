@@ -4,7 +4,10 @@ import org.jobportal.bll.impl.RecruitmentService;
 import org.jobportal.bll.interfaces.IRecruitmentService;
 import org.jobportal.dto.RecruitmentDTO;
 import org.jobportal.enums.JobType;
+import org.jobportal.enums.Role;
+import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.JobCardPanel;
+import org.jobportal.view.common.SidebarPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -214,9 +217,31 @@ public class JobModerationPanel extends JPanel {
         return panel;
     }
 
+    private String toJobTypeLabel(JobType jobType) {
+        if (jobType == JobType.PARTTIME) return "Bán thời gian";
+        if (jobType == JobType.INTERNSHIP) return "Thực tập";
+        return "Toàn thời gian";
+    }
+
     private String toEnglishJobTypeLabel(JobType jobType) {
         if (jobType == JobType.PARTTIME) return "Part-time";
         if (jobType == JobType.INTERNSHIP) return "Internship";
         return "Full-time";
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Quản trị - Kiểm duyệt tin tuyển dụng");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1200, 850);
+            frame.setLayout(new BorderLayout());
+
+            frame.add(new HeaderPanel(), BorderLayout.NORTH);
+            frame.add(new SidebarPanel(Role.ADMIN), BorderLayout.WEST);
+            frame.add(new JobModerationPanel(), BorderLayout.CENTER);
+
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }

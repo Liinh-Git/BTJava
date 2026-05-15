@@ -1,4 +1,5 @@
 ﻿package org.jobportal.view.common;
+
 import org.jobportal.bll.impl.AuthService;
 import org.jobportal.bll.impl.UserService;
 import org.jobportal.bll.interfaces.IAuthService;

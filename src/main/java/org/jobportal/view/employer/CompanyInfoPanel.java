@@ -1,4 +1,8 @@
 package org.jobportal.view.employer;
+
+import org.jobportal.view.common.HeaderPanel;
+import org.jobportal.view.common.SidebarPanel;
+
 import org.jobportal.bll.impl.UserService;
 import org.jobportal.bll.interfaces.IUserService;
 import org.jobportal.dto.UserDTO;
@@ -8,6 +12,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class CompanyInfoPanel extends JPanel {
 
@@ -245,5 +251,30 @@ public class CompanyInfoPanel extends JPanel {
         card.add(lblValue);
 
         return card;
+    }
+
+    // ham main kiem tra giao dien doc lap
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Employer Portal - Thong tin cong ty");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1200, 850);
+            frame.setLayout(new BorderLayout());
+
+            // Header o NORTH
+            HeaderPanel header = new HeaderPanel();
+            frame.add(header, BorderLayout.NORTH);
+
+            // Sidebar o WEST
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.EMPLOYER);
+            frame.add(sidebar, BorderLayout.WEST);
+
+            // Giao dien chinh o CENTER
+            CompanyInfoPanel companyPanel = new CompanyInfoPanel();
+            frame.add(companyPanel, BorderLayout.CENTER);
+
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }

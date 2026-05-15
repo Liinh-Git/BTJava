@@ -1,11 +1,15 @@
 ﻿package org.jobportal.view.candidate;
+
 import org.jobportal.bll.impl.CategoryService;
 import org.jobportal.bll.impl.RecruitmentService;
 import org.jobportal.bll.interfaces.IRecruitmentService;
 import org.jobportal.dto.RecruitmentDTO;
 import org.jobportal.enums.JobType;
+import org.jobportal.enums.Role;
 import org.jobportal.model.Category;
+import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.JobCardPanel;
+import org.jobportal.view.common.SidebarPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -252,6 +256,22 @@ public class JobSearchPanel extends JPanel {
         if (jobType == JobType.PARTTIME) return "Part-time";
         if (jobType == JobType.INTERNSHIP) return "Internship";
         return "Full-time";
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Ứng viên - Tìm việc");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1200, 800);
+            frame.setLayout(new BorderLayout());
+
+            frame.add(new HeaderPanel(), BorderLayout.NORTH);
+            frame.add(new SidebarPanel(Role.CANDIDATE), BorderLayout.WEST);
+            frame.add(new JobSearchPanel(), BorderLayout.CENTER);
+
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }
 

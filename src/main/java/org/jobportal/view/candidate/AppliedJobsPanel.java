@@ -1,7 +1,12 @@
 ﻿package org.jobportal.view.candidate;
+
+import org.jobportal.view.common.HeaderPanel;
+import org.jobportal.view.common.SidebarPanel;
+
 import org.jobportal.bll.impl.ApplicationService;
 import org.jobportal.bll.interfaces.IApplicationService;
 import org.jobportal.dto.ApplicationDTO;
+import org.jobportal.dto.UserDTO;
 import org.jobportal.enums.ApplicationStatus;
 import org.jobportal.utils.SessionManager;
 
@@ -294,6 +299,33 @@ public class AppliedJobsPanel extends JPanel {
             btn.setBorder(new LineBorder(new Color(220, 220, 220), 1));
         }
         return btn;
+    }
+
+    // ham main de kiem tra giao dien
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Ứng viên - Việc làm đã ứng tuyển");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1300, 850);
+            frame.setLayout(new BorderLayout());
+
+            // dung lai HeaderPanel
+            HeaderPanel header = new HeaderPanel();
+            frame.add(header, BorderLayout.NORTH);
+
+            // dung lai SidebarPanel (Role Candidate)
+            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.CANDIDATE);
+            frame.add(sidebar, BorderLayout.WEST);
+
+            JPanel rightPanel = new JPanel(new BorderLayout());
+            // them panel AppliedJobs vua code
+            AppliedJobsPanel appliedPanel = new AppliedJobsPanel();
+            rightPanel.add(appliedPanel, BorderLayout.CENTER);
+
+            frame.add(rightPanel, BorderLayout.CENTER);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }
 

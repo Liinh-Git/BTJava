@@ -1,6 +1,8 @@
 package org.jobportal.view.common;
+
 import org.jobportal.dto.UserDTO;
 import org.jobportal.utils.SessionManager;
+import org.jobportal.view.common.NotificationPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -140,5 +142,28 @@ public class HeaderPanel extends JPanel {
         });
 
         return btn;
+    }
+
+    // ham main de kiem tra giao dien doc lap
+    public static void main(String[] args) {
+        // dam bao chay UI tren Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Kiem tra Header Panel");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1000, 600); // kich thuoc frame test
+            frame.setLayout(new BorderLayout());
+
+            // khoi tao va them header vao phia tren cung (NORTH)
+            HeaderPanel header = new HeaderPanel();
+            frame.add(header, BorderLayout.NORTH);
+
+            // panel chua noi dung gia lap o duoi de thay ro phan cach
+            JPanel contentPanel = new JPanel();
+            contentPanel.setBackground(new Color(248, 249, 250));
+            frame.add(contentPanel, BorderLayout.CENTER);
+
+            frame.setLocationRelativeTo(null); // giua man hinh
+            frame.setVisible(true);
+        });
     }
 }
