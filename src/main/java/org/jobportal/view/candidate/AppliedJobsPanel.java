@@ -3,12 +3,27 @@ package org.jobportal.view.candidate;
 import org.jobportal.view.common.HeaderPanel;
 import org.jobportal.view.common.SidebarPanel;
 
+import org.jobportal.bll.impl.ApplicationService;
+import org.jobportal.bll.interfaces.IApplicationService;
+import org.jobportal.dto.ApplicationDTO;
+import org.jobportal.dto.UserDTO;
+import org.jobportal.enums.ApplicationStatus;
+import org.jobportal.utils.SessionManager;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class AppliedJobsPanel extends JPanel {
+
+    private final IApplicationService applicationService = new ApplicationService();
+    private JPanel statsPanel;
+    private JPanel tableContainer;
+    private JLabel lblCount;
+    private List<ApplicationDTO> currentApps = null; // cache danh sach hien tai
 
     public AppliedJobsPanel() {
         // thiet lap mau nen va layout chinh
@@ -21,20 +36,22 @@ public class AppliedJobsPanel extends JPanel {
         mainContent.setBackground(new Color(248, 249, 250));
         mainContent.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        // 1. tieu de trang va cac nut thao tac (Filter, Export)
-        mainContent.add(createPageHeader());
-        mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
-
         // 2. phan thong ke (3 the: Total, Active, Success Rate)
-        mainContent.add(createStatsRow());
+        statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
+        statsPanel.setBackground(new Color(248, 249, 250));
+        statsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+        mainContent.add(statsPanel);
         mainContent.add(Box.createRigidArea(new Dimension(0, 30)));
 
         // 3. danh sach don ung tuyen (Gia lap bang)
-        mainContent.add(createApplicationsTable());
+        tableContainer = new JPanel();
+        tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
+        tableContainer.setBackground(Color.WHITE);
+        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
+        mainContent.add(tableContainer);
+        
+        loadData();
         mainContent.add(Box.createRigidArea(new Dimension(0, 25)));
-
-        // 4. banner Pro Tip
-        mainContent.add(createProTipBanner());
 
         // boc vao scroll pane
         JScrollPane scrollPane = new JScrollPane(mainContent);
@@ -43,52 +60,35 @@ public class AppliedJobsPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    // ham tao tieu de trang
-    private JPanel createPageHeader() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(248, 249, 250));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
-
-        // ben trai: Tieu de va mo ta
-        JPanel leftPanel = new JPanel();
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(new Color(248, 249, 250));
-
-        JLabel lblTitle = new JLabel("Applied Jobs");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-
-        JLabel lblSub = new JLabel("Track the status of your current job applications in real-time.");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblSub.setForeground(Color.GRAY);
-
-        leftPanel.add(lblTitle);
-        leftPanel.add(lblSub);
-
-        // ben phai: Filter va Export
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rightPanel.setBackground(new Color(248, 249, 250));
-
-        JButton btnFilter = createOutlineButton("Filter", "Y"); // gia lap icon
-        JButton btnExport = createOutlineButton("Export", "v");
-        rightPanel.add(btnFilter);
-        rightPanel.add(btnExport);
-
-        panel.add(leftPanel, BorderLayout.WEST);
-        panel.add(rightPanel, BorderLayout.EAST);
-        return panel;
+    public void refreshData() {
+        loadData();
     }
 
     // ham tao 3 the thong ke
-    private JPanel createStatsRow() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 20, 0));
-        panel.setBackground(new Color(248, 249, 250));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
-
-        panel.add(createStatCard("TOTAL APPLICATIONS", "24", null));
-        panel.add(createStatCard("ACTIVE INTERVIEWS", "3", "Coming up"));
-        panel.add(createStatCard("SUCCESS RATE", "12%", null));
-
-        return panel;
+    private void updateStats(String candidateId) {
+        statsPanel.removeAll();
+        if (candidateId != null) {
+            int total = applicationService.getTotalApplyCountByUser(candidateId);
+            int approved = applicationService.getApprovedApplicationByUser(candidateId);
+            List<ApplicationDTO> apps = applicationService.getListOfApplicationByUser(candidateId);
+            int pending = 0;
+            for (ApplicationDTO app : apps) {
+                if (app.getStatus() == ApplicationStatus.PENDING) {
+                    pending++;
+                }
+            }
+            double rate = total > 0 ? (approved * 100.0 / total) : 0;
+            
+            statsPanel.add(createStatCard("TỔNG ĐƠN", String.valueOf(total), null));
+            statsPanel.add(createStatCard("ĐƠN CHỜ DUYỆT", String.valueOf(pending), null));
+            statsPanel.add(createStatCard("TỶ LỆ ĐƯỢC DUYỆT", String.format("%.1f%%", rate), null));
+        } else {
+            statsPanel.add(createStatCard("TỔNG ĐƠN", "0", null));
+            statsPanel.add(createStatCard("ĐƠN CHỜ DUYỆT", "0", null));
+            statsPanel.add(createStatCard("TỶ LỆ ĐƯỢC DUYỆT", "0%", null));
+        }
+        statsPanel.revalidate();
+        statsPanel.repaint();
     }
 
     private JPanel createStatCard(String label, String value, String badgeText) {
@@ -103,9 +103,11 @@ public class AppliedJobsPanel extends JPanel {
         JLabel lblLabel = new JLabel(label);
         lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblLabel.setForeground(Color.GRAY);
+        lblLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         valuePanel.setBackground(Color.WHITE);
+        valuePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         JLabel lblValue = new JLabel(value);
         lblValue.setFont(new Font("Segoe UI", Font.BOLD, 28));
         valuePanel.add(lblValue);
@@ -125,57 +127,69 @@ public class AppliedJobsPanel extends JPanel {
         return card;
     }
 
-    // ham tao bang danh sach ung tuyen
-    private JPanel createApplicationsTable() {
-        JPanel tableContainer = new JPanel();
+    private void loadData() {
+        String candidateId = SessionManager.getInstance().getCandidateId();
+        updateStats(candidateId);
+        
+        tableContainer.removeAll();
         tableContainer.setLayout(new BoxLayout(tableContainer, BoxLayout.Y_AXIS));
-        tableContainer.setBackground(Color.WHITE);
-        tableContainer.setBorder(new LineBorder(new Color(230, 230, 230), 1));
+        tableContainer.add(createRow("TIN TUYỂN DỤNG", "CÔNG TY", "NGÀY ỨNG TUYỂN", "TRẠNG THÁI", "THAO TÁC", true, null));
 
-        // header cua bang
-        tableContainer.add(createRow("JOB TITLE", "COMPANY", "DATE APPLIED", "STATUS", "ACTIONS", true));
+        if (candidateId != null) {
+            currentApps = applicationService.getListOfApplicationByUser(candidateId);
+        } else {
+            currentApps = null;
+        }
 
-        // du lieu cac dong
-        tableContainer.add(createRow("Senior Frontend Developer", "TechCorp Inc.", "Oct 24, 2023", "In Review", "...", false));
-        tableContainer.add(createRow("UI/UX Designer", "CreativePulse", "Oct 20, 2023", "Interview Scheduled", "...", false));
-        tableContainer.add(createRow("Backend Engineer (Go)", "Streamline Soft", "Oct 18, 2023", "Not Selected", "...", false));
-        tableContainer.add(createRow("Product Manager", "Nexus Labs", "Oct 15, 2023", "Applied", "...", false));
+        if (currentApps != null && !currentApps.isEmpty()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
+            for (ApplicationDTO app : currentApps) {
+                String title = app.getJobTitle();
+                String company = app.getCompanyName(); 
+                String dateStr = app.getAppliedDate() != null ? app.getAppliedDate().format(formatter) : "N/A";
+                String statusStr = toStatusLabel(app.getStatus());
+                
+                tableContainer.add(createRow(title, company, dateStr, statusStr, "...", false, app));
+            }
+        }
 
-        // phan footer cua bang co phan trang
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(Color.WHITE);
         footer.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel lblCount = new JLabel("Showing 4 of 24 applications");
-        lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblCount.setForeground(Color.GRAY);
+        if (lblCount == null) {
+            lblCount = new JLabel();
+            lblCount.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            lblCount.setForeground(Color.GRAY);
+        }
+        lblCount.setText("Hiển thị " + (currentApps != null ? currentApps.size() : 0) + " đơn ứng tuyển");
         footer.add(lblCount, BorderLayout.WEST);
 
-        JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        pagination.setBackground(Color.WHITE);
-        pagination.add(createPageBtn("1", true));
-        pagination.add(createPageBtn("2", false));
-        pagination.add(createPageBtn("3", false));
-        pagination.add(createPageBtn(">", false));
-        footer.add(pagination, BorderLayout.EAST);
+        if (currentApps != null && !currentApps.isEmpty()) {
+            JPanel pagination = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+            pagination.setBackground(Color.WHITE);
+            pagination.add(createPageBtn("1", true));
+            footer.add(pagination, BorderLayout.EAST);
+        }
 
         tableContainer.add(footer);
-
-        return tableContainer;
+        tableContainer.revalidate();
+        tableContainer.repaint();
     }
 
-    private JPanel createRow(String col1, String col2, String col3, String status, String action, boolean isHeader) {
+    private JPanel createRow(String col1, String col2, String col3, String status, String action, boolean isHeader, ApplicationDTO app) {
         JPanel row = new JPanel(new GridLayout(1, 5));
         row.setBackground(isHeader ? new Color(250, 250, 250) : Color.WHITE);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
-        row.setPreferredSize(new Dimension(0, 70));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        int rowHeight = isHeader ? 56 : 70;
+        row.setPreferredSize(new Dimension(0, rowHeight));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowHeight));
 
         Font font = new Font("Segoe UI", isHeader ? Font.BOLD : Font.PLAIN, 13);
         Color textColor = isHeader ? Color.GRAY : Color.BLACK;
 
         // cot 1: Job Title
-        JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel p1 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
         p1.setOpaque(false);
         JLabel l1 = new JLabel(col1);
         l1.setFont(font); l1.setForeground(textColor);
@@ -183,7 +197,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p1);
 
         // cot 2: Company
-        JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel p2 = new JPanel(new FlowLayout(isHeader ? FlowLayout.CENTER : FlowLayout.LEFT, 20, 15));
         p2.setOpaque(false);
         JLabel l2 = new JLabel(col2);
         l2.setFont(font); l2.setForeground(textColor);
@@ -191,7 +205,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p2);
 
         // cot 3: Date
-        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
+        JPanel p3 = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         p3.setOpaque(false);
         JLabel l3 = new JLabel(col3);
         l3.setFont(font); l3.setForeground(textColor);
@@ -199,7 +213,7 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p3);
 
         // cot 4: Status
-        JPanel p4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
+        JPanel p4 = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         p4.setOpaque(false);
         if (isHeader) {
             JLabel l4 = new JLabel(status);
@@ -211,12 +225,34 @@ public class AppliedJobsPanel extends JPanel {
         row.add(p4);
 
         // cot 5: Actions
-        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 15));
+        JPanel p5 = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
         p5.setOpaque(false);
-        JLabel l5 = new JLabel(action);
-        l5.setFont(new Font("Arial", Font.BOLD, 18));
-        l5.setForeground(Color.GRAY);
-        p5.add(l5);
+        if (isHeader) {
+            JLabel l5 = new JLabel(action);
+            l5.setFont(font);
+            l5.setForeground(textColor);
+            p5.add(l5);
+        } else {
+            JButton btnCancel = new JButton("Hủy");
+            btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            btnCancel.setBackground(Color.WHITE);
+            btnCancel.setForeground(Color.RED);
+            btnCancel.addActionListener(e -> {
+                if (app != null) {
+                    boolean confirmed = org.jobportal.view.common.ModernDialogUtils.showConfirm(this, "Xác nhận", "Bạn có chắc muốn hủy đơn ứng tuyển này?");
+                    if (confirmed) {
+                        boolean success = applicationService.cancelApplication(app.getApplicationId());
+                        if (success) {
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Đã hủy đơn ứng tuyển!");
+                            loadData();
+                        } else {
+                            org.jobportal.view.common.ModernDialogUtils.showMessageDialog(this, "Lỗi khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            });
+            p5.add(btnCancel);
+        }
         row.add(p5);
 
         return row;
@@ -228,19 +264,16 @@ public class AppliedJobsPanel extends JPanel {
         badge.setOpaque(true);
 
         switch (status) {
-            case "In Review":
+            case "Đang duyệt":
+            case "Đang chờ duyệt":
                 badge.setBackground(new Color(230, 240, 255));
                 badge.setForeground(new Color(13, 110, 253));
                 break;
-            case "Interview Scheduled":
+            case "Bị từ chối":
                 badge.setBackground(new Color(255, 243, 230));
                 badge.setForeground(new Color(253, 126, 20));
                 break;
-            case "Not Selected":
-                badge.setBackground(new Color(240, 240, 240));
-                badge.setForeground(Color.GRAY);
-                break;
-            case "Applied":
+            case "Đã duyệt":
                 badge.setBackground(new Color(230, 250, 240));
                 badge.setForeground(new Color(40, 167, 69));
                 break;
@@ -250,34 +283,10 @@ public class AppliedJobsPanel extends JPanel {
         return badge;
     }
 
-    private JPanel createProTipBanner() {
-        JPanel banner = new JPanel(new BorderLayout(15, 0));
-        banner.setBackground(new Color(240, 245, 255));
-        banner.setBorder(new EmptyBorder(15, 25, 15, 25));
-        banner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-
-        JLabel icon = new JLabel("L"); // gia lap icon bong den
-        icon.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        icon.setForeground(new Color(0, 100, 250));
-        banner.add(icon, BorderLayout.WEST);
-
-        String text = "<html><b>Pro Tip: Keep your profile updated</b><br/>"
-                + "Companies are 3x more likely to view candidates who have updated their CV in the last 30 days.</html>";
-        JLabel lblText = new JLabel(text);
-        lblText.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        banner.add(lblText, BorderLayout.CENTER);
-
-        return banner;
-    }
-
-    private JButton createOutlineButton(String text, String icon) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        btn.setBackground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorder(new LineBorder(new Color(220, 220, 220), 1));
-        btn.setPreferredSize(new Dimension(100, 35));
-        return btn;
+    private String toStatusLabel(ApplicationStatus status) {
+        if (status == ApplicationStatus.APPROVED) return "Đã duyệt";
+        if (status == ApplicationStatus.REJECTED) return "Bị từ chối";
+        return "Đang chờ duyệt";
     }
 
     private JButton createPageBtn(String text, boolean active) {
@@ -296,30 +305,5 @@ public class AppliedJobsPanel extends JPanel {
         return btn;
     }
 
-    // ham main de kiem tra giao dien
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Applied Jobs Dashboard");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1300, 850);
-            frame.setLayout(new BorderLayout());
-
-            // dung lai HeaderPanel
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            // dung lai SidebarPanel (Role Candidate)
-            SidebarPanel sidebar = new SidebarPanel(SidebarPanel.Role.CANDIDATE);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            JPanel rightPanel = new JPanel(new BorderLayout());
-            // them panel AppliedJobs vua code
-            AppliedJobsPanel appliedPanel = new AppliedJobsPanel();
-            rightPanel.add(appliedPanel, BorderLayout.CENTER);
-
-            frame.add(rightPanel, BorderLayout.CENTER);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }
+

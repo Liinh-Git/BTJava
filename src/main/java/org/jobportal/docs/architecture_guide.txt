@@ -1,0 +1,314 @@
+# ARCHITECTURE GUIDE - JOB PORTAL SYSTEM
+
+## 1. Mục đích tài liệu
+
+Tài liệu này mô tả kiến trúc tổng quát của dự án JobPortalSystem.
+
+Mục tiêu:
+- Thống nhất cách các tầng giao tiếp với nhau.
+- Tránh viết code chồng chéo giữa View, Service và DAO.
+- Giúp các thành viên chia việc theo folder nhưng vẫn tích hợp được với nhau.
+
+Dự án là Java Desktop App dùng Swing, không phải web app.
+
+---
+
+## 2. Kiến trúc phân lớp
+
+### 2.1. Luồng chính của hệ thống:
+
+DatabaseConfig
+    ↓
+DAO / DAL
+    ↓
+Service / BLL
+    ↓
+View / Swing Panel
+
+### 2.2. Luồng gọi từ giao diện:
+
+View/Swing Panel
+    ↓ gọi
+Service/BLL
+    ↓ gọi
+DAO/DAL
+    ↓ truy vấn
+Database
+
+### 2.3. Luồng dữ liệu trả về:
+
+Database → DAO → Model/DTO → Service → DTO → View
+
+#### Nguyên tắc quan trọng:
+
+- View không gọi DAO trực tiếp.
+- View chỉ gọi Service.
+- Service xử lý nghiệp vụ và gọi DAO.
+- DAO chỉ làm việc với database.
+- Model bám sát bảng database.
+- DTO là dữ liệu đã chuẩn bị để View dùng.
+
+---
+
+## 3. Vai trò từng tầng
+
+### 3.1. DatabaseConfig
+
+Nhiệm vụ:
+- Tạo và cung cấp JDBC Connection.
+- Đọc thông tin kết nối từ config nếu có.
+- Không viết SQL nghiệp vụ.
+- Không gọi DAO, Service hoặc View.
+
+Ví dụ:
+- DatabaseConfig.getConnection()
+
+Tầng sử dụng:
+- DAO
+
+Không nên:
+- Hiển thị lỗi bằng JOptionPane.
+- Xử lý nghiệp vụ.
+- Tự query dữ liệu.
+
+---
+
+### 3.2. DAL / DAO
+
+DAO là tầng làm việc trực tiếp với database.
+
+Nhiệm vụ:
+- Viết SQL.
+- Thực hiện SELECT, INSERT, UPDATE, DELETE.
+- Mapping ResultSet sang Model hoặc DTO.
+- Đóng tài nguyên JDBC đúng cách.
+- Trả kết quả cho Service.
+
+DAO không được:
+- Gọi Service.
+- Gọi Swing component.
+- Hiển thị JOptionPane.
+- Xử lý nghiệp vụ như phân quyền, session, điều hướng UI.
+
+Quy tắc trả dữ liệu:
+- Query CRUD đơn giản nên trả Model.
+- Query phục vụ màn hình có JOIN nhiều bảng có thể trả DTO.
+
+Ví dụ:
+- UserDAO.findById(userId) → User
+- RecruitmentDAO.findById(recruitmentId) → Recruitment
+- RecruitmentDAO.searchByKeywordAndCategory(...) → List<RecruitmentDTO>
+- ApplicationDAO.findByRecruitmentId(...) → List<ApplicationDTO>
+
+---
+
+### 3.3. BLL / Service
+
+Service là tầng xử lý nghiệp vụ.
+
+Nhiệm vụ:
+- Nhận yêu cầu từ View.
+- Validate dữ liệu nghiệp vụ.
+- Kiểm tra role/quyền nếu cần.
+- Kiểm tra session hiện tại nếu cần.
+- Gọi DAO đúng thứ tự.
+- Mapping Model sang DTO nếu cần.
+- Trả dữ liệu hoặc trạng thái xử lý cho View.
+
+Service không được:
+- Viết SQL trực tiếp.
+- Gọi Swing component.
+- Hiển thị JOptionPane.
+- Xử lý layout giao diện.
+
+Ví dụ:
+ApplicationService.applyRecruitment(candidateId, recruitmentId)
+
+Logic nên nằm ở Service:
+1. Kiểm tra user hiện tại có phải CANDIDATE không.
+2. Kiểm tra tin tuyển dụng còn OPEN không.
+3. Kiểm tra tin đã được admin APPROVED chưa.
+4. Kiểm tra tin chưa hết hạn.
+5. Kiểm tra ứng viên chưa ứng tuyển trước đó.
+6. Sinh applicationId.
+7. Gọi ApplicationDAO.insert().
+8. Trả true/false cho View.
+
+---
+
+### 3.4. View / Swing Panel
+
+View là tầng giao diện.
+
+Nhiệm vụ:
+- Hiển thị dữ liệu.
+- Lấy input từ người dùng.
+- Gọi Service.
+- Nhận DTO từ Service.
+- Render dữ liệu lên JTable, JPanel, JLabel, JTextField...
+- Hiển thị thông báo thành công/thất bại.
+- Điều hướng màn hình.
+
+View không được:
+- Gọi DAO trực tiếp.
+- Viết SQL.
+- Tự join dữ liệu.
+- Tự xử lý nghiệp vụ phức tạp.
+- Tự quyết định quyền nghiệp vụ.
+
+Ví dụ:
+JobSearchPanel gọi RecruitmentService.searchRecruitments(...)
+
+Service trả List<RecruitmentDTO>
+
+JobSearchPanel render danh sách đó lên giao diện.
+
+---
+
+## 4. Model và DTO
+
+### 4.1. Model
+
+Model là object bám sát bảng database.
+
+Ví dụ Recruitment model:
+- recruitmentId
+- employerId
+- categoryId
+- title
+- description
+- jobType
+- status
+- adminStatus
+- salary
+- location
+- dueDate
+
+Model phù hợp cho:
+- DAO mapping từ database.
+- Service xử lý dữ liệu gốc.
+- Các thao tác CRUD đơn giản.
+
+---
+
+### 4.2. DTO
+
+DTO là object đóng gói dữ liệu để truyền giữa Service và View.
+
+DTO không cần giống database 1:1.
+
+Ví dụ giao diện tìm việc cần:
+- Tên công việc
+- Tên công ty
+- Tên danh mục
+- Lương
+- Địa điểm
+- Loại công việc
+- Hạn nộp
+- Số người ứng tuyển
+
+Các dữ liệu này có thể đến từ nhiều bảng:
+- recruitments
+- employers
+- categories
+- applications
+
+Vì vậy dùng RecruitmentDTO:
+- recruitmentId
+- title
+- companyName
+- categoryName
+- jobType
+- salary
+- location
+- dueDate
+- applicationCount
+
+Kết luận:
+- Model = dữ liệu gốc theo database.
+- DTO = dữ liệu đã chuẩn bị cho View hoặc Service dùng.
+- View nên dùng DTO, không tự xử lý nhiều Model cùng lúc.
+
+---
+
+## 5. Quy tắc phụ thuộc giữa các tầng
+
+Đúng:   View → Service → DAO → Database
+
+Sai:    View → DAO
+
+Sai:    DAO → Service
+
+Sai:    Service → Swing UI
+
+Sai:    DAO → JOptionPane
+
+Sai:    View tự viết SQL
+
+---
+
+## 6. Quy tắc xử lý lỗi
+
+DAO:
+- Bắt SQLException.
+- Có thể throw RuntimeException hoặc trả kết quả phù hợp theo style repo.
+- Không hiển thị popup.
+
+Service:
+- Kiểm tra nghiệp vụ.
+- Trả boolean/null/List rỗng hoặc throw lỗi tùy contract đã chốt.
+- Không hiển thị popup.
+
+View:
+- Nhận kết quả từ Service.
+- Hiển thị thông báo cho người dùng.
+- Không xử lý SQL/transaction.
+
+---
+
+## 7. Quy tắc với Notification
+
+Notification đã có model/DTO/skeleton.
+
+Giai đoạn hiện tại:
+- Chỉ giữ prototype/TODO.
+- Chưa cần implement logic thật nếu chưa phục vụ demo chính.
+- Không nối Notification vào flow chính khi chưa chốt.
+
+Sau này khi làm:
+- Service tạo notification sau approve/reject/moderate.
+- DAO insert/select notification.
+- View/Header hiển thị danh sách notification.
+
+---
+
+## 8. Thứ tự module nên ưu tiên
+
+1. Auth
+2. User/Candidate/Employer
+3. Category
+4. Recruitment
+5. Application
+6. CV
+7. Admin moderation
+8. Notification
+
+Lý do:
+- Auth là cửa vào hệ thống.
+- Category và Recruitment phục vụ nhiều màn hình.
+- Application phụ thuộc Candidate và Recruitment.
+- CV phụ thuộc Candidate.
+- Notification có thể làm sau.
+
+---
+
+## 9. Kết luận
+
+Nguyên tắc kiến trúc cần giữ:
+
+- DatabaseConfig chỉ quản lý kết nối.
+- DAO chỉ làm SQL và mapping.
+- Service xử lý nghiệp vụ.
+- View chỉ hiển thị và gọi Service.
+- Model bám database.
+- DTO phục vụ truyền dữ liệu cho View.
