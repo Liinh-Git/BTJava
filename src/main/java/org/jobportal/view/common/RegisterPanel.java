@@ -1,5 +1,4 @@
 package org.jobportal.view.common;
-
 import org.jobportal.bll.impl.AuthService;
 import org.jobportal.bll.interfaces.IAuthService;
 import org.jobportal.enums.Role;
@@ -207,17 +206,5 @@ public class RegisterPanel extends JPanel {
         lbl.setForeground(Color.DARK_GRAY);
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         return lbl;
-    }
-
-    // ham test giao dien
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Test Register");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(800, 750);
-            frame.add(new RegisterPanel());
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
     }
 }

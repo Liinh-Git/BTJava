@@ -1,5 +1,4 @@
 package org.jobportal.view.common;
-
 import org.jobportal.bll.impl.NotificationService;
 import org.jobportal.bll.interfaces.INotificationService;
 import org.jobportal.dto.NotificationDTO;

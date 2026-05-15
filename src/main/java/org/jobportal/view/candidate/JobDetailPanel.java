@@ -1,15 +1,11 @@
 package org.jobportal.view.candidate;
-
 import org.jobportal.bll.impl.ApplicationService;
 import org.jobportal.bll.impl.RecruitmentService;
 import org.jobportal.bll.interfaces.IApplicationService;
 import org.jobportal.bll.interfaces.IRecruitmentService;
 import org.jobportal.dto.RecruitmentDTO;
 import org.jobportal.enums.JobType;
-import org.jobportal.enums.Role;
 import org.jobportal.utils.SessionManager;
-import org.jobportal.view.common.HeaderPanel;
-import org.jobportal.view.common.SidebarPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -249,18 +245,5 @@ public class JobDetailPanel extends JPanel {
 
     private String safeText(String value, String fallback) {
         return value != null && !value.isBlank() ? value : fallback;
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Ứng viên - Chi tiết việc làm");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 800);
-            frame.add(new HeaderPanel(), BorderLayout.NORTH);
-            frame.add(new SidebarPanel(Role.CANDIDATE), BorderLayout.WEST);
-            frame.add(new JobDetailPanel(null, null), BorderLayout.CENTER);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
     }
 }

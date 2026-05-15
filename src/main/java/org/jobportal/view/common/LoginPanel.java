@@ -1,5 +1,4 @@
 package org.jobportal.view.common;
-
 import org.jobportal.bll.impl.AuthService;
 import org.jobportal.bll.interfaces.IAuthService;
 import org.jobportal.dto.UserDTO;
@@ -195,17 +194,5 @@ public class LoginPanel extends JPanel {
         lbl.setForeground(Color.DARK_GRAY);
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         return lbl;
-    }
-
-    // ham test giao dien
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Test Login");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(800, 700);
-            frame.add(new LoginPanel());
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
     }
 }
