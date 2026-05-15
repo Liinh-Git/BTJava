@@ -178,13 +178,6 @@ public class MainFrame extends JFrame {
         }
         return normalized;
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            MainFrame mainFrame = new MainFrame();
-            mainFrame.setVisible(true);
-        });
-    }
 }
 
 

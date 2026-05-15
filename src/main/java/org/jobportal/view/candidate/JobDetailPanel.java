@@ -261,17 +261,4 @@ public class JobDetailPanel extends JPanel {
     private String safeText(String value, String fallback) {
         return value != null && !value.isBlank() ? value : fallback;
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Ứng viên - Chi tiết việc làm");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 800);
-            frame.add(new HeaderPanel(), BorderLayout.NORTH);
-            frame.add(new SidebarPanel(Role.CANDIDATE), BorderLayout.WEST);
-            frame.add(new JobDetailPanel(null, null), BorderLayout.CENTER);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

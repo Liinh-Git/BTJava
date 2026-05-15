@@ -297,28 +297,4 @@ public class CategoryManagementPanel extends JPanel {
         return btn;
     }
 
-    // Ham main de kiem tra giao dien
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Admin Portal - Quan ly danh muc");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1200, 800);
-            frame.setLayout(new BorderLayout());
-
-            // Header o NORTH
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            // Sidebar o WEST (Gia lap Role ADMIN)
-            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.ADMIN);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            // Giao dien chinh o CENTER
-            CategoryManagementPanel categoryPanel = new CategoryManagementPanel();
-            frame.add(categoryPanel, BorderLayout.CENTER);
-
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

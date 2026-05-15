@@ -665,25 +665,4 @@ public class ApplicationReviewPanel extends JPanel {
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Employer Portal - Duyệt hồ sơ");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1300, 850);
-            frame.setLayout(new BorderLayout());
-
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.EMPLOYER);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            ApplicationReviewPanel reviewPanel = new ApplicationReviewPanel();
-            frame.add(reviewPanel, BorderLayout.CENTER);
-
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

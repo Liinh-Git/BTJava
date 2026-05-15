@@ -264,21 +264,5 @@ public class JobSearchPanel extends JPanel {
         if (jobType == JobType.INTERNSHIP) return "Internship";
         return "Full-time";
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Ứng viên - Tìm việc");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1200, 800);
-            frame.setLayout(new BorderLayout());
-
-            frame.add(new HeaderPanel(), BorderLayout.NORTH);
-            frame.add(new SidebarPanel(Role.CANDIDATE), BorderLayout.WEST);
-            frame.add(new JobSearchPanel(), BorderLayout.CENTER);
-
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }
 

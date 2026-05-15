@@ -419,25 +419,4 @@ public class UserManagementPanel extends JPanel {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Admin Portal - User Management");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1200, 850);
-            frame.setLayout(new BorderLayout());
-
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.ADMIN);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            UserManagementPanel userPanel = new UserManagementPanel();
-            frame.add(userPanel, BorderLayout.CENTER);
-
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

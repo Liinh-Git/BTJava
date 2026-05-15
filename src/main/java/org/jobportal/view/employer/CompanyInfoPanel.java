@@ -253,28 +253,4 @@ public class CompanyInfoPanel extends JPanel {
         return card;
     }
 
-    // ham main kiem tra giao dien doc lap
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Employer Portal - Thong tin cong ty");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1200, 850);
-            frame.setLayout(new BorderLayout());
-
-            // Header o NORTH
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            // Sidebar o WEST
-            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.EMPLOYER);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            // Giao dien chinh o CENTER
-            CompanyInfoPanel companyPanel = new CompanyInfoPanel();
-            frame.add(companyPanel, BorderLayout.CENTER);
-
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

@@ -766,30 +766,6 @@ public class CVEditorPanel extends JPanel {
         return row;
     }
 
-    // ham main de kiem tra giao dien
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("CV Management");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1100, 800);
-            frame.setLayout(new BorderLayout());
-
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.CANDIDATE);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            JPanel rightPanel = new JPanel(new BorderLayout());
-
-            CVEditorPanel cvPanel = new CVEditorPanel();
-            rightPanel.add(cvPanel, BorderLayout.CENTER);
-
-            frame.add(rightPanel, BorderLayout.CENTER);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }
 
 

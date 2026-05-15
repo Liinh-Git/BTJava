@@ -782,25 +782,4 @@ public class RecruitmentListPanel extends JPanel {
         }
         return btn;
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Employer Portal - Quan ly tin dang");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1200, 800);
-            frame.setLayout(new BorderLayout());
-
-            HeaderPanel header = new HeaderPanel();
-            frame.add(header, BorderLayout.NORTH);
-
-            SidebarPanel sidebar = new SidebarPanel(org.jobportal.enums.Role.EMPLOYER);
-            frame.add(sidebar, BorderLayout.WEST);
-
-            RecruitmentListPanel listPanel = new RecruitmentListPanel();
-            frame.add(listPanel, BorderLayout.CENTER);
-
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

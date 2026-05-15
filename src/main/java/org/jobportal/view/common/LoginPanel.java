@@ -197,15 +197,4 @@ public class LoginPanel extends JPanel {
         return lbl;
     }
 
-    // ham test giao dien
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Test Login");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(800, 700);
-            frame.add(new LoginPanel());
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }
