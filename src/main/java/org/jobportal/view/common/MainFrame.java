@@ -39,6 +39,7 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         setTitle("Hệ thống Tìm kiếm Việc làm");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // Mở rộng toàn màn hình
         setSize(1200, 850);
         
         rootCardLayout = new CardLayout();
